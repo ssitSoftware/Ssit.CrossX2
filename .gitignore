@@ -427,3 +427,5 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+Ssit.CrossX2/.DS_Store
+.DS_Store
