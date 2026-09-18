@@ -1,4 +1,4 @@
-namespace CrossX2.Graphics;
+namespace Ssit.CrossX2.Graphics;
 
 public interface ITexture: IDisposable
 {

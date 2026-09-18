@@ -1,7 +1,7 @@
 using System.Drawing;
 using System.Numerics;
 
-namespace CrossX2.Graphics;
+namespace Ssit.CrossX2.Graphics;
 
 public interface IRenderStateProvider
 {

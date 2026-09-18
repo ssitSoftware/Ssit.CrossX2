@@ -1,6 +1,6 @@
-using CrossX2.IO;
+using Ssit.CrossX2.IO;
 
-namespace CrossX2.Content;
+namespace Ssit.CrossX2.Content;
 
 public interface IContentManager
 {

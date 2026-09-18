@@ -4,7 +4,7 @@ using System.Drawing;
 using System.Globalization;
 using System.Runtime.InteropServices;
 
-namespace CrossX2;
+namespace Ssit.CrossX2;
 
 /// <summary>
 /// Represents a color in the RGBA (Red, Green, Blue, Alpha) color space.
@@ -282,12 +282,12 @@ public readonly partial struct RgbaColor(byte red, byte green, byte blue, byte a
 
     public static implicit operator RgbaColor(string name)
     {
-        if (!name.StartsWith('#') || name.Length is not (7 or 9)) return global::CrossX2.RgbaColor.Transparent;
+        if (!name.StartsWith('#') || name.Length is not (7 or 9)) return global::Ssit.CrossX2.RgbaColor.Transparent;
 
         var hexColor = name.AsSpan(1);
             
         if (!int.TryParse(hexColor, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var color))
-            return global::CrossX2.RgbaColor.Transparent;
+            return global::Ssit.CrossX2.RgbaColor.Transparent;
             
         var a = color >> 24 & 0xff;
         var r = color >> 16 & 0xff;

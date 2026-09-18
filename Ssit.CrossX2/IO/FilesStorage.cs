@@ -1,4 +1,4 @@
-namespace CrossX2.IO;
+namespace Ssit.CrossX2.IO;
 
 public class FilesStorage(string appName) : IFileStorage
 {

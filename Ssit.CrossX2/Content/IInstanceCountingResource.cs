@@ -1,4 +1,4 @@
-namespace CrossX2.Content;
+namespace Ssit.CrossX2.Content;
 
 public interface IInstanceCountingResource: IDisposable
 {

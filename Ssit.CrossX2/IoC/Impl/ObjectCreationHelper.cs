@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
-namespace CrossX2.IoC.Impl;
+namespace Ssit.CrossX2.IoC.Impl;
 
 internal static class ObjectCreationHelper
 {
@@ -63,6 +63,7 @@ internal static class ObjectCreationHelper
             }
         }
 
-        return resolveDelegate(type, out instance);
+        instance = null;
+        return resolveDelegate?.Invoke(type, out instance) ?? false;
     }
 }

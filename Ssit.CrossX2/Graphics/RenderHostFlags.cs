@@ -1,11 +1,11 @@
-namespace CrossX2.Graphics;
+namespace Ssit.CrossX2.Graphics;
 
 [Flags]
 public enum RenderHostFlags
 {
-    None = 0,
-    EnableGlowPass = 1,
-    MatchWidth = 2,
-    MatchHeight = 4,
-    ExactSize = MatchWidth | MatchHeight
+    MatchWidth = 1,
+    MatchHeight = 2,
+    ExactSize = MatchWidth | MatchHeight,
+    EnableGlowPass = 4,
+    EnableCrtSimulation = 8
 }

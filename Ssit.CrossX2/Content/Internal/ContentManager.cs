@@ -1,10 +1,10 @@
-using CrossX2.Graphics;
-using CrossX2.Graphics.Misc;
-using CrossX2.IO;
-using CrossX2.IoC;
-using CrossX2.Services;
+using Ssit.CrossX2.Graphics;
+using Ssit.CrossX2.Graphics.Misc;
+using Ssit.CrossX2.IO;
+using Ssit.CrossX2.IoC;
+using Ssit.CrossX2.Services;
 
-namespace CrossX2.Content.Internal;
+namespace Ssit.CrossX2.Content.Internal;
 
 internal class ContentManager: IContentManager
 {
@@ -35,21 +35,20 @@ internal class ContentManager: IContentManager
     public void RemoveCache<TResource>(string path) where TResource : class, IDisposable
     {
         var key = GetKey<TResource>(path);
-        if (_resources.TryGetValue(key, out var resource))
-        {
-            resource.Users.Remove(Guid.Empty);
-            
-            if (resource.Users.Count == 0)
-            {
-                _resources.Remove(key);
-                _scheduler.Schedule(resource.Object.Dispose);
-            }
-        }
+        if (!_resources.TryGetValue(key, out var resource)) return;
+
+        resource.Users.Remove(Guid.Empty);
+
+        if (resource.Users.Count > 0) return;
+
+        _resources.Remove(key);
+        _scheduler.Schedule(resource.Object.Dispose);
     }
     
     public ResourceHandle<TResource> Get<TResource>(string path) where TResource : class, IDisposable
     {
         bool cache = false;
+
         if (path.EndsWith('!'))
         {
             cache = true;

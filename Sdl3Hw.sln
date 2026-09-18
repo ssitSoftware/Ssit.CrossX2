@@ -2,7 +2,9 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sdl3Hw", "Sdl3Hw\Sdl3Hw.csproj", "{0B025ED2-9018-4CC8-8D2A-612978286C2E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrossX2", "CrossX2\CrossX2.csproj", "{AFF66D74-9682-41EF-917D-E0527A04AF36}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ssit.CrossX2", "Ssit.CrossX2\Ssit.CrossX2.csproj", "{AFF66D74-9682-41EF-917D-E0527A04AF36}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Samples", "Samples\Samples.csproj", "{1D2EAFB1-047B-450F-977D-1392A9C60008}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,5 +20,9 @@ Global
 		{AFF66D74-9682-41EF-917D-E0527A04AF36}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AFF66D74-9682-41EF-917D-E0527A04AF36}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AFF66D74-9682-41EF-917D-E0527A04AF36}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D2EAFB1-047B-450F-977D-1392A9C60008}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D2EAFB1-047B-450F-977D-1392A9C60008}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D2EAFB1-047B-450F-977D-1392A9C60008}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D2EAFB1-047B-450F-977D-1392A9C60008}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

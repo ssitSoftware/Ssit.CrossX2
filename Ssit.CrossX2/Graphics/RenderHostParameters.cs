@@ -1,10 +1,30 @@
-namespace CrossX2.Graphics;
+using Ssit.CrossX2.Utils;
 
-public class RenderHostParameters
+namespace Ssit.CrossX2.Graphics;
+
+internal class RenderHostParameters: BindableModel, IRenderHostParameters
 {
-    public Size DesignSize { get; set; }
-    public RenderHostFlags Flags { get; set; }
-    public int MinScale { get; set; } = 1;
-    public int MaxScale { get; set; } = 16;
-    public uint[] PostProcessingEffects { get; set; } = [];
+    public Size DesignSize
+    {
+        get;
+        set => SetField(ref field, value);
+    } = new(1280, 720);
+
+    public RenderHostFlags Flags
+    {
+        get;
+        set => SetField(ref field, value);
+    } = RenderHostFlags.MatchHeight;
+
+    public int MinScale
+    {
+        get;
+        set => SetField(ref field, value);
+    } = 1;
+
+    public int MaxScale
+    {
+        get;
+        set => SetField(ref field, value);
+    } = 32;
 }

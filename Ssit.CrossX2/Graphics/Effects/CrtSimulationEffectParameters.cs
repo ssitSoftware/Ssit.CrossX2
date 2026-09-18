@@ -1,4 +1,4 @@
-namespace CrossX2.Graphics.Effects;
+namespace Ssit.CrossX2.Graphics.Effects;
 
 public class CrtSimulationEffectParameters
 {

@@ -1,5 +1,5 @@
 ﻿
-namespace CrossX2;
+namespace Ssit.CrossX2;
 
 public partial struct RgbaColor
 {

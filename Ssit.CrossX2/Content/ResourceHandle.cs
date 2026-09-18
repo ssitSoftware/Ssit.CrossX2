@@ -1,4 +1,4 @@
-namespace CrossX2.Content;
+namespace Ssit.CrossX2.Content;
 
 public abstract class ResourceHandle<TResource> : IDisposable where TResource : class, IDisposable
 {

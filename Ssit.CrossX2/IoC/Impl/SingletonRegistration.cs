@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace CrossX2.IoC.Impl;
+namespace Ssit.CrossX2.IoC.Impl;
 
 internal class SingletonRegistration<TType>: ISingletonRegistration<TType> where TType: class
 {

@@ -1,4 +1,4 @@
-namespace CrossX2.IO;
+namespace Ssit.CrossX2.IO;
 
 /// <summary>
 /// Provides methods to open files from various locations.

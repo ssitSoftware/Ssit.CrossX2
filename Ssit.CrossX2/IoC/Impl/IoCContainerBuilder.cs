@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace CrossX2.IoC.Impl;
+namespace Ssit.CrossX2.IoC.Impl;
 
 internal class IoCContainerBuilder: IIoCContainerBuilder
 {

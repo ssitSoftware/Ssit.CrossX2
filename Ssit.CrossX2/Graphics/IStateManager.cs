@@ -1,7 +1,6 @@
-using System.Drawing;
 using System.Numerics;
 
-namespace CrossX2.Graphics;
+namespace Ssit.CrossX2.Graphics;
 
 public interface IStateManager
 {
@@ -14,6 +13,4 @@ public interface IStateManager
     void SetBlendMode(BlendMode blendMode);
     void SetTextureFilter(TextureFilter filter);
     void SetClipRect(RectangleF? clipRect, bool intersectExisting = true);
-    
-    void SetPipeline(uint pipeline, object parameters = null);
 }

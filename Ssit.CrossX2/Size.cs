@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Numerics;
 
-namespace CrossX2;
+namespace Ssit.CrossX2;
 
 [DebuggerDisplay("Size = ({Width}, {Height})")]
 public readonly struct Size : IEquatable<Size>

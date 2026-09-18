@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace CrossX2.IoC;
+namespace Ssit.CrossX2.IoC;
 
 /// <summary>
 /// Interface representing an Inversion of Control (IoC) Container.

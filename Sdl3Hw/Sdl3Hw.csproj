@@ -10,11 +10,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ppy.SDL3-CS" Version="2026.722.0" />
-        <PackageReference Include="ppy.SDL3_image-CS" Version="2026.722.0" />
-    </ItemGroup>
-
-    <ItemGroup>
         <None Remove="Shaders/**/*.metal" />
         <EmbeddedResource Include="Assets/**">
             <LogicalName>Assets.%(Filename)%(Extension)</LogicalName>
@@ -25,7 +20,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\CrossX2\CrossX2.csproj" />
+      <ProjectReference Include="..\Ssit.CrossX2\Ssit.CrossX2.csproj" />
     </ItemGroup>
 
 </Project>

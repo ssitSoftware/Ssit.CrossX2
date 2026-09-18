@@ -1,4 +1,4 @@
-namespace CrossX2.IoC;
+namespace Ssit.CrossX2.IoC;
 
 /// <summary>
 /// Interface for building an Inversion of Control (IoC) container.

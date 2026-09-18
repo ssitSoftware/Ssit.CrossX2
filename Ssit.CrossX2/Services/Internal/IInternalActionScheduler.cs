@@ -1,4 +1,4 @@
-namespace CrossX2.Services.Internal;
+namespace Ssit.CrossX2.Services.Internal;
 
 public interface IInternalActionScheduler: IActionScheduler
 {

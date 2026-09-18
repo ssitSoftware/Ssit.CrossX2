@@ -1,4 +1,4 @@
-namespace CrossX2.IoC;
+namespace Ssit.CrossX2.IoC;
 
 public interface ISingletonRegistration<out TImplementation>: IIoCContainerBuilder where TImplementation : class
 {

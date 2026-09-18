@@ -1,9 +1,8 @@
-namespace CrossX2.Graphics;
+namespace Ssit.CrossX2.Graphics;
 
 public enum TextureMaps
 {
     Diffuse = 1,
     Glow = 2,
-    Normal = 4,
-    Specular = 8
+    NormalAndSpecular = 4
 }
