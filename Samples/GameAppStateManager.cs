@@ -1,23 +1,47 @@
+using Ssit.CrossX2.Core;
 using Ssit.CrossX2.Graphics;
+using Ssit.CrossX2.Input;
+using Ssit.CrossX2.IoC;
 using Ssit.CrossX2.Services;
 
 namespace Samples;
 
-internal class GameAppStateManager: IDisposable
+internal class GameAppStateManager: IDisposable, IIoCPostRegisterHandler, IUpdatable
 {
     private readonly IAppWindowManager _windowManager;
     private readonly IRenderHostParameters _hostParameters;
+    private readonly IKeyboard _keyboard;
 
-    public GameAppStateManager(IAppWindowManager windowManager, IRenderHostParameters hostParameters)
+    public GameAppStateManager(IAppWindowManager windowManager, IRenderHostParameters hostParameters, IKeyboard keyboard)
     {
         _windowManager = windowManager;
         _hostParameters = hostParameters;
-
-        _windowManager.SetWindowed(_hostParameters.DesignSize * 2);
+        _keyboard = keyboard;
     }
 
     public void Dispose()
     {
         // TODO release managed resources here
     }
+
+    public void OnAllServicesRegistered()
+    {
+        _windowManager.SetWindowed(_hostParameters.DesignSize * 2);
+    }
+    
+    void IUpdatable.Update(float dt)
+    {
+        if (_keyboard.GetKey(Key.F11) == ButtonState.JustPressed)
+        {
+            if (_windowManager.IsFullscreen)
+            {
+                _windowManager.SetWindowed(_hostParameters.DesignSize * 2);
+            }
+            else
+            {
+                _windowManager.SetFullscreen();
+            }
+        }
+    }
 }
+

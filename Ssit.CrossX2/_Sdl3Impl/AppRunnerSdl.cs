@@ -9,6 +9,7 @@ using Ssit.CrossX2.Core;
 using Ssit.CrossX2.Graphics;
 using Ssit.CrossX2.Input;
 using Ssit.CrossX2.Input.Internal;
+using Ssit.CrossX2.IoC;
 using Ssit.CrossX2.IoC.Impl;
 using Ssit.CrossX2.Services;
 using Ssit.CrossX2.Services.Internal;
@@ -44,6 +45,7 @@ public static class AppRunnerSdl
             .WithImplementation<IVertexBuffer, SdlGpuVertexBuffer>()
             .WithSingleton<ISoundManager, SdlSoundManagerImpl>().As<SdlSoundManagerImpl>()
             .WithSingleton<SdlTrackPool, SdlTrackPool>()
+            .WithSingleton<IActionScheduler, ActionScheduler>().As<IInternalActionScheduler>()
             .WithImplementation<ISoundEffect, SdlSoundEffectImpl>()
             .WithImplementation<ISingleMusicPlayer, SdlSingleMusicPlayer>()
             .WithSingleton<IHapticDevice, SdlHapticDevice>();
@@ -97,29 +99,29 @@ public static class AppRunnerSdl
         
         var appWindowManager = new AppWindowManager(window);
         var sdlRenderer = new SdlGpuRenderer(device, window);
-        
+
         builder
             .WithInstance<IRenderer>(sdlRenderer)
             .WithSingleton<ISdlGpuPipelineManager, SdlGpuPipelineManager>()
             .WithInstance<IAppWindowManager>(appWindowManager).As<IInternalWindowProvider>()
             .WithInstance<IPointingDevices>(pointingDevices).As<IInputHandler>()
-            .WithInstance(handles);
+            .WithInstance(handles)
+            .WithPostBuildDelegate<IActionScheduler>(scheduler => appWindowManager.Initialize(scheduler))
+            .WithPostBuildDelegate<SdlGpuRenderer>((r, c) => r.Initialize(c));
+        
 
         appInitializer.RegisterServices(builder);
         appInitializer.InitializeRenderHost(hostParameters);
         
         var services = builder.Build();
 
-        var actionScheduler = services.Get<IActionScheduler>();
-
+        var actionScheduler = services.Get<IInternalActionScheduler>();
         var updatables = services.Fetch<IUpdatable>().ToArray();
-        
-        appWindowManager.Initialize(actionScheduler);
         
         using IAppComponent component = appInitializer.CreateAppComponent(services);
         component.SetActive(true);
         
-        (actionScheduler as IInternalActionScheduler)?.Process();
+        actionScheduler.Process();
         
         if ((pointingDevices.Mode & PointingDevicesMode.Mouse) == 0)
         {
@@ -247,6 +249,8 @@ public static class AppRunnerSdl
                 gameControllers.ProcessEvent(@event);
             }
             
+            actionScheduler.Process();
+            
             if (!shouldDisplayAndUpdate) continue;
             
             var ticks = SDL_GetTicksNS();
@@ -269,8 +273,6 @@ public static class AppRunnerSdl
 
             Render(component, sdlRenderer);
             
-            // Present!!
-            //SDL_RenderPresent(renderer);
             eventSource.OnRenderFinished();
         }
         
@@ -284,17 +286,19 @@ public static class AppRunnerSdl
 
     private static unsafe void Render(IAppComponent component, SdlGpuRenderer sdlGpuRenderer)
     {
+        sdlGpuRenderer.SubmitCommandBuffer();
+        
         var window = sdlGpuRenderer.Window;
-
+        
         SDL_GPUCommandBuffer* commandBuffer = sdlGpuRenderer.CommandBuffer;
         
         SDL_GPUTexture* swapchainTexture;
         uint swapchainWidth, swapchainHeight;
-
+        
         if (!SDL_WaitAndAcquireGPUSwapchainTexture(commandBuffer, window, &swapchainTexture, &swapchainWidth, &swapchainHeight))
         {
             Console.Error.WriteLine($"SDL_WaitAndAcquireGPUSwapchainTexture failed: {SDL_GetError()}");
-            SDL_SubmitGPUCommandBuffer(commandBuffer);
+            sdlGpuRenderer.SubmitCommandBuffer();
             return;
         }
 

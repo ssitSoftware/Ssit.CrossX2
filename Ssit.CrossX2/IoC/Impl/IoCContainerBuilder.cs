@@ -193,6 +193,11 @@ internal class IoCContainerBuilder: IIoCContainerBuilder
         {
             action.Invoke(_container);
         }
+
+        foreach (var service in _container.Fetch<IIoCPostRegisterHandler>())
+        {
+            service.OnAllServicesRegistered();
+        }
         
         return _container;
     }

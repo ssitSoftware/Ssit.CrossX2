@@ -2,6 +2,7 @@ using SDL;
 using Ssit.CrossX2.Graphics;
 using Ssit.CrossX2.Graphics.Lighting;
 using Ssit.CrossX2.Graphics.Renderers;
+using Ssit.CrossX2.IoC;
 using static SDL.SDL3;
 
 namespace Ssit.CrossX2._Sdl3Impl.Graphics;
@@ -26,10 +27,10 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
     public IStateManager StateManager => _stateManager;
     public IRenderStateProvider RenderStateProvider => _stateManager;
 
-    public IPrimitiveRenderer PrimitiveRenderer { get; }
-    public IGeometryRenderer GeometryRenderer { get; }
-    public ISpriteRenderer SpriteRenderer { get; }
-    public ITextRenderer TextRenderer { get; }
+    public IPrimitiveRenderer PrimitiveRenderer { get; private set; }
+    public IGeometryRenderer GeometryRenderer { get; private set; }
+    public ISpriteRenderer SpriteRenderer { get; private set; }
+    public ITextRenderer TextRenderer { get; private set; }
 
     public SdlGpuRenderTargetStruct DefaultOutputTarget { get; set; }
 
@@ -78,50 +79,41 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
         
         _stateManager = new StateManager(this);
         _lightingManager =  new LightingManager(this);
-        PrimitiveRenderer = new SdlGpuPrimitiveRenderer(this);
     }
 
+    public void Initialize(IIoCContainer container)
+    {
+        PrimitiveRenderer = container.IoCConstruct<SdlGpuPrimitiveRenderer>();
+    }
+
+    private SDL_GPURenderPass* _gpuRenderPass = null;
+    
     public SDL_GPURenderPass* CurrentGpuRenderPass
     {
         get
         {
-            if (field is null)
+            if (_gpuRenderPass is null)
             {
                 BeginNewRenderPass();
             }
 
-            return field;
+            return _gpuRenderPass;
         }
-        private set;
     }
 
-    public void Clear(RgbaColor black)
+    public void Clear(RgbaColor color)
     {
         EndCurrentGpuRenderPass();
-
-        var colorTargetInfo = new SDL_GPUColorTargetInfo
-        {
-            texture = CurrentOutputTarget.Handle,
-            clear_color = new SDL_FColor { r = black.Rf, g = black.Gf, b = black.Bf, a = black.Af },
-            load_op = SDL_GPULoadOp.SDL_GPU_LOADOP_CLEAR,
-            store_op = SDL_GPUStoreOp.SDL_GPU_STOREOP_STORE,
-        };
-
-        CurrentGpuRenderPass = SDL_BeginGPURenderPass(CommandBuffer, &colorTargetInfo, 1, null);
-
-        if (CurrentGpuRenderPass == null)
-            throw new InvalidOperationException($"SDL_BeginGPURenderPass failed: {SDL_GetError()}");
-
-        EndCurrentGpuRenderPass();
+        BeginNewRenderPass(color);
     }
 
     internal void EndCurrentGpuRenderPass()
     {
-        if (CurrentGpuRenderPass == null)
+        if (_gpuRenderPass == null)
             return;
 
         SDL_EndGPURenderPass(CurrentGpuRenderPass);
-        CurrentGpuRenderPass = null;
+        _gpuRenderPass = null;
     }
     
     public void OnLightsUpdated()
@@ -147,21 +139,24 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
         }
     }
 
-    public void BeginNewRenderPass()
+    public void BeginNewRenderPass(RgbaColor? clearColor = null)
     {
-        if (CurrentGpuRenderPass != null)
+        if (_gpuRenderPass != null)
             return;
 
+        var clrClr =  clearColor ?? RgbaColor.Transparent;
+        
         var colorTargetInfo = new SDL_GPUColorTargetInfo
         {
+            clear_color = new SDL_FColor { r = clrClr.Rf, g = clrClr.Gf, b = clrClr.Bf, a = clrClr.Af },
             texture = CurrentOutputTarget.Handle,
-            load_op = SDL_GPULoadOp.SDL_GPU_LOADOP_LOAD,
+            load_op = clearColor.HasValue ?  SDL_GPULoadOp.SDL_GPU_LOADOP_CLEAR : SDL_GPULoadOp.SDL_GPU_LOADOP_LOAD,
             store_op = SDL_GPUStoreOp.SDL_GPU_STOREOP_STORE,
         };
 
-        CurrentGpuRenderPass = SDL_BeginGPURenderPass(CommandBuffer, &colorTargetInfo, 1, null);
+        _gpuRenderPass = SDL_BeginGPURenderPass(CommandBuffer, &colorTargetInfo, 1, null);
 
-        if (CurrentGpuRenderPass == null)
+        if (_gpuRenderPass == null)
             throw new InvalidOperationException($"SDL_BeginGPURenderPass failed: {SDL_GetError()}");
 
         ApplyClipRect();
@@ -188,8 +183,10 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
     {
         if (CommandBuffer is null)
             return;
-
+        
+        EndCurrentGpuRenderPass();
         SDL_SubmitGPUCommandBuffer(CommandBuffer);
+
         CommandBuffer = null;
     }
 }

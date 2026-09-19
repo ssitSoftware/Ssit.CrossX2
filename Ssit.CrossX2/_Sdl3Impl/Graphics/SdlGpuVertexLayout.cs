@@ -2,7 +2,7 @@ using System.Numerics;
 using SDL;
 using Ssit.CrossX2.Graphics;
 
-namespace Ssit.CrossX2._Sdl3Impl.Graphics.Pipelines;
+namespace Ssit.CrossX2._Sdl3Impl.Graphics;
 
 internal static unsafe class GpuVertexLayout
 {
