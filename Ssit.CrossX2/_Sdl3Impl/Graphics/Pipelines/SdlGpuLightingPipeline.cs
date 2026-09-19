@@ -7,12 +7,14 @@ using static SDL.SDL3;
 
 namespace Ssit.CrossX2._Sdl3Impl.Graphics.Pipelines;
 
-internal sealed unsafe class LightingPipeline : SdlSdlGpuTexturePipeline
+internal sealed unsafe class LightingPipeline : SdlGpuTexturePipeline
 {
     private readonly SdlGpuRenderer _renderer;
 
-    public LightingPipeline(SdlHandles handles, SdlGpuRenderer renderer)
-        : base(handles.GpuDevice, handles.Window, "Shaders.Screen.vert.metal", "Shaders.Light.frag.metal", fragmentUniformBuffers: 1)
+    public LightingPipeline(SdlGpuRenderer renderer)
+        : base(renderer, 
+            "Pipelines.Shaders.TextureLight.vert", 
+            "Pipelines.Shaders.TextureLight.frag", fragmentUniformBuffers: 1)
     {
         _renderer = renderer;
     }

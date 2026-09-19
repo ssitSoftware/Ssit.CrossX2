@@ -24,18 +24,44 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Graphics\Pipelines\" />
-    </ItemGroup>
-
-    <ItemGroup>
+      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\Color.frag.metal">
+        <LogicalName>Pipelines.Shaders.Color.frag.metal</LogicalName>
+      </EmbeddedResource>
+      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\Color.vert.metal">
+        <LogicalName>Pipelines.Shaders.Color.vert.metal</LogicalName>
+      </EmbeddedResource>
+      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\Texture.frag.metal">
+        <LogicalName>Pipelines.Shaders.Texture.frag.metal</LogicalName>
+      </EmbeddedResource>
+      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\Texture.vert.metal">
+        <LogicalName>Pipelines.Shaders.Texture.vert.metal</LogicalName>
+      </EmbeddedResource>
+      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\TextureLight.frag.metal">
+        <LogicalName>Pipelines.Shaders.TextureLight.frag.metal</LogicalName>
+      </EmbeddedResource>
+      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\TextureLight.vert.metal">
+        <LogicalName>Pipelines.Shaders.TextureLight.vert.metal</LogicalName>
+      </EmbeddedResource>
+      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Hlsl\Color.frag.hlsl">
+        <LogicalName>Pipelines.Shaders.Color.frag.hlsl</LogicalName>
+      </EmbeddedResource>
+      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Hlsl\Color.vert.hlsl">
+        <LogicalName>Pipelines.Shaders.Color.vert.hlsl</LogicalName>
+      </EmbeddedResource>
+      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Hlsl\Texture.frag.hlsl">
+        <LogicalName>Pipelines.Shaders.Texture.frag.hlsl</LogicalName>
+      </EmbeddedResource>
+      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Hlsl\Texture.vert.hlsl">
+        <LogicalName>Pipelines.Shaders.Texture.vert.hlsl</LogicalName>
+      </EmbeddedResource>
+      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Hlsl\TextureLight.frag.hlsl">
+        <LogicalName>Pipelines.Shaders.TextureLight.frag.hlsl</LogicalName>
+      </EmbeddedResource>
+      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Hlsl\TextureLight.vert.hlsl">
+        <LogicalName>Pipelines.Shaders.TextureLight.vert.hlsl</LogicalName>
+      </EmbeddedResource>
       <EmbeddedResource Include="_Sdl3Impl\Graphics\Shaders\Blur.frag.metal">
         <LogicalName>Shaders.Blur.frag.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Shaders\Color.frag.metal">
-        <LogicalName>Shaders.Color.frag.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Shaders\Color.vert.metal">
-        <LogicalName>Shaders.Color.vert.metal</LogicalName>
       </EmbeddedResource>
       <EmbeddedResource Include="_Sdl3Impl\Graphics\Shaders\Crt.frag.metal">
         <LogicalName>Shaders.Crt.frag.metal</LogicalName>
@@ -48,21 +74,6 @@
       </EmbeddedResource>
       <EmbeddedResource Include="_Sdl3Impl\Graphics\Shaders\GlowComposite.frag.metal">
         <LogicalName>Shaders.GlowComposite.frag.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Shaders\Light.frag.metal">
-        <LogicalName>Shaders.Light.frag.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Shaders\Screen.frag.metal">
-        <LogicalName>Shaders.Screen.frag.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Shaders\Screen.vertPct.metal">
-        <LogicalName>Shaders.Screen.vert.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Shaders\Texture.frag.metal">
-        <LogicalName>Shaders.Texture.frag.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Shaders\Texture.vert.metal">
-        <LogicalName>Shaders.Texture.vert.metal</LogicalName>
       </EmbeddedResource>
     </ItemGroup>
 

@@ -59,12 +59,23 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
         }
         private set;
     }
+    
+    public SdlGpuBackendType BackendType { get; }
 
     public SdlGpuRenderer(SDL_GPUDevice* device, SDL_Window* window)
     {
         Device = device;
         Window = window;
 
+        var driver = SDL_GetGPUDeviceDriver(device);
+        BackendType = driver switch
+        {
+            "metal" => SdlGpuBackendType.Metal,
+            "direct3d12" => SdlGpuBackendType.DirectX,
+            "vulkan" => SdlGpuBackendType.Vulkan,
+            _ => throw new ArgumentOutOfRangeException(nameof(driver), driver, null)
+        };
+        
         _stateManager = new StateManager(this);
         _lightingManager =  new LightingManager(this);
         PrimitiveRenderer = new SdlGpuPrimitiveRenderer(this);

@@ -6,8 +6,31 @@ namespace Ssit.CrossX2._Sdl3Impl.Graphics;
 
 static unsafe class GpuShader
 {
-    public static SDL_GPUShader* CreateFromEmbeddedResource(SDL_GPUDevice* device, string resourceName, string entrypoint, SDL_GPUShaderStage stage, int numSamplers = 0, int numUniformBuffers = 0)
+    public static SDL_GPUShader* CreateFromEmbeddedResource(SdlGpuRenderer renderer, string resourceName, string entrypoint, SDL_GPUShaderStage stage, int numSamplers = 0, int numUniformBuffers = 0)
     {
+        SDL_GPUShaderFormat format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_PRIVATE;
+        
+        switch (renderer.BackendType)
+        {
+            case SdlGpuBackendType.Metal:
+                format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_MSL;
+                resourceName += ".metal";
+                break;
+            
+            case SdlGpuBackendType.Vulkan:
+                format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV;
+                break;
+            
+            case SdlGpuBackendType.DirectX:
+                format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXIL;
+                resourceName += ".hlsl";
+                break;
+            
+            default:
+                throw new NotSupportedException($"Shader creation is not supported for backend type {renderer.BackendType}");
+        }
+        
+        
         byte[] code = Encoding.UTF8.GetBytes(LoadEmbeddedSource(resourceName));
         byte[] entrypointBytes = Encoding.UTF8.GetBytes(entrypoint + "\0");
 
@@ -27,7 +50,7 @@ static unsafe class GpuShader
                 num_uniform_buffers = (uint)numUniformBuffers,
             };
 
-            return SDL_CreateGPUShader(device, &createInfo);
+            return SDL_CreateGPUShader(renderer.Device, &createInfo);
         }
     }
 

@@ -20,6 +20,7 @@ struct ScreenUniforms
 {
     float4 screenSize;  // xy = pixel width/height
     float4 offsetScale; // xy = offset, z = scale, w unused
+    float4 globalColor;
 };
 
 vertex VertexOut vertexMain(VertexIn in [[stage_in]],
@@ -35,7 +36,7 @@ vertex VertexOut vertexMain(VertexIn in [[stage_in]],
                          1.0 - transformed.y / screen.screenSize.y * 2.0);
     out.position = float4(ndc, 0.0, 1.0);
     out.uv = in.uv;
-    out.color = in.color;
+    out.color = in.color * screen.globalColor;
     out.screenPosition = in.position;
     return out;
 }

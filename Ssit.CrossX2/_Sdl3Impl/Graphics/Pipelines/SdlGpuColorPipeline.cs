@@ -6,7 +6,7 @@ using static SDL.SDL3;
 
 namespace Ssit.CrossX2._Sdl3Impl.Graphics.Pipelines;
 
-internal unsafe class SdlSdlGpuColorPipeline : ISdlGpuPipeline
+internal unsafe class SdlGpuColorPipeline : ISdlGpuPipeline
 {
     private readonly SdlGpuRenderer _gpuRenderer;
     private readonly SDL_GPUDevice* _device;
@@ -15,13 +15,13 @@ internal unsafe class SdlSdlGpuColorPipeline : ISdlGpuPipeline
 
     public SDL_GPUGraphicsPipeline* Pipeline { get; }
 
-    public SdlSdlGpuColorPipeline(SdlHandles handles, SdlGpuRenderer gpuRenderer)
+    public SdlGpuColorPipeline(SdlHandles handles, SdlGpuRenderer gpuRenderer)
     {
         _gpuRenderer = gpuRenderer;
         _device = handles.GpuDevice;
 
-        SDL_GPUShader* vertexShader = GpuShader.CreateFromEmbeddedResource(_device, "Shaders.Color.vert.metal", "vertexMain", SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX, numUniformBuffers: 1);
-        SDL_GPUShader* fragmentShader = GpuShader.CreateFromEmbeddedResource(_device, "Shaders.Color.frag.metal", "fragmentMain", SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT);
+        SDL_GPUShader* vertexShader = GpuShader.CreateFromEmbeddedResource(gpuRenderer, "Pipelines.Shaders.Color.vert", "vertexMain", SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX, numUniformBuffers: 1);
+        SDL_GPUShader* fragmentShader = GpuShader.CreateFromEmbeddedResource(gpuRenderer, "Pipelines.Shaders.Color.frag", "fragmentMain", SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT);
 
         if (vertexShader == null || fragmentShader == null)
             throw new InvalidOperationException($"Shader creation failed: {SDL_GetError()}");

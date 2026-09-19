@@ -6,7 +6,7 @@ using static SDL.SDL3;
 
 namespace Ssit.CrossX2._Sdl3Impl.Graphics.Pipelines;
 
-internal unsafe class SdlSdlGpuTexturePipeline : ISdlGpuPipeline
+internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
 {
     protected readonly SdlGpuRenderer GpuRenderer;
 
@@ -16,18 +16,22 @@ internal unsafe class SdlSdlGpuTexturePipeline : ISdlGpuPipeline
     public SDL_GPUGraphicsPipeline* Pipeline { get; }
     public SDL_GPUSampler* Sampler { get; }
     
-    public SdlSdlGpuTexturePipeline(SdlHandles handles, SdlGpuRenderer gpuRenderer)
-        : this(handles.GpuDevice, handles.Window, "Shaders.Screen.vertPct.metal", "Shaders.Screen.frag.metal", fragmentUniformBuffers: 0)
+    public SdlGpuTexturePipeline(SdlGpuRenderer gpuRenderer)
+        : this(gpuRenderer,
+            "Pipelines.Shaders.Texture", 
+            "Pipelines.Shaders.Texture", 
+            fragmentUniformBuffers: 0)
     {
         GpuRenderer = gpuRenderer;
     }
 
-    protected SdlSdlGpuTexturePipeline(SDL_GPUDevice* device, SDL_Window* window, string vertexShaderResource, string fragmentShaderResource, int fragmentUniformBuffers)
+    protected SdlGpuTexturePipeline(SdlGpuRenderer gpuRenderer, string vertexShaderResource, string fragmentShaderResource, int fragmentUniformBuffers)
     {
-        _device = device;
+        _device = gpuRenderer.Device;
+        var window = gpuRenderer.Window;
 
-        SDL_GPUShader* vertexShader = GpuShader.CreateFromEmbeddedResource(device, vertexShaderResource, "vertexMain", SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX, numUniformBuffers: 1);
-        SDL_GPUShader* fragmentShader = GpuShader.CreateFromEmbeddedResource(device, fragmentShaderResource, "fragmentMain", SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT, numSamplers: 1, numUniformBuffers: fragmentUniformBuffers);
+        SDL_GPUShader* vertexShader = GpuShader.CreateFromEmbeddedResource(gpuRenderer, vertexShaderResource, "vertexMain", SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX, numUniformBuffers: 1);
+        SDL_GPUShader* fragmentShader = GpuShader.CreateFromEmbeddedResource(gpuRenderer, fragmentShaderResource, "fragmentMain", SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT, numSamplers: 1, numUniformBuffers: fragmentUniformBuffers);
 
         if (vertexShader == null || fragmentShader == null)
         {
@@ -42,7 +46,7 @@ internal unsafe class SdlSdlGpuTexturePipeline : ISdlGpuPipeline
         var colorTargetDescriptions = stackalloc SDL_GPUColorTargetDescription[1];
         colorTargetDescriptions[0] = new SDL_GPUColorTargetDescription
         {
-            format = SDL_GetGPUSwapchainTextureFormat(device, window),
+            format = SDL_GetGPUSwapchainTextureFormat(_device, window),
             blend_state = new SDL_GPUColorTargetBlendState
             {
                 enable_blend = true,
@@ -76,7 +80,7 @@ internal unsafe class SdlSdlGpuTexturePipeline : ISdlGpuPipeline
                 },
             };
 
-            Pipeline = SDL_CreateGPUGraphicsPipeline(device, &pipelineCreateInfo);
+            Pipeline = SDL_CreateGPUGraphicsPipeline(_device, &pipelineCreateInfo);
         }
 
         if (Pipeline == null)
@@ -84,8 +88,8 @@ internal unsafe class SdlSdlGpuTexturePipeline : ISdlGpuPipeline
             throw new InvalidOperationException($"SDL_CreateGPUGraphicsPipeline failed: {SDL_GetError()}");
         }
 
-        SDL_ReleaseGPUShader(device, vertexShader);
-        SDL_ReleaseGPUShader(device, fragmentShader);
+        SDL_ReleaseGPUShader(_device, vertexShader);
+        SDL_ReleaseGPUShader(_device, fragmentShader);
 
         var samplerCreateInfo = new SDL_GPUSamplerCreateInfo
         {
@@ -96,7 +100,7 @@ internal unsafe class SdlSdlGpuTexturePipeline : ISdlGpuPipeline
             address_mode_v = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
             address_mode_w = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
         };
-        Sampler = SDL_CreateGPUSampler(device, &samplerCreateInfo);
+        Sampler = SDL_CreateGPUSampler(_device, &samplerCreateInfo);
 
         if (Sampler == null)
         {
@@ -111,11 +115,38 @@ internal unsafe class SdlSdlGpuTexturePipeline : ISdlGpuPipeline
         var targetSize = GpuRenderer.TargetSize;
         var offset = GpuRenderer.RenderStateProvider.Offset;
         var scale = GpuRenderer.RenderStateProvider.Scale;
-        
+
+        SDL_GPUTexture* texture = null;
+        Vector4 globalColor = new Vector4(1f, 1f, 1f, 1f);
+
+        if (textures.Length != 0)
+        {
+            if (GpuRenderer.CurrentPass == RenderPass.Glow)
+            {
+                var glowTexture = textures.Length > 1 ? textures[1] : null;
+                if (glowTexture == null)
+                {
+                    texture = textures[0];
+                    globalColor = new Vector4(0f, 0f, 0f, 0f);
+                }
+                else
+                {
+                    texture = glowTexture;
+                    globalColor = new Vector4(1f, 1f, 1f, 1f);
+                }
+            }
+            else
+            {
+                texture = textures[0];
+                globalColor = new Vector4(1f, 1f, 1f, 1f);
+            }
+        }
+
         var screenUniforms = new ScreenUniforms
         {
             ScreenSize = new Vector4(targetSize.Width, targetSize.Height, 0f, 0f),
             OffsetScale = new Vector4(offset.X, offset.Y, scale, 0f),
+            GlobalColor = globalColor,
         };
         SDL_PushGPUVertexUniformData(commandBuffer, 0, (IntPtr)(&screenUniforms), (uint)sizeof(ScreenUniforms));
 
@@ -123,12 +154,11 @@ internal unsafe class SdlSdlGpuTexturePipeline : ISdlGpuPipeline
         {
             return;
         }
-        
-        var  texture =  GpuRenderer.CurrentPass == RenderPass.Glow ? textures[1] : textures[0];
+
         var samplerBindings = stackalloc SDL_GPUTextureSamplerBinding[1];
         samplerBindings[0] = new SDL_GPUTextureSamplerBinding { texture = texture, sampler = Sampler };
 
-        SDL_BindGPUFragmentSamplers(renderPass, 0, samplerBindings, (uint)textures.Length);
+        SDL_BindGPUFragmentSamplers(renderPass, 0, samplerBindings, 1);
     }
 
     public virtual void Dispose()
@@ -142,5 +172,6 @@ internal unsafe class SdlSdlGpuTexturePipeline : ISdlGpuPipeline
     {
         public Vector4 ScreenSize;
         public Vector4 OffsetScale; // xy = offset, z = scale, w unused
+        public Vector4 GlobalColor;
     }
 }

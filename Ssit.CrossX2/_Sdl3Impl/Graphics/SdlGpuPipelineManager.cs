@@ -33,10 +33,10 @@ internal class SdlGpuPipelineManager(IIoCContainer ioCContainer, IRenderer rende
         switch (type)
         {
             case 0:
-                return ioCContainer.IoCConstruct<SdlSdlGpuColorPipeline>();
+                return ioCContainer.IoCConstruct<SdlGpuColorPipeline>();
             
             case Texture:
-                return ioCContainer.IoCConstruct<SdlSdlGpuTexturePipeline>();
+                return ioCContainer.IoCConstruct<SdlGpuTexturePipeline>();
             
             case Texture | Lighting:
                 return ioCContainer.IoCConstruct<LightingPipeline>();

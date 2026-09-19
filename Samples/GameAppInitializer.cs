@@ -20,12 +20,13 @@ public class GameAppInitializer: IAppInitializer
             .WithAutoNavigationMapping(typeof(MainPage).Assembly)
             .WithFirstNavigation<MainPageViewModel>();
 
-        return container.IoCConstruct<GameAppComponent>(builder.Build());
+        return builder.Build();
     }
     
     void IAppInitializer.RegisterServices(IIoCContainerBuilder builder)
     {
         builder
+            .WithSingleton<GameAppStateManager, GameAppStateManager>()
             .WithPostBuildDelegate<IPointingDevices>(pd => pd.Mode = PointingDevicesMode.Touch | PointingDevicesMode.Mouse)
             .WithPostBuildDelegate<IInputMappings>(GameInitializer.MapInput);
     }

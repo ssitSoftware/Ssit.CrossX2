@@ -6,7 +6,7 @@ using Ssit.CrossX2.UI.Views;
 
 namespace Ssit.CrossX2.UI;
 
-internal class UiAppComponent(IAppHost host, IRenderer renderer, UiAppComponent.Parameters parameters) : IAppComponent
+internal abstract class UiAppComponent(IAppHost host, IRenderer renderer, UiAppComponent.Parameters parameters) : IAppComponent
 {
     public class Parameters
     {
@@ -24,6 +24,7 @@ internal class UiAppComponent(IAppHost host, IRenderer renderer, UiAppComponent.
         GC.SuppressFinalize(this);
     }
 
+    void IAppComponent.Initialize() { }
     void IAppComponent.SetActive(bool active) => IsActive = active;
     void IAppComponent.Update( float dt ) => OnUpdate(dt);
     void IAppComponent.Draw() => OnDraw();
