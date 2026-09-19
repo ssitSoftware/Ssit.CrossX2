@@ -13,4 +13,6 @@ public struct VertexPcttb(VertexPct vertex, Vector2 tangent, Vector2 binormal)
     public Vector2 TexCoordinates = vertex.TexCoordinates;
     public Vector2 Tangent = tangent;
     public Vector2 BiNormal = binormal;
+    
+    public static implicit operator VertexPcttb(VertexPct vertex) => new(vertex, Vector2.Zero, Vector2.Zero);
 }

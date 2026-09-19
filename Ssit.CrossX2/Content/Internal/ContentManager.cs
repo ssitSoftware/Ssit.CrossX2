@@ -139,12 +139,6 @@ internal class ContentManager: IContentManager
         var hasNormals = _filesProvider.FileExists(name + ".normal" + ext);
         var hasGlow = _filesProvider.FileExists(name + ".glow" + ext);
         
-        if (!hasGlow)
-        {
-            glowPath = hasDiffuseImplicit ? name + ext : hasDiffuseExplicit ? name + ".diffuse" + ext : null;
-            hasGlow = glowPath != null;
-        }
-        
         return _iocContainer.IoCConstruct<ITexture>(new LoadTextureParameters
         {
             DiffuseMapStream =  hasDiffuseImplicit ? _filesProvider.Open(name + ext) : hasDiffuseExplicit ? 

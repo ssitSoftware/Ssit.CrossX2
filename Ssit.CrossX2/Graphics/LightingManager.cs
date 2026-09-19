@@ -12,8 +12,11 @@ internal class LightingManager(LightingManager.IUpdateLightsHandler handler) : I
     public float Resolution { get; private set; } = 0.1f;
     public bool LightingEnabled { get; private set; }
     
+    public int DirectionalLightsCount { get; private set; }
+
     public PointLight[] PointLights { get; } = new PointLight[ILightingManager.MaxPointLights];
     public SpotLight[] SpotLights { get; } = new SpotLight[ILightingManager.MaxSpotLights];
+    public DirectionalLight[] DirectionalLights { get; } = new DirectionalLight[ILightingManager.MaxDirectionalLights];
     public int LocalCellShades { get; private set; }
     public int GlobalCellShades { get; private set; }
 
@@ -96,6 +99,36 @@ internal class LightingManager(LightingManager.IUpdateLightsHandler handler) : I
         for (var idx = 0; idx < lights.Count; ++idx)
         {
             SpotLights[idx] = lights[idx];
+        }
+        handler.OnLightsUpdated();
+    }
+
+    public void SetDirectionalLights(ReadOnlySpan<DirectionalLight> lights)
+    {
+        if (lights.Length > ILightingManager.MaxDirectionalLights)
+        {
+            throw new InvalidOperationException("Max directional lights reached");
+        }
+
+        DirectionalLightsCount = lights.Length;
+        for (var idx = 0; idx < lights.Length; ++idx)
+        {
+            DirectionalLights[idx] = lights[idx];
+        }
+        handler.OnLightsUpdated();
+    }
+
+    public void SetDirectionalLights(IReadOnlyList<DirectionalLight> lights)
+    {
+        if (lights.Count > ILightingManager.MaxDirectionalLights)
+        {
+            throw new InvalidOperationException("Max directional lights reached");
+        }
+
+        DirectionalLightsCount = lights.Count;
+        for (var idx = 0; idx < lights.Count; ++idx)
+        {
+            DirectionalLights[idx] = lights[idx];
         }
         handler.OnLightsUpdated();
     }

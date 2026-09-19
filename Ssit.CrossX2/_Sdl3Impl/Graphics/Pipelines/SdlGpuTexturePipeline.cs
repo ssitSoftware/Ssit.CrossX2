@@ -23,15 +23,15 @@ internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
     {
     }
 
-    protected SdlGpuTexturePipeline(SdlGpuRenderer gpuRenderer, string vertexShaderResource, string fragmentShaderResource, int fragmentUniformBuffers)
+    protected SdlGpuTexturePipeline(SdlGpuRenderer gpuRenderer, string vertexShaderResource, string fragmentShaderResource, int fragmentUniformBuffers, int fragmentSamplers = 1)
     {
         GpuRenderer = gpuRenderer;
-        
+
         _device = gpuRenderer.Device;
         var window = gpuRenderer.Window;
 
         SDL_GPUShader* vertexShader = GpuShader.CreateFromEmbeddedResource(gpuRenderer, vertexShaderResource, "vertexMain", SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX, numUniformBuffers: 1);
-        SDL_GPUShader* fragmentShader = GpuShader.CreateFromEmbeddedResource(gpuRenderer, fragmentShaderResource, "fragmentMain", SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT, numSamplers: 1, numUniformBuffers: fragmentUniformBuffers);
+        SDL_GPUShader* fragmentShader = GpuShader.CreateFromEmbeddedResource(gpuRenderer, fragmentShaderResource, "fragmentMain", SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT, numSamplers: fragmentSamplers, numUniformBuffers: fragmentUniformBuffers);
 
         if (vertexShader == null || fragmentShader == null)
         {

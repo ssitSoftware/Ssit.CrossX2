@@ -16,7 +16,7 @@ public class GameAppTestComponent(IRenderer renderer, IContentManager contentMan
 
     public void Initialize()
     {
-        _sampleTexture = contentManager.Get<ITexture>("Sample1.jpg");
+        _sampleTexture = contentManager.Get<ITexture>("Sample1.png");
     }
 
     public void SetActive(bool active)
@@ -36,24 +36,31 @@ public class GameAppTestComponent(IRenderer renderer, IContentManager contentMan
 
     private readonly PointLight[] _lights = new PointLight[2];
     private readonly SpotLight[] _spotLights = new SpotLight[1];
+    private readonly DirectionalLight[] _directionalLights = new DirectionalLight[2];
+    
+    
     private float _lighting;
     
     public void Draw()
     {
-        _lights[0] = new PointLight(new Vector3(renderer.TargetSize.ToVector() / 2f - new Vector2(200, 0), -512f), 512, RgbaColor.Green, 1.5f);
-        _lights[1] = new PointLight(new Vector3(renderer.TargetSize.ToVector() / 2f + Vector2.Transform(new Vector2(512), Matrix3x2.CreateRotation(-timer.RunTime * 2)), -1024), 1024, RgbaColor.Yellow, 2);
+        _directionalLights[0] = new DirectionalLight( Vector3.Normalize(new Vector3(-1, 1, 1)), RgbaColor.LightYellow, 1f);
+        _directionalLights[1] = new DirectionalLight( Vector3.Normalize(new Vector3(1, -1, 1)), RgbaColor.Navy, 1f);
         
-        _spotLights[0] = new SpotLight(new Vector3(renderer.TargetSize.ToVector() / 2f - new Vector2(0, _sampleTexture.Resource.Size.Height / 1.5f), -1000),
-            Vector2.Normalize(Vector2.Transform(new Vector2(1, 0), Matrix3x2.CreateRotation(timer.RunTime * 3.3f))), 30, 15,  1000,  RgbaColor.Red, 1);
+        _lights[0] = new PointLight(new Vector3(renderer.TargetSize.ToVector() / 2f - new Vector2(200, 0), -512f), 512, RgbaColor.Green, 1f);
+        _lights[1] = new PointLight(new Vector3(renderer.TargetSize.ToVector() / 2f + Vector2.Transform(new Vector2(256), Matrix3x2.CreateRotation(-timer.RunTime * 2)), -1024), 1024, RgbaColor.Yellow, 1);
+        
+        _spotLights[0] = new SpotLight(new Vector3(renderer.TargetSize.ToVector() / 2f - new Vector2(0,  _sampleTexture.Resource.Size.Height / 2f), -1000),
+            Vector2.Normalize(new Vector2(0, 1)), 30, 15,  1000,  RgbaColor.Red, 1);
         
         renderer.StateManager.Reset();
 
         renderer.LightingManager.EnableLighting(true);
-        renderer.LightingManager.SetAmbientLight(new RgbaColor(30,30,30).Mix(RgbaColor.White, _lighting));
-        renderer.LightingManager.SetResolution(12);
+        renderer.LightingManager.SetAmbientLight(RgbaColor.Black);
+        renderer.LightingManager.SetResolution(0);
+        renderer.LightingManager.SetDirectionalLights(_directionalLights);
         renderer.LightingManager.SetPointLights(_lights);
-        renderer.LightingManager.SetSpotLights(_spotLights);
-        renderer.LightingManager.SetCellShades(true, 8);
+        //renderer.LightingManager.SetSpotLights(_spotLights);
+        renderer.LightingManager.SetCellShades(true, 0);
 
         renderer.StateManager.SetTextureFilter(TextureFilter.Point);
         
@@ -62,7 +69,7 @@ public class GameAppTestComponent(IRenderer renderer, IContentManager contentMan
             _sampleTexture.Resource,
             renderer.TargetSize.ToVector() / 2,
             null,
-            _sampleTexture.Resource.Size.ToVector() / 2f, scale: 3f);
+            _sampleTexture.Resource.Size.ToVector() / 2f, scale: 2f);
     }
 
     public void Resize()

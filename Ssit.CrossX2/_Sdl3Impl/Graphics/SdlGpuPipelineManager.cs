@@ -54,6 +54,9 @@ internal class SdlGpuPipelineManager(IIoCContainer ioCContainer, IRenderer rende
 
             case Texture | Lighting:
                 return ioCContainer.IoCConstruct<SdlGpuTextureLightingPipeline>();
+
+            case Texture | Lighting | BumpMapping:
+                return ioCContainer.IoCConstruct<SdlGpuTextureBumpLightingPipeline>();
         }
 
         return null;

@@ -7,7 +7,7 @@ using static SDL.SDL3;
 
 namespace Ssit.CrossX2._Sdl3Impl.Graphics.Renderers;
 
-internal unsafe class SdlGpuRenderQueue: IDisposable, IRenderQueue
+internal unsafe class SdlGpuRenderQueue: IDisposable, IRenderQueueInternal
 {
     struct Command
     {
@@ -62,35 +62,46 @@ internal unsafe class SdlGpuRenderQueue: IDisposable, IRenderQueue
             _currentPrimitiveType = PrimitiveType.Lines;
             _currentTexture = null;
         }
-        
-        _buffer[_currentPosition++] = new VertexPcttb(p1, Vector2.Zero, Vector2.Zero);
-        _buffer[_currentPosition++] = new VertexPcttb(p2, Vector2.Zero, Vector2.Zero);
+
+        _buffer[_currentPosition++] = p1;
+        _buffer[_currentPosition++] = p2;
     }
 
     public void PushTriangle(VertexPct p1, VertexPct p2, VertexPct p3, ITexture texture)
     {
         CheckBufferOverflow(3);
 
-        if (_currentTexture != texture || _currentPrimitiveType != PrimitiveType.Triangles)
+        var primitiveType = texture != null && texture.Maps.HasFlag(TextureMaps.NormalAndSpecular)
+            ? PrimitiveType.TrianglesWithTangents
+            : PrimitiveType.Triangles;
+
+        if (_currentTexture != texture || _currentPrimitiveType != primitiveType)
         {
             StoreCommand();
             _currentTexture = texture;
-            _currentPrimitiveType = PrimitiveType.Triangles;
+            _currentPrimitiveType = primitiveType;
         }
-        
-        var (tangent, bitangent) = GeometryUtils.CalculateTangentAndBiTangent(
-            new Vector2(p1.Position.X, p1.Position.Y),
-            new Vector2(p2.Position.X, p2.Position.Y),
-            new Vector2(p3.Position.X, p3.Position.Y),
-            p1.TexCoordinates,
-            p2.TexCoordinates,
-            p3.TexCoordinates);
-        
-        _buffer[_currentPosition++] = new VertexPcttb(p1, tangent, bitangent);
-        _buffer[_currentPosition++] = new VertexPcttb(p2, tangent, bitangent);
-        _buffer[_currentPosition++] = new VertexPcttb(p3, tangent, bitangent);
 
-        
+        if (primitiveType == PrimitiveType.TrianglesWithTangents)
+        {
+            var (tangent, bitangent) = GeometryUtils.CalculateTangentAndBiTangent(
+                new Vector2(p1.Position.X, p1.Position.Y),
+                new Vector2(p2.Position.X, p2.Position.Y),
+                new Vector2(p3.Position.X, p3.Position.Y),
+                p1.TexCoordinates,
+                p2.TexCoordinates,
+                p3.TexCoordinates);
+            
+            _buffer[_currentPosition++] = new VertexPcttb(p1, tangent, bitangent);
+            _buffer[_currentPosition++] = new VertexPcttb(p2, tangent, bitangent);
+            _buffer[_currentPosition++] = new VertexPcttb(p3, tangent, bitangent);
+        }
+        else
+        {
+            _buffer[_currentPosition++] = p1;
+            _buffer[_currentPosition++] = p2;
+            _buffer[_currentPosition++] = p3;
+        }
     }
 
     public void PushVertices(PrimitiveType type, IVertexBuffer vertices, int start, int count, ITexture texture = null)

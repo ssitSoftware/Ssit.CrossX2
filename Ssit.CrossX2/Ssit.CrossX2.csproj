@@ -42,6 +42,12 @@
       <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\TextureLight.vert.metal">
         <LogicalName>Pipelines.Shaders.TextureLight.vert.metal</LogicalName>
       </EmbeddedResource>
+      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\TextureLightBump.frag.metal">
+        <LogicalName>Pipelines.Shaders.TextureLightBump.frag.metal</LogicalName>
+      </EmbeddedResource>
+      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\TextureLightBump.vert.metal">
+        <LogicalName>Pipelines.Shaders.TextureLightBump.vert.metal</LogicalName>
+      </EmbeddedResource>
       <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\ColorLight.frag.metal">
         <LogicalName>Pipelines.Shaders.ColorLight.frag.metal</LogicalName>
       </EmbeddedResource>

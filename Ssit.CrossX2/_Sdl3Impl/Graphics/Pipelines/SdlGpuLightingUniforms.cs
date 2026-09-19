@@ -42,6 +42,19 @@ internal static unsafe class SdlGpuLightingUniforms
             spotColorIntensity[i] = new Vector4(spot.Color.Rf, spot.Color.Gf, spot.Color.Bf, spot.Intensity);
         }
 
+        var directionalLights = lightingManager.DirectionalLights;
+        int dirCount = Math.Min(lightingManager.DirectionalLightsCount, ILightingManager.MaxDirectionalLights);
+
+        Span<Vector4> dirDirection = stackalloc Vector4[ILightingManager.MaxDirectionalLights];
+        Span<Vector4> dirColorIntensity = stackalloc Vector4[ILightingManager.MaxDirectionalLights];
+
+        for (int i = 0; i < dirCount; i++)
+        {
+            DirectionalLight dir = directionalLights[i];
+            dirDirection[i] = new Vector4(dir.Direction.X, dir.Direction.Y, dir.Direction.Z, 0f);
+            dirColorIntensity[i] = new Vector4(dir.Color.Rf, dir.Color.Gf, dir.Color.Bf, dir.Intensity);
+        }
+
         var uniforms = new LightingUniforms
         {
             Ambient = new Vector4(lightingManager.AmbientLight.Rf, lightingManager.AmbientLight.Gf, lightingManager.AmbientLight.Bf, lightingManager.GlobalCellShades),
@@ -85,7 +98,16 @@ internal static unsafe class SdlGpuLightingUniforms
             SpotColorIntensity5 = spotColorIntensity[5],
             SpotColorIntensity6 = spotColorIntensity[6],
             SpotColorIntensity7 = spotColorIntensity[7],
-            LightCount = new Vector4(pointCount, lightingManager.Resolution, spotCount, lightingManager.LocalCellShades)
+            LightCount = new Vector4(pointCount, lightingManager.Resolution, spotCount, lightingManager.LocalCellShades),
+            DirDirection0 = dirDirection[0],
+            DirDirection1 = dirDirection[1],
+            DirDirection2 = dirDirection[2],
+            DirDirection3 = dirDirection[3],
+            DirColorIntensity0 = dirColorIntensity[0],
+            DirColorIntensity1 = dirColorIntensity[1],
+            DirColorIntensity2 = dirColorIntensity[2],
+            DirColorIntensity3 = dirColorIntensity[3],
+            DirectionalCount = new Vector4(dirCount, 0f, 0f, 0f),
         };
 
         SDL_PushGPUFragmentUniformData(commandBuffer, 0, (IntPtr)(&uniforms), (uint)sizeof(LightingUniforms));
@@ -136,5 +158,14 @@ internal static unsafe class SdlGpuLightingUniforms
         public Vector4 SpotColorIntensity6;
         public Vector4 SpotColorIntensity7;
         public Vector4 LightCount; // x = point light count, y = position quantization resolution in pixels, z = spot light count, w = cell shades
+        public Vector4 DirDirection0; // xyz = normalized 3D light-travel direction, w unused
+        public Vector4 DirDirection1;
+        public Vector4 DirDirection2;
+        public Vector4 DirDirection3;
+        public Vector4 DirColorIntensity0; // rgb = color, a = intensity
+        public Vector4 DirColorIntensity1;
+        public Vector4 DirColorIntensity2;
+        public Vector4 DirColorIntensity3;
+        public Vector4 DirectionalCount; // x = directional light count, yzw unused
     }
 }
