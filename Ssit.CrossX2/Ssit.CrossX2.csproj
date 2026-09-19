@@ -42,6 +42,12 @@
       <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\TextureLight.vert.metal">
         <LogicalName>Pipelines.Shaders.TextureLight.vert.metal</LogicalName>
       </EmbeddedResource>
+      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\ColorLight.frag.metal">
+        <LogicalName>Pipelines.Shaders.ColorLight.frag.metal</LogicalName>
+      </EmbeddedResource>
+      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\ColorLight.vert.metal">
+        <LogicalName>Pipelines.Shaders.ColorLight.vert.metal</LogicalName>
+      </EmbeddedResource>
       <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Hlsl\Color.frag.hlsl">
         <LogicalName>Pipelines.Shaders.Color.frag.hlsl</LogicalName>
       </EmbeddedResource>
@@ -59,6 +65,12 @@
       </EmbeddedResource>
       <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Hlsl\TextureLight.vert.hlsl">
         <LogicalName>Pipelines.Shaders.TextureLight.vert.hlsl</LogicalName>
+      </EmbeddedResource>
+      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Hlsl\ColorLight.frag.hlsl">
+        <LogicalName>Pipelines.Shaders.ColorLight.frag.hlsl</LogicalName>
+      </EmbeddedResource>
+      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Hlsl\ColorLight.vert.hlsl">
+        <LogicalName>Pipelines.Shaders.ColorLight.vert.hlsl</LogicalName>
       </EmbeddedResource>
       <EmbeddedResource Include="_Sdl3Impl\Graphics\Shaders\Blur.frag.metal">
         <LogicalName>Shaders.Blur.frag.metal</LogicalName>

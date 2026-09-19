@@ -8,18 +8,24 @@ namespace Ssit.CrossX2._Sdl3Impl.Graphics.Pipelines;
 
 internal unsafe class SdlGpuColorPipeline : ISdlGpuPipeline
 {
-    private readonly SdlGpuRenderer _gpuRenderer;
+    protected readonly SdlGpuRenderer GpuRenderer;
     private readonly SDL_GPUDevice* _device;
 
     public SDL_GPUGraphicsPipeline* Pipeline { get; }
 
     public SdlGpuColorPipeline(SdlHandles handles, SdlGpuRenderer gpuRenderer, SDL_GPUPrimitiveType primitiveType)
+        : this(handles, gpuRenderer, primitiveType, "Pipelines.Shaders.Color.vert", "Pipelines.Shaders.Color.frag", fragmentUniformBuffers: 0)
     {
-        _gpuRenderer = gpuRenderer;
+    }
+
+    protected SdlGpuColorPipeline(SdlHandles handles, SdlGpuRenderer gpuRenderer, SDL_GPUPrimitiveType primitiveType,
+        string vertexShaderResource, string fragmentShaderResource, int fragmentUniformBuffers)
+    {
+        GpuRenderer = gpuRenderer;
         _device = handles.GpuDevice;
 
-        SDL_GPUShader* vertexShader = GpuShader.CreateFromEmbeddedResource(gpuRenderer, "Pipelines.Shaders.Color.vert", "vertexMain", SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX, numUniformBuffers: 1);
-        SDL_GPUShader* fragmentShader = GpuShader.CreateFromEmbeddedResource(gpuRenderer, "Pipelines.Shaders.Color.frag", "fragmentMain", SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT);
+        SDL_GPUShader* vertexShader = GpuShader.CreateFromEmbeddedResource(gpuRenderer, vertexShaderResource, "vertexMain", SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX, numUniformBuffers: 1);
+        SDL_GPUShader* fragmentShader = GpuShader.CreateFromEmbeddedResource(gpuRenderer, fragmentShaderResource, "fragmentMain", SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT, numUniformBuffers: fragmentUniformBuffers);
 
         if (vertexShader == null || fragmentShader == null)
             throw new InvalidOperationException($"Shader creation failed: {SDL_GetError()}");
@@ -76,13 +82,13 @@ internal unsafe class SdlGpuColorPipeline : ISdlGpuPipeline
         SDL_ReleaseGPUShader(_device, fragmentShader);
     }
 
-    public void Bind(SDL_GPUCommandBuffer* commandBuffer, SDL_GPURenderPass* renderPass, SDL_GPUTexture*[] textures)
+    public virtual void Bind(SDL_GPUCommandBuffer* commandBuffer, SDL_GPURenderPass* renderPass, SDL_GPUTexture*[] textures)
     {
         SDL_BindGPUGraphicsPipeline(renderPass, Pipeline);
 
-        var targetSize = _gpuRenderer.TargetSize;
-        var offset = _gpuRenderer.RenderStateProvider.Offset;
-        var scale = _gpuRenderer.RenderStateProvider.Scale;
+        var targetSize = GpuRenderer.TargetSize;
+        var offset = GpuRenderer.RenderStateProvider.Offset;
+        var scale = GpuRenderer.RenderStateProvider.Scale;
 
         var screenUniforms = new ScreenUniforms
         {
@@ -92,7 +98,7 @@ internal unsafe class SdlGpuColorPipeline : ISdlGpuPipeline
         SDL_PushGPUVertexUniformData(commandBuffer, 0, (IntPtr)(&screenUniforms), (uint)sizeof(ScreenUniforms));
     }
 
-    public void Dispose()
+    public virtual void Dispose()
     {
         SDL_ReleaseGPUGraphicsPipeline(_device, Pipeline);
     }

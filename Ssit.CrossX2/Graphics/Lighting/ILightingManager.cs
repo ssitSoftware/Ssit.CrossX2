@@ -8,6 +8,8 @@ public interface ILightingManager
     void EnableLighting(bool enable);
     void SetResolution(float resolution);
     void SetAmbientLight(RgbaColor color);
+    void SetPointLights(ReadOnlySpan<PointLight2D> lights);
+    void SetSpotLights(ReadOnlySpan<SpotLight2D> lights);
     void SetPointLights(IReadOnlyList<PointLight2D> lights);
-    void SetSpotLight(IReadOnlyList<SpotLight2D> lights);
+    void SetSpotLights(IReadOnlyList<SpotLight2D> lights);
 }

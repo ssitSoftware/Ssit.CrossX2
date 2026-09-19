@@ -20,7 +20,7 @@ internal class SdlGpuPipelineManager(IIoCContainer ioCContainer, IRenderer rende
         byte type = 0;
 
         if (texturedRendering) type |= Texture;
-        if (manager.LightingEnabled && texturedRendering) type |= Lighting;
+        if (manager.LightingEnabled) type |= Lighting;
         if (primitiveType == PrimitiveType.Lines) type |= Lines;
 
         if (_pipelines.TryGetValue(type, out var pipeline)) return pipeline;
@@ -41,11 +41,17 @@ internal class SdlGpuPipelineManager(IIoCContainer ioCContainer, IRenderer rende
             case Lines:
                 return ioCContainer.IoCConstruct<SdlGpuColorPipeline>(SDL_GPUPrimitiveType.SDL_GPU_PRIMITIVETYPE_LINELIST);
 
+            case Lighting:
+                return ioCContainer.IoCConstruct<ColorLightingPipeline>(SDL_GPUPrimitiveType.SDL_GPU_PRIMITIVETYPE_TRIANGLELIST);
+
+            case Lighting | Lines:
+                return ioCContainer.IoCConstruct<ColorLightingPipeline>(SDL_GPUPrimitiveType.SDL_GPU_PRIMITIVETYPE_LINELIST);
+
             case Texture:
                 return ioCContainer.IoCConstruct<SdlGpuTexturePipeline>();
 
             case Texture | Lighting:
-                return ioCContainer.IoCConstruct<LightingPipeline>();
+                return ioCContainer.IoCConstruct<SdlGpuTextureLightingPipeline>();
         }
 
         return null;

@@ -21,11 +21,12 @@ internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
             "Pipelines.Shaders.Texture.frag", 
             fragmentUniformBuffers: 0)
     {
-        GpuRenderer = gpuRenderer;
     }
 
     protected SdlGpuTexturePipeline(SdlGpuRenderer gpuRenderer, string vertexShaderResource, string fragmentShaderResource, int fragmentUniformBuffers)
     {
+        GpuRenderer = gpuRenderer;
+        
         _device = gpuRenderer.Device;
         var window = gpuRenderer.Window;
 
