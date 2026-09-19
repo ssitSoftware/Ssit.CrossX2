@@ -3,7 +3,7 @@ using namespace metal;
 
 struct VertexIn
 {
-    float2 position [[attribute(0)]];
+    float3 position [[attribute(0)]];
     float4 color [[attribute(1)]];
     float2 uv [[attribute(2)]];
 };
@@ -29,7 +29,7 @@ vertex VertexOut vertexMain(VertexIn in [[stage_in]],
 
     float2 offset = screen.offsetScale.xy;
     float scale = screen.offsetScale.z;
-    float2 transformed = (in.position + offset) * scale;
+    float2 transformed = (in.position.xy + offset) * scale;
 
     float2 ndc = float2(transformed.x / screen.screenSize.x * 2.0 - 1.0,
                          1.0 - transformed.y / screen.screenSize.y * 2.0);

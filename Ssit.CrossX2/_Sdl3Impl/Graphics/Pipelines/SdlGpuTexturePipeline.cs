@@ -39,9 +39,9 @@ internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
         }
 
         var vertexBufferDescriptions = stackalloc SDL_GPUVertexBufferDescription[1];
-        vertexBufferDescriptions[0] = GpuVertexLayout.CreateVertexBufferDescription(VertexPct2D.Components);
-        
-        var vertexAttributesManaged = GpuVertexLayout.CreateVertexAttributes(VertexPct2D.Components);
+        vertexBufferDescriptions[0] = GpuVertexLayout.CreateVertexBufferDescription(VertexPcttb.Components);
+
+        var vertexAttributesManaged = GpuVertexLayout.CreateVertexAttributes(VertexPcttb.Components);
 
         var colorTargetDescriptions = stackalloc SDL_GPUColorTargetDescription[1];
         colorTargetDescriptions[0] = new SDL_GPUColorTargetDescription

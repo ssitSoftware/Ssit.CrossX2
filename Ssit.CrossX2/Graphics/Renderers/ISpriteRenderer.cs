@@ -6,12 +6,12 @@ namespace Ssit.CrossX2.Graphics.Renderers;
 public interface ISpriteRenderer
 {
     void Draw(ITexture texture, RectangleF target, RectangleF? sourceRectangle = null, Vector2? origin = null, float rotation = 0,
-        RgbaColor? nullableColor = null, ImageTransform imageTransform = ImageTransform.None);
+        RgbaColor? nullableColor = null, ImageTransform imageTransform = ImageTransform.None, float depth = 0);
     
     void Draw(ITexture texture, Vector2 position, RectangleF? sourceRectangle = null,
         Vector2? origin = null, float rotation = 0, float scale = 1, RgbaColor? color = null,
-        ImageTransform imageTransform = ImageTransform.None);
+        ImageTransform imageTransform = ImageTransform.None, float depth = 0);
 
     void Draw(SpriteInstance sprite, Vector2 position, float rotation = 0, float scale = 1, RgbaColor? color = null,
-        ImageTransform transform = ImageTransform.None);
+        ImageTransform transform = ImageTransform.None, float depth = 0);
 }

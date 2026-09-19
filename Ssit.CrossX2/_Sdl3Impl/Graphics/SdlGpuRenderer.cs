@@ -10,6 +10,8 @@ namespace Ssit.CrossX2._Sdl3Impl.Graphics;
 
 internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHandler, LightingManager.IUpdateLightsHandler, IIoCPostRegisterHandler
 {
+    private bool UseBumpMapping = true;
+    
     private readonly IIoCContainer _container;
     public SDL_GPUDevice* Device { get; }
     public SDL_Window* Window { get; }
@@ -30,12 +32,12 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
     public IRenderStateProvider RenderStateProvider => _stateManager;
 
     public SdlGpuPrimitiveRenderer PrimitiveRenderer { get; private set; }
-    public SdlGpuRenderQueue GpuRenderQueue { get; private set; }
     
-    public IGeometryRenderer GeometryRenderer => field ??= new GeometryRendererImpl(GpuRenderQueue);
-    public ISpriteRenderer SpriteRenderer => field ??= new SpriteRendererImpl(GpuRenderQueue);
+    
+    public IGeometryRenderer GeometryRenderer => field ??= new GeometryRendererImpl(RenderQueue);
+    public ISpriteRenderer SpriteRenderer => field ??= new SpriteRendererImpl(RenderQueue);
     public ITextRenderer TextRenderer { get; private set; }
-    public IRenderQueue RenderQueue => GpuRenderQueue;
+    public IRenderQueue RenderQueue { get; private set; }
 
     public SdlGpuRenderTargetStruct DefaultOutputTarget { get; set; }
 
@@ -90,7 +92,7 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
     void IIoCPostRegisterHandler.OnAllServicesRegistered()
     {
         PrimitiveRenderer = _container.IoCConstruct<SdlGpuPrimitiveRenderer>();
-        GpuRenderQueue = new SdlGpuRenderQueue(this);
+        RenderQueue = new SdlGpuRenderQueue(this);
     }
 
     private SDL_GPURenderPass* _gpuRenderPass = null;
@@ -118,7 +120,7 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
     {
         if (flushQueue)
         {
-            GpuRenderQueue.Flush();
+            ((IRenderQueueInternal)RenderQueue).Flush();
         }
 
         if (_gpuRenderPass == null)

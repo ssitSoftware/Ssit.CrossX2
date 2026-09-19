@@ -12,9 +12,11 @@ internal class LightingManager(LightingManager.IUpdateLightsHandler handler) : I
     public float Resolution { get; private set; } = 0.1f;
     public bool LightingEnabled { get; private set; }
     
-    public PointLight2D[] PointLights { get; } = new PointLight2D[ILightingManager.MaxPointLights];
-    public SpotLight2D[] SpotLights { get; } = new SpotLight2D[ILightingManager.MaxSpotLights];
-    
+    public PointLight[] PointLights { get; } = new PointLight[ILightingManager.MaxPointLights];
+    public SpotLight[] SpotLights { get; } = new SpotLight[ILightingManager.MaxSpotLights];
+    public int LocalCellShades { get; private set; }
+    public int GlobalCellShades { get; private set; }
+
     public interface IUpdateLightsHandler
     {
         void OnLightsUpdated();
@@ -38,7 +40,7 @@ internal class LightingManager(LightingManager.IUpdateLightsHandler handler) : I
         handler.OnLightsUpdated();
     }
 
-    public void SetPointLights(ReadOnlySpan<PointLight2D> lights)
+    public void SetPointLights(ReadOnlySpan<PointLight> lights)
     {
         if (lights.Length >= ILightingManager.MaxPointLights)
         {
@@ -53,7 +55,7 @@ internal class LightingManager(LightingManager.IUpdateLightsHandler handler) : I
         handler.OnLightsUpdated();
     }
     
-    public void SetPointLights(IReadOnlyList<PointLight2D> lights)
+    public void SetPointLights(IReadOnlyList<PointLight> lights)
     {
         if (lights.Count >= ILightingManager.MaxPointLights)
         {
@@ -68,33 +70,40 @@ internal class LightingManager(LightingManager.IUpdateLightsHandler handler) : I
         handler.OnLightsUpdated();
     }
 
-    public void SetSpotLights(ReadOnlySpan<SpotLight2D> lights)
+    public void SetSpotLights(ReadOnlySpan<SpotLight> lights)
     {
         if (lights.Length >= ILightingManager.MaxSpotLights)
         {
             throw new InvalidOperationException("Max spot lights reached");
         }
-        
-        PointLightsCount = lights.Length;
+
+        SpotLightsCount = lights.Length;
         for (var idx = 0; idx < lights.Length; ++idx)
         {
             SpotLights[idx] = lights[idx];
         }
         handler.OnLightsUpdated();
     }
-    
-    public void SetSpotLights(IReadOnlyList<SpotLight2D> lights)
+
+    public void SetSpotLights(IReadOnlyList<SpotLight> lights)
     {
         if (lights.Count >= ILightingManager.MaxSpotLights)
         {
             throw new InvalidOperationException("Max spot lights reached");
         }
-        
-        PointLightsCount = lights.Count;
+
+        SpotLightsCount = lights.Count;
         for (var idx = 0; idx < lights.Count; ++idx)
         {
             SpotLights[idx] = lights[idx];
         }
+        handler.OnLightsUpdated();
+    }
+
+    public void SetCellShades(bool global, int shades)
+    {
+        LocalCellShades = global ? 0 : shades;
+        GlobalCellShades = global ? shades : 0;
         handler.OnLightsUpdated();
     }
 }

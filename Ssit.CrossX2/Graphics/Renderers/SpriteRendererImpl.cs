@@ -6,7 +6,7 @@ namespace Ssit.CrossX2.Graphics.Renderers;
 public class SpriteRendererImpl(IRenderQueue renderQueue): ISpriteRenderer
 {
     public void Draw(ITexture texture, RectangleF target, RectangleF? sourceRectangle = null, Vector2? origin = null, float rotation = 0,
-        RgbaColor? nullableColor = null, ImageTransform imageTransform = ImageTransform.None)
+        RgbaColor? nullableColor = null, ImageTransform imageTransform = ImageTransform.None, float depth = 0)
     {
         var source = sourceRectangle ?? new RectangleF(0, 0, texture.Size.Width, texture.Size.Height);
         var color = nullableColor ?? RgbaColor.White;
@@ -45,17 +45,17 @@ public class SpriteRendererImpl(IRenderQueue renderQueue): ISpriteRenderer
 
         var (uvTl, uvTr, uvBl, uvBr) = GetTextureCoordinates(source, texture.Size, imageTransform);
 
-        var vTl = new VertexPct2D(posTl, color, uvTl);
-        var vTr = new VertexPct2D(posTr, color, uvTr);
-        var vBl = new VertexPct2D(posBl, color, uvBl);
-        var vBr = new VertexPct2D(posBr, color, uvBr);
+        var vTl = new VertexPct(new Vector3(posTl, depth), color, uvTl);
+        var vTr = new VertexPct(new Vector3(posTr, depth), color, uvTr);
+        var vBl = new VertexPct(new Vector3(posBl, depth), color, uvBl);
+        var vBr = new VertexPct(new Vector3(posBr, depth), color, uvBr);
 
         renderQueue.PushTriangle(vTl, vBl, vBr, texture);
         renderQueue.PushTriangle(vTl, vBr, vTr, texture);
     }
 
     public void Draw(ITexture texture, Vector2 position, RectangleF? sourceRectangle = null, Vector2? origin = null, float rotation = 0,
-        float scale = 1, RgbaColor? color = null, ImageTransform imageTransform = ImageTransform.None)
+        float scale = 1, RgbaColor? color = null, ImageTransform imageTransform = ImageTransform.None, float depth = 0)
     {
         var source = sourceRectangle ?? new RectangleF(0, 0, texture.Size.Width, texture.Size.Height);
         var target = new RectangleF(position.X, position.Y, source.Width * scale, source.Height * scale);
@@ -63,8 +63,8 @@ public class SpriteRendererImpl(IRenderQueue renderQueue): ISpriteRenderer
         Draw(texture, target, sourceRectangle, origin, rotation, color, imageTransform);
     }
 
-    public void Draw(SpriteInstance sprite, Vector2 position, float rotation = 0, float scale = 1, RgbaColor? color = null, ImageTransform transform = ImageTransform.None) 
-        => Draw(sprite.SpriteSheet, position, sprite.Source, sprite.Origin, rotation, scale, color, transform);
+    public void Draw(SpriteInstance sprite, Vector2 position, float rotation = 0, float scale = 1, RgbaColor? color = null, ImageTransform transform = ImageTransform.None, float depth = 0) 
+        => Draw(sprite.SpriteSheet, position, sprite.Source, sprite.Origin, rotation, scale, color, transform, depth);
 
     private static Vector2 Rotate(Vector2 v, float sin, float cos) => new(v.X * cos - v.Y * sin, v.X * sin + v.Y * cos);
 

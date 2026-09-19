@@ -6,7 +6,6 @@ struct VertexOut
     float4 position [[position]];
     float2 uv;
     float4 color;
-    float2 screenPosition;
 };
 
 fragment float4 fragmentMain(VertexOut in [[stage_in]],

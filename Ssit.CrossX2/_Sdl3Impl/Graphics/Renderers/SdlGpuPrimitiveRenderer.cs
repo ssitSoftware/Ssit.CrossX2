@@ -29,7 +29,7 @@ internal unsafe class SdlGpuPrimitiveRenderer(SdlGpuRenderer renderer, ISdlGpuPi
             throw new ArgumentException($"Cannot draw lines with texture", nameof(type));
         }
 
-        var pipeline = pipelineManager.GetProperPipeline(texture != null, type);
+        var pipeline = pipelineManager.GetProperPipeline(_sdlGpuTextures[0] != null, type);
         
         var commandBuffer = renderer.CommandBuffer;
         var renderPass = renderer.CurrentGpuRenderPass;

@@ -21,8 +21,8 @@ internal static unsafe class SdlGpuLightingUniforms
 
         for (int i = 0; i < pointCount; i++)
         {
-            PointLight2D light = pointLights[i];
-            positionRadius[i] = new Vector4(light.Position.X, light.Position.Y, light.Radius, 0f);
+            PointLight light = pointLights[i];
+            positionRadius[i] = new Vector4(light.Position.X, light.Position.Y, light.Position.Z, light.Radius);
             colorIntensity[i] = new Vector4(light.Color.Rf, light.Color.Gf, light.Color.Bf, light.Intensity);
         }
 
@@ -35,15 +35,16 @@ internal static unsafe class SdlGpuLightingUniforms
 
         for (int i = 0; i < spotCount; i++)
         {
-            SpotLight2D spot = spotLights[i];
-            spotPositionRadius[i] = new Vector4(spot.Position.X, spot.Position.Y, spot.Radius, 0f);
-            spotDirectionAngle[i] = new Vector4(spot.Direction.X, spot.Direction.Y, MathF.Cos(spot.OuterAngle), MathF.Cos(spot.InnerAngle));
+            SpotLight spot = spotLights[i];
+            spotPositionRadius[i] = new Vector4(spot.Position.X, spot.Position.Y, spot.Position.Z, spot.Radius);
+            spotDirectionAngle[i] = new Vector4(spot.Direction.X, spot.Direction.Y,
+                MathF.Cos(spot.OuterAngle * MathF.PI / 180f), MathF.Cos(spot.InnerAngle * MathF.PI / 180f));
             spotColorIntensity[i] = new Vector4(spot.Color.Rf, spot.Color.Gf, spot.Color.Bf, spot.Intensity);
         }
 
         var uniforms = new LightingUniforms
         {
-            Ambient = new Vector4(lightingManager.AmbientLight.Rf, lightingManager.AmbientLight.Gf, lightingManager.AmbientLight.Bf, 0f),
+            Ambient = new Vector4(lightingManager.AmbientLight.Rf, lightingManager.AmbientLight.Gf, lightingManager.AmbientLight.Bf, lightingManager.GlobalCellShades),
             LightPositionRadius0 = positionRadius[0],
             LightPositionRadius1 = positionRadius[1],
             LightPositionRadius2 = positionRadius[2],
@@ -64,15 +65,27 @@ internal static unsafe class SdlGpuLightingUniforms
             SpotPositionRadius1 = spotPositionRadius[1],
             SpotPositionRadius2 = spotPositionRadius[2],
             SpotPositionRadius3 = spotPositionRadius[3],
+            SpotPositionRadius4 = spotPositionRadius[4],
+            SpotPositionRadius5 = spotPositionRadius[5],
+            SpotPositionRadius6 = spotPositionRadius[6],
+            SpotPositionRadius7 = spotPositionRadius[7],
             SpotDirectionAngle0 = spotDirectionAngle[0],
             SpotDirectionAngle1 = spotDirectionAngle[1],
             SpotDirectionAngle2 = spotDirectionAngle[2],
             SpotDirectionAngle3 = spotDirectionAngle[3],
+            SpotDirectionAngle4 = spotDirectionAngle[4],
+            SpotDirectionAngle5 = spotDirectionAngle[5],
+            SpotDirectionAngle6 = spotDirectionAngle[6],
+            SpotDirectionAngle7 = spotDirectionAngle[7],
             SpotColorIntensity0 = spotColorIntensity[0],
             SpotColorIntensity1 = spotColorIntensity[1],
             SpotColorIntensity2 = spotColorIntensity[2],
             SpotColorIntensity3 = spotColorIntensity[3],
-            LightCount = new Vector4(pointCount, lightingManager.Resolution, spotCount, 0f),
+            SpotColorIntensity4 = spotColorIntensity[4],
+            SpotColorIntensity5 = spotColorIntensity[5],
+            SpotColorIntensity6 = spotColorIntensity[6],
+            SpotColorIntensity7 = spotColorIntensity[7],
+            LightCount = new Vector4(pointCount, lightingManager.Resolution, spotCount, lightingManager.LocalCellShades)
         };
 
         SDL_PushGPUFragmentUniformData(commandBuffer, 0, (IntPtr)(&uniforms), (uint)sizeof(LightingUniforms));
@@ -82,7 +95,7 @@ internal static unsafe class SdlGpuLightingUniforms
     private struct LightingUniforms
     {
         public Vector4 Ambient;
-        public Vector4 LightPositionRadius0;
+        public Vector4 LightPositionRadius0; // xyz = position, w = radius
         public Vector4 LightPositionRadius1;
         public Vector4 LightPositionRadius2;
         public Vector4 LightPositionRadius3;
@@ -98,18 +111,30 @@ internal static unsafe class SdlGpuLightingUniforms
         public Vector4 LightColorIntensity5;
         public Vector4 LightColorIntensity6;
         public Vector4 LightColorIntensity7;
-        public Vector4 SpotPositionRadius0;
+        public Vector4 SpotPositionRadius0; // xyz = position, w = radius
         public Vector4 SpotPositionRadius1;
         public Vector4 SpotPositionRadius2;
         public Vector4 SpotPositionRadius3;
-        public Vector4 SpotDirectionAngle0; // xy = normalized direction, z = cos(outerAngle), w = cos(innerAngle)
+        public Vector4 SpotPositionRadius4;
+        public Vector4 SpotPositionRadius5;
+        public Vector4 SpotPositionRadius6;
+        public Vector4 SpotPositionRadius7;
+        public Vector4 SpotDirectionAngle0; // xy = normalized 2D direction, z = cos(outerAngle), w = cos(innerAngle)
         public Vector4 SpotDirectionAngle1;
         public Vector4 SpotDirectionAngle2;
         public Vector4 SpotDirectionAngle3;
+        public Vector4 SpotDirectionAngle4;
+        public Vector4 SpotDirectionAngle5;
+        public Vector4 SpotDirectionAngle6;
+        public Vector4 SpotDirectionAngle7;
         public Vector4 SpotColorIntensity0;
         public Vector4 SpotColorIntensity1;
         public Vector4 SpotColorIntensity2;
         public Vector4 SpotColorIntensity3;
-        public Vector4 LightCount; // x = point light count, y = position quantization resolution in pixels, z = spot light count
+        public Vector4 SpotColorIntensity4;
+        public Vector4 SpotColorIntensity5;
+        public Vector4 SpotColorIntensity6;
+        public Vector4 SpotColorIntensity7;
+        public Vector4 LightCount; // x = point light count, y = position quantization resolution in pixels, z = spot light count, w = cell shades
     }
 }

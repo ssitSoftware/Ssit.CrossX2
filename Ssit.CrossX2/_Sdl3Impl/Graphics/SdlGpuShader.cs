@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using SDL;
 using static SDL.SDL3;
@@ -50,7 +51,16 @@ static unsafe class GpuShader
                 num_uniform_buffers = (uint)numUniformBuffers,
             };
 
-            return SDL_CreateGPUShader(renderer.Device, &createInfo);
+            var shader = SDL_CreateGPUShader(renderer.Device, &createInfo);
+
+            if (shader == null)
+            {
+                var error = SDL_GetError();
+                Console.WriteLine($"SDL_CreateGPUShader failed: {error}");
+                Debugger.Break();
+            }
+            
+            return shader;
         }
     }
 
