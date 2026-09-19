@@ -1,4 +1,3 @@
-using System.Numerics;
 using SDL;
 using Ssit.CrossX2.Graphics;
 
@@ -24,7 +23,7 @@ public sealed unsafe class SdlGpuVertexBuffer : IVertexBuffer
         _device = handles.GpuDevice;
         Components = parameters.Components;
         Count = parameters.Count;
-        _strideBytes = GetStrideBytes(parameters.Components);
+        _strideBytes = GpuVertexLayout.GetStrideBytes(parameters.Components);
 
         var createInfo = new SDL_GPUBufferCreateInfo
         {
@@ -35,22 +34,6 @@ public sealed unsafe class SdlGpuVertexBuffer : IVertexBuffer
 
         if (_buffer == null)
             throw new InvalidOperationException($"SDL_CreateGPUBuffer failed: {SDL_GetError()}");
-    }
-
-    private static int GetStrideBytes(VertexComponents components)
-    {
-        int stride = 0;
-
-        if (components.HasFlag(VertexComponents.Position))
-            stride += sizeof(Vector2);
-
-        if (components.HasFlag(VertexComponents.Color))
-            stride += sizeof(RgbaColor);
-
-        if (components.HasFlag(VertexComponents.Texture))
-            stride += sizeof(Vector2);
-
-        return stride;
     }
 
     public void SetData<TVertex>(TVertex[] data) where TVertex : unmanaged

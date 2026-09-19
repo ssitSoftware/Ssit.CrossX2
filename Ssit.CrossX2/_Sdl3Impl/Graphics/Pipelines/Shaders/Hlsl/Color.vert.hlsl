@@ -2,6 +2,7 @@ struct VertexInput
 {
     float2 position : TEXCOORD0;
     float4 color    : TEXCOORD1;
+    float2 texCoord : TEXCOORD2; // unused
 };
 
 struct VertexOutput

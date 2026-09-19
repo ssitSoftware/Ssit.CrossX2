@@ -113,17 +113,16 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
 
     internal void EndCurrentGpuRenderPass()
     {
+        GpuRenderQueue.Flush();
+
         if (_gpuRenderPass == null)
             return;
-
+        
         SDL_EndGPURenderPass(CurrentGpuRenderPass);
         _gpuRenderPass = null;
     }
     
-    public void OnLightsUpdated()
-    {
-        EndCurrentGpuRenderPass();
-    }
+    public void OnLightsUpdated() => EndCurrentGpuRenderPass();
 
     public void UpdateHwMode(BlendMode blendMode, RectangleF? clipRect, IRenderTarget renderTarget)
     {
