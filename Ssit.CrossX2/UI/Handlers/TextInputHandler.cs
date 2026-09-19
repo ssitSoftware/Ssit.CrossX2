@@ -1,6 +1,7 @@
 using System.Numerics;
 using Ssit.CrossX2.Graphics;
 using Ssit.CrossX2.Graphics.Font;
+using Ssit.CrossX2.Graphics.Renderers;
 using Ssit.CrossX2.Input;
 using Ssit.CrossX2.Text;
 using Ssit.CrossX2.UI.Common.Pages;

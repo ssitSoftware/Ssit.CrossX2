@@ -1,11 +1,11 @@
 using SDL;
 using Ssit.CrossX2.Graphics;
-
+using Ssit.CrossX2.Graphics.Renderers;
 using static SDL.SDL3;
 
-namespace Ssit.CrossX2._Sdl3Impl.Graphics;
+namespace Ssit.CrossX2._Sdl3Impl.Graphics.Renderers;
 
-internal unsafe class SdlGpuRenderQueue: IDisposable
+internal unsafe class SdlGpuRenderQueue: IDisposable, IRenderQueue
 {
     struct Command
     {
@@ -36,7 +36,7 @@ internal unsafe class SdlGpuRenderQueue: IDisposable
     public SdlGpuRenderQueue(SdlGpuRenderer renderer)
     {
         _renderer = renderer;
-        _primitiveRenderer  = (SdlGpuPrimitiveRenderer)renderer.PrimitiveRenderer;
+        _primitiveRenderer  = renderer.PrimitiveRenderer;
 
         var createInfo = new SDL_GPUBufferCreateInfo
         {
@@ -49,7 +49,7 @@ internal unsafe class SdlGpuRenderQueue: IDisposable
             throw new InvalidOperationException($"SDL_CreateGPUBuffer failed: {SDL_GetError()}");
     }
 
-    public void AddLine(VertexPct2D p1, VertexPct2D p2)
+    public void PushLine(VertexPct2D p1, VertexPct2D p2)
     {
         CheckBufferOverflow(2);
 
@@ -64,7 +64,7 @@ internal unsafe class SdlGpuRenderQueue: IDisposable
         _buffer[_currentPosition++] = p2;
     }
 
-    public void AddTriangle(VertexPct2D p1, VertexPct2D p2, VertexPct2D p3, ITexture texture)
+    public void PushTriangle(VertexPct2D p1, VertexPct2D p2, VertexPct2D p3, ITexture texture)
     {
         CheckBufferOverflow(3);
 
@@ -78,6 +78,12 @@ internal unsafe class SdlGpuRenderQueue: IDisposable
         _buffer[_currentPosition++] = p1;
         _buffer[_currentPosition++] = p2;
         _buffer[_currentPosition++] = p3;
+    }
+
+    public void PushVertices(PrimitiveType type, IVertexBuffer vertices, int start, int count, ITexture texture = null)
+    {
+        Flush();
+        _renderer.PrimitiveRenderer.RenderVertices(type, vertices, start, count, texture);
     }
 
     private void CheckBufferOverflow(int count)
@@ -122,6 +128,8 @@ internal unsafe class SdlGpuRenderQueue: IDisposable
         if (_currentPosition == 0)
             return;
 
+        _renderer.EndCurrentGpuRenderPass(false);
+        
         var device = _renderer.Device;
         var commandBuffer = _renderer.CommandBuffer;
 

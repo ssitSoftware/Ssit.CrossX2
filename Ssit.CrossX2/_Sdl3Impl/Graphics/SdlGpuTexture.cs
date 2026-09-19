@@ -19,7 +19,8 @@ internal unsafe class SdlGpuTexture: ITexture
     public SdlGpuTexture(SdlHandles handles, LoadTextureParameters parameters)
     {
         _device = handles.GpuDevice;
-
+        TextureMaps maps = 0; 
+        
         Size? size = null;
         
         if (parameters.DiffuseMapStream is not null)
@@ -28,6 +29,8 @@ internal unsafe class SdlGpuTexture: ITexture
             size = ts;
 
             _diffuse = tex.Pointer;
+            
+            maps |= TextureMaps.Diffuse;
         }
         
         if (parameters.GlowMapStream is not null)
@@ -36,6 +39,8 @@ internal unsafe class SdlGpuTexture: ITexture
             size ??= ts;
             
             _glow = tex.Pointer;
+            
+            maps |= TextureMaps.Glow;
         }
         
         if (parameters.NormalMapStream is not null)
@@ -44,7 +49,11 @@ internal unsafe class SdlGpuTexture: ITexture
             size ??= ts;
             
             _normal = tex.Pointer;
+            maps |= TextureMaps.NormalAndSpecular;
         }
+
+        Size = size.GetValueOrDefault();
+        Maps = maps;
     }
 
     private (SdlHandle<SDL_GPUTexture>, Size) LoadTextureFromStream(Stream stream)

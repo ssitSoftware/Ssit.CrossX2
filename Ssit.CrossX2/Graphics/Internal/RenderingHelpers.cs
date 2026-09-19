@@ -13,15 +13,6 @@ public static class RenderingHelpers
             
             case ImageTransform.FlipVertical:
                 return Matrix3x2.CreateScale(1, -1, rect.Center);
-            
-            case ImageTransform.Rotate90:
-                return Matrix3x2.CreateRotation(MathF.PI / 2, rect.Center);
-            
-            case ImageTransform.Rotate180:
-                return Matrix3x2.CreateRotation(MathF.PI, rect.Center);
-            
-            case ImageTransform.Rotate270:
-                return Matrix3x2.CreateRotation(MathF.PI * 3 / 2, rect.Center);
         }
         
         return Matrix3x2.Identity;

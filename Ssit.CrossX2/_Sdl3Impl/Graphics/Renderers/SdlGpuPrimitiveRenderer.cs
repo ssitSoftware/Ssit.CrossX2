@@ -1,12 +1,11 @@
 using SDL;
 using Ssit.CrossX2.Graphics;
 using Ssit.CrossX2.Graphics.Renderers;
-
 using static SDL.SDL3;
 
-namespace Ssit.CrossX2._Sdl3Impl.Graphics;
+namespace Ssit.CrossX2._Sdl3Impl.Graphics.Renderers;
 
-internal unsafe class SdlGpuPrimitiveRenderer(SdlGpuRenderer renderer, SdlGpuPipelineManager pipelineManager): IPrimitiveRenderer
+internal unsafe class SdlGpuPrimitiveRenderer(SdlGpuRenderer renderer, ISdlGpuPipelineManager pipelineManager): IPrimitiveRenderer
 {
     private readonly SDL_GPUTexture*[] _sdlGpuTextures =  new SDL_GPUTexture*[3];
 
@@ -24,8 +23,13 @@ internal unsafe class SdlGpuPrimitiveRenderer(SdlGpuRenderer renderer, SdlGpuPip
             _sdlGpuTextures[1] = null;
             _sdlGpuTextures[2] = null;
         }
-        
-        var pipeline = pipelineManager.GetProperPipeline(texture != null);
+
+        if (type == PrimitiveType.Lines && texture != null)
+        {
+            throw new ArgumentException($"Cannot draw lines with texture", nameof(type));
+        }
+
+        var pipeline = pipelineManager.GetProperPipeline(texture != null, type);
         
         var commandBuffer = renderer.CommandBuffer;
         var renderPass = renderer.CurrentGpuRenderPass;

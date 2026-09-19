@@ -8,5 +8,4 @@ public interface IGeometryRenderer
     void DrawPolyline(IReadOnlyList<Vector2> points, RgbaColor color);
     void DrawRectangle(RectangleF rect, RgbaColor color);
     void FillRectangle(RectangleF rect, RgbaColor color);
-    void DrawFrame(RectangleF frame, RgbaColor frameColor, float thickness);
 }

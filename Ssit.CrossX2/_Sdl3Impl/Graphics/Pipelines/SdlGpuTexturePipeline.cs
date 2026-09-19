@@ -12,12 +12,13 @@ internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
     
     private readonly SDL_GPUDevice* _device;
     public SDL_GPUGraphicsPipeline* Pipeline { get; }
-    public SDL_GPUSampler* Sampler { get; }
-    
+    public SDL_GPUSampler* LinearSampler { get; }
+    public SDL_GPUSampler* PointSampler { get; }
+
     public SdlGpuTexturePipeline(SdlGpuRenderer gpuRenderer)
         : this(gpuRenderer,
-            "Pipelines.Shaders.Texture", 
-            "Pipelines.Shaders.Texture", 
+            "Pipelines.Shaders.Texture.vert", 
+            "Pipelines.Shaders.Texture.frag", 
             fragmentUniformBuffers: 0)
     {
         GpuRenderer = gpuRenderer;
@@ -89,7 +90,7 @@ internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
         SDL_ReleaseGPUShader(_device, vertexShader);
         SDL_ReleaseGPUShader(_device, fragmentShader);
 
-        var samplerCreateInfo = new SDL_GPUSamplerCreateInfo
+        var linearSamplerCreateInfo = new SDL_GPUSamplerCreateInfo
         {
             min_filter = SDL_GPUFilter.SDL_GPU_FILTER_LINEAR,
             mag_filter = SDL_GPUFilter.SDL_GPU_FILTER_LINEAR,
@@ -98,9 +99,25 @@ internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
             address_mode_v = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
             address_mode_w = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
         };
-        Sampler = SDL_CreateGPUSampler(_device, &samplerCreateInfo);
+        LinearSampler = SDL_CreateGPUSampler(_device, &linearSamplerCreateInfo);
 
-        if (Sampler == null)
+        if (LinearSampler == null)
+        {
+            throw new InvalidOperationException($"SDL_CreateGPUSampler failed: {SDL_GetError()}");
+        }
+
+        var pointSamplerCreateInfo = new SDL_GPUSamplerCreateInfo
+        {
+            min_filter = SDL_GPUFilter.SDL_GPU_FILTER_NEAREST,
+            mag_filter = SDL_GPUFilter.SDL_GPU_FILTER_NEAREST,
+            mipmap_mode = SDL_GPUSamplerMipmapMode.SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
+            address_mode_u = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+            address_mode_v = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+            address_mode_w = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+        };
+        PointSampler = SDL_CreateGPUSampler(_device, &pointSamplerCreateInfo);
+
+        if (PointSampler == null)
         {
             throw new InvalidOperationException($"SDL_CreateGPUSampler failed: {SDL_GetError()}");
         }
@@ -153,15 +170,18 @@ internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
             return;
         }
 
+        var sampler = GpuRenderer.RenderStateProvider.TextureFilter == TextureFilter.Point ? PointSampler : LinearSampler;
+
         var samplerBindings = stackalloc SDL_GPUTextureSamplerBinding[1];
-        samplerBindings[0] = new SDL_GPUTextureSamplerBinding { texture = texture, sampler = Sampler };
+        samplerBindings[0] = new SDL_GPUTextureSamplerBinding { texture = texture, sampler = sampler };
 
         SDL_BindGPUFragmentSamplers(renderPass, 0, samplerBindings, 1);
     }
 
     public virtual void Dispose()
     {
-        SDL_ReleaseGPUSampler(_device, Sampler);
+        SDL_ReleaseGPUSampler(_device, LinearSampler);
+        SDL_ReleaseGPUSampler(_device, PointSampler);
         SDL_ReleaseGPUGraphicsPipeline(_device, Pipeline);
     }
 

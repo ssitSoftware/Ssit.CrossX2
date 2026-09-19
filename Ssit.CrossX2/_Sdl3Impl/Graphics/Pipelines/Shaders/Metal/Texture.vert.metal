@@ -4,8 +4,8 @@ using namespace metal;
 struct VertexIn
 {
     float2 position [[attribute(0)]];
-    float4 color [[attribute(2)]];
-    float2 uv [[attribute(1)]];
+    float4 color [[attribute(1)]];
+    float2 uv [[attribute(2)]];
 };
 
 struct VertexOut

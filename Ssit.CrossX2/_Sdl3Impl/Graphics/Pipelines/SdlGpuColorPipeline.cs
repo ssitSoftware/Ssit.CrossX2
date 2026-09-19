@@ -13,7 +13,7 @@ internal unsafe class SdlGpuColorPipeline : ISdlGpuPipeline
 
     public SDL_GPUGraphicsPipeline* Pipeline { get; }
 
-    public SdlGpuColorPipeline(SdlHandles handles, SdlGpuRenderer gpuRenderer)
+    public SdlGpuColorPipeline(SdlHandles handles, SdlGpuRenderer gpuRenderer, SDL_GPUPrimitiveType primitiveType)
     {
         _gpuRenderer = gpuRenderer;
         _device = handles.GpuDevice;
@@ -51,7 +51,7 @@ internal unsafe class SdlGpuColorPipeline : ISdlGpuPipeline
             {
                 vertex_shader = vertexShader,
                 fragment_shader = fragmentShader,
-                primitive_type = SDL_GPUPrimitiveType.SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+                primitive_type = primitiveType,
                 vertex_input_state = new SDL_GPUVertexInputState
                 {
                     vertex_buffer_descriptions = vertexBufferDescriptions,

@@ -5,8 +5,12 @@ using Ssit.CrossX2._Sdl3Impl.Input;
 using Ssit.CrossX2._Sdl3Impl.Services;
 using Ssit.CrossX2.Audio;
 using Ssit.CrossX2.Audio.Internal;
+using Ssit.CrossX2.Content;
+using Ssit.CrossX2.Content.Internal;
 using Ssit.CrossX2.Core;
 using Ssit.CrossX2.Graphics;
+using Ssit.CrossX2.Graphics.Font;
+using Ssit.CrossX2.Graphics.Internal;
 using Ssit.CrossX2.Input;
 using Ssit.CrossX2.Input.Internal;
 using Ssit.CrossX2.IoC;
@@ -34,22 +38,27 @@ public static class AppRunnerSdl
         var gameControllers = new SdlGameControllers();
         var eventSource = new EventSource();
         var hostParameters = new RenderHostParameters();
-        
+
         builder
             .WithInstance<IEventSource>(eventSource)
             .WithInstance<IKeyboard>(keyboard)
             .WithInstance<IGameControllers>(gameControllers)
             .WithInstance<IRenderHostParameters>(hostParameters)
-            // .WithImplementation<ITexture, SdlTexture>()
-            .WithImplementation<IRenderTarget, SdlGpuRenderTarget>()
-            .WithImplementation<IVertexBuffer, SdlGpuVertexBuffer>()
             .WithSingleton<ISoundManager, SdlSoundManagerImpl>().As<SdlSoundManagerImpl>()
             .WithSingleton<SdlTrackPool, SdlTrackPool>()
             .WithSingleton<IActionScheduler, ActionScheduler>().As<IInternalActionScheduler>()
+            .WithSingleton<IHapticDevice, SdlHapticDevice>()
+            .WithSingleton<IFontsManager, FontsManager>()
+            .WithSingleton<IContentManager, ContentManager>()
+            .WithSingleton<IInputMappings, InputMappings>()
+            .WithSingleton<IVirtualGameInput, VirtualGameInput>()
+            .WithSingleton<ISmartTextRenderer, SmartTextRenderer>()
+            .WithSingleton<IAppTimer, AppTimer>()
+            .WithImplementation<ITexture, SdlGpuTexture>()
+            .WithImplementation<IRenderTarget, SdlGpuRenderTarget>()
+            .WithImplementation<IVertexBuffer, SdlGpuVertexBuffer>()
             .WithImplementation<ISoundEffect, SdlSoundEffectImpl>()
-            .WithImplementation<ISingleMusicPlayer, SdlSingleMusicPlayer>()
-            .WithSingleton<IHapticDevice, SdlHapticDevice>();
-            //.WithPixelCore();
+            .WithImplementation<ISingleMusicPlayer, SdlSingleMusicPlayer>();
 
         initializeServicesDelegate?.Invoke(builder);
 
@@ -98,17 +107,14 @@ public static class AppRunnerSdl
         var pointingDevices = new SdlPointingDevices(new SdlHandle<SDL_Window>(window));
         
         var appWindowManager = new AppWindowManager(window);
-        var sdlRenderer = new SdlGpuRenderer(device, window);
 
         builder
-            .WithInstance<IRenderer>(sdlRenderer)
+            .WithSingleton<IRenderer, SdlGpuRenderer>().As<SdlGpuRenderer>()
             .WithSingleton<ISdlGpuPipelineManager, SdlGpuPipelineManager>()
             .WithInstance<IAppWindowManager>(appWindowManager).As<IInternalWindowProvider>()
             .WithInstance<IPointingDevices>(pointingDevices).As<IInputHandler>()
             .WithInstance(handles)
-            .WithPostBuildDelegate<IActionScheduler>(scheduler => appWindowManager.Initialize(scheduler))
-            .WithPostBuildDelegate<SdlGpuRenderer>((r, c) => r.Initialize(c));
-        
+            .WithPostBuildDelegate<IActionScheduler>(scheduler => appWindowManager.Initialize(scheduler));
 
         appInitializer.RegisterServices(builder);
         appInitializer.InitializeRenderHost(hostParameters);
@@ -117,8 +123,11 @@ public static class AppRunnerSdl
 
         var actionScheduler = services.Get<IInternalActionScheduler>();
         var updatables = services.Fetch<IUpdatable>().ToArray();
+        var sdlRenderer = services.Get<SdlGpuRenderer>();
         
-        using IAppComponent component = appInitializer.CreateAppComponent(services);
+        var component = appInitializer.CreateAppComponent(services);
+
+        component.Initialize();
         component.SetActive(true);
         
         actionScheduler.Process();
@@ -270,12 +279,13 @@ public static class AppRunnerSdl
             component.Update((float)dt);
             eventSource.OnUpdated();
             gameControllers.PostUpdate();
-
-            Render(component, sdlRenderer);
             
+            Render(component, sdlRenderer);
+
             eventSource.OnRenderFinished();
         }
         
+        component.Dispose();
         services.Dispose();
         
         SDL_ReleaseWindowFromGPUDevice(device, window);

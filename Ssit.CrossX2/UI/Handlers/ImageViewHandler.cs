@@ -81,26 +81,12 @@ public class ImageViewHandler : BackgroundHandler<ImageView>
             
             if (width.IsAuto)
             {
-                if ((AttachedView.Transform ?? ImageTransform.None) is ImageTransform.Rotate90 or ImageTransform.Rotate270)
-                {
-                    width = size?.Height ?? 0;
-                }
-                else
-                {
-                    width = size?.Width ?? 0;
-                }
+                width = size?.Width ?? 0;
             }
 
             if (height.IsAuto)
             {
-                if ((AttachedView.Transform ?? ImageTransform.None) is ImageTransform.Rotate90 or ImageTransform.Rotate270)
-                {
-                    height = size?.Width ?? 0;
-                }
-                else
-                {
-                    height = size?.Height ?? 0;
-                }
+                height = size?.Height ?? 0;
             }
         }
     }
@@ -129,17 +115,12 @@ public class ImageViewHandler : BackgroundHandler<ImageView>
         var source = AttachedView.Source.SourceRect;
 
         CalculateTargetRects(texture.Resource, source, out var targetRect, out var sourceRect);
-        renderer.SpriteRenderer.Draw(texture.Resource, targetRect, sourceRect, null, AttachedView?.TintColor, AttachedView?.Transform ?? ImageTransform.None);
+        renderer.SpriteRenderer.Draw(texture.Resource, targetRect, sourceRect, null, 0, AttachedView?.TintColor, AttachedView?.Transform ?? ImageTransform.None);
     }
 
     private void CalculateTargetRects(ITexture texture, Rectangle? source, out RectangleF targetRect, out RectangleF sourceRect)
     {
         var size = source?.Size ?? texture.Size;
-        
-        if ((AttachedView.Transform ?? ImageTransform.None) is ImageTransform.Rotate90 or ImageTransform.Rotate270)
-        {
-            size = new Size(size.Height, size.Width);
-        }
 
         var targetSize = new SizeF(size.Width, size.Height);
         
@@ -224,11 +205,6 @@ public class ImageViewHandler : BackgroundHandler<ImageView>
         var offY = MathF.Max(0, -targetRect.Y);
         
         sourceRect = new Rectangle( (int)(offX / scaleX), (int)(offY / scaleY), (int)(targetRect.Width / scaleX), (int)(targetRect.Height / scaleY));
-        
-        if ((AttachedView!.Transform ?? ImageTransform.None) is ImageTransform.Rotate90 or ImageTransform.Rotate270)
-        {
-            sourceRect = new RectangleF(sourceRect.Y, sourceRect.X, sourceRect.Height, sourceRect.Width);
-        }
 
         if (source.HasValue)
         {

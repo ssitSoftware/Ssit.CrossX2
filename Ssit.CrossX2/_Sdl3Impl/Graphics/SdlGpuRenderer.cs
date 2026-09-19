@@ -1,4 +1,5 @@
 using SDL;
+using Ssit.CrossX2._Sdl3Impl.Graphics.Renderers;
 using Ssit.CrossX2.Graphics;
 using Ssit.CrossX2.Graphics.Lighting;
 using Ssit.CrossX2.Graphics.Renderers;
@@ -7,8 +8,9 @@ using static SDL.SDL3;
 
 namespace Ssit.CrossX2._Sdl3Impl.Graphics;
 
-internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHandler, LightingManager.IUpdateLightsHandler
+internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHandler, LightingManager.IUpdateLightsHandler, IIoCPostRegisterHandler
 {
+    private readonly IIoCContainer _container;
     public SDL_GPUDevice* Device { get; }
     public SDL_Window* Window { get; }
 
@@ -27,12 +29,13 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
     public IStateManager StateManager => _stateManager;
     public IRenderStateProvider RenderStateProvider => _stateManager;
 
-    public SdlGpuRenderQueue GpuRenderQueue { get; }
+    public SdlGpuPrimitiveRenderer PrimitiveRenderer { get; private set; }
+    public SdlGpuRenderQueue GpuRenderQueue { get; private set; }
     
-    public IPrimitiveRenderer PrimitiveRenderer { get; private set; }
-    public IGeometryRenderer GeometryRenderer { get; private set; }
-    public ISpriteRenderer SpriteRenderer { get; private set; }
+    public IGeometryRenderer GeometryRenderer => field ??= new GeometryRendererImpl(GpuRenderQueue);
+    public ISpriteRenderer SpriteRenderer => field ??= new SpriteRendererImpl(GpuRenderQueue);
     public ITextRenderer TextRenderer { get; private set; }
+    public IRenderQueue RenderQueue => GpuRenderQueue;
 
     public SdlGpuRenderTargetStruct DefaultOutputTarget { get; set; }
 
@@ -65,12 +68,13 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
     
     public SdlGpuBackendType BackendType { get; }
 
-    public SdlGpuRenderer(SDL_GPUDevice* device, SDL_Window* window)
+    public SdlGpuRenderer(SdlHandles handles, IIoCContainer container)
     {
-        Device = device;
-        Window = window;
+        _container = container;
+        Device = handles.GpuDevice;
+        Window = handles.Window;
 
-        var driver = SDL_GetGPUDeviceDriver(device);
+        var driver = SDL_GetGPUDeviceDriver(Device);
         BackendType = driver switch
         {
             "metal" => SdlGpuBackendType.Metal,
@@ -81,13 +85,12 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
         
         _stateManager = new StateManager(this);
         _lightingManager =  new LightingManager(this);
-        
-        GpuRenderQueue = new SdlGpuRenderQueue(this);
     }
 
-    public void Initialize(IIoCContainer container)
+    void IIoCPostRegisterHandler.OnAllServicesRegistered()
     {
-        PrimitiveRenderer = container.IoCConstruct<SdlGpuPrimitiveRenderer>();
+        PrimitiveRenderer = _container.IoCConstruct<SdlGpuPrimitiveRenderer>();
+        GpuRenderQueue = new SdlGpuRenderQueue(this);
     }
 
     private SDL_GPURenderPass* _gpuRenderPass = null;
@@ -110,10 +113,13 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
         EndCurrentGpuRenderPass();
         BeginNewRenderPass(color);
     }
-
-    internal void EndCurrentGpuRenderPass()
+    
+    internal void EndCurrentGpuRenderPass(bool flushQueue = true)
     {
-        GpuRenderQueue.Flush();
+        if (flushQueue)
+        {
+            GpuRenderQueue.Flush();
+        }
 
         if (_gpuRenderPass == null)
             return;

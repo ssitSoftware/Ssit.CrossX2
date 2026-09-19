@@ -14,8 +14,8 @@ public interface IRenderer
     IStateManager StateManager { get; }
     IRenderStateProvider RenderStateProvider { get; }
     
-    IPrimitiveRenderer PrimitiveRenderer { get; }
     IGeometryRenderer GeometryRenderer { get; }
     ISpriteRenderer SpriteRenderer { get; }
     ITextRenderer TextRenderer { get; }
+    IRenderQueue RenderQueue { get; }
 }

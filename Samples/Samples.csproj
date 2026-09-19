@@ -11,4 +11,8 @@
       <ProjectReference Include="..\Ssit.CrossX2\Ssit.CrossX2.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <EmbeddedResource Include="Assets\Sample1.jpg"/>
+    </ItemGroup>
+
 </Project>
