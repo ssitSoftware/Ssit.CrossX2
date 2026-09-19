@@ -9,8 +9,6 @@ namespace Ssit.CrossX2._Sdl3Impl.Graphics.Pipelines;
 internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
 {
     protected readonly SdlGpuRenderer GpuRenderer;
-
-    public VertexComponents VertexFormat => VertexComponents.Position | VertexComponents.Texture | VertexComponents.Color;
     
     private readonly SDL_GPUDevice* _device;
     public SDL_GPUGraphicsPipeline* Pipeline { get; }
@@ -39,9 +37,9 @@ internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
         }
 
         var vertexBufferDescriptions = stackalloc SDL_GPUVertexBufferDescription[1];
-        vertexBufferDescriptions[0] = GpuVertexLayout.CreateVertexBufferDescription(VertexFormat);
-
-        var vertexAttributesManaged = GpuVertexLayout.CreateVertexAttributes(VertexFormat);
+        vertexBufferDescriptions[0] = GpuVertexLayout.CreateVertexBufferDescription(VertexPct2D.Components);
+        
+        var vertexAttributesManaged = GpuVertexLayout.CreateVertexAttributes(VertexPct2D.Components);
 
         var colorTargetDescriptions = stackalloc SDL_GPUColorTargetDescription[1];
         colorTargetDescriptions[0] = new SDL_GPUColorTargetDescription

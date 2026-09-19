@@ -27,6 +27,8 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
     public IStateManager StateManager => _stateManager;
     public IRenderStateProvider RenderStateProvider => _stateManager;
 
+    public SdlGpuRenderQueue GpuRenderQueue { get; }
+    
     public IPrimitiveRenderer PrimitiveRenderer { get; private set; }
     public IGeometryRenderer GeometryRenderer { get; private set; }
     public ISpriteRenderer SpriteRenderer { get; private set; }
@@ -79,6 +81,8 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
         
         _stateManager = new StateManager(this);
         _lightingManager =  new LightingManager(this);
+        
+        GpuRenderQueue = new SdlGpuRenderQueue(this);
     }
 
     public void Initialize(IIoCContainer container)

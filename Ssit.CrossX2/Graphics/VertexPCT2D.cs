@@ -12,12 +12,3 @@ public struct VertexPct2D(Vector2 position, RgbaColor color, Vector2 texCoordina
     public RgbaColor Color = color;
     public Vector2 TexCoordinates = texCoordinates;
 }
-
-[StructLayout(LayoutKind.Sequential)]
-public struct VertexPc2D(Vector2 position, RgbaColor color)
-{
-    public const VertexComponents Components = VertexComponents.Position | VertexComponents.Color;
-    
-    public Vector2 Position = position;
-    public RgbaColor Color = color;
-}

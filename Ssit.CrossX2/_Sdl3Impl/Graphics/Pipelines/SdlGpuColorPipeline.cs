@@ -11,8 +11,6 @@ internal unsafe class SdlGpuColorPipeline : ISdlGpuPipeline
     private readonly SdlGpuRenderer _gpuRenderer;
     private readonly SDL_GPUDevice* _device;
 
-    public VertexComponents VertexFormat => VertexPc2D.Components;
-
     public SDL_GPUGraphicsPipeline* Pipeline { get; }
 
     public SdlGpuColorPipeline(SdlHandles handles, SdlGpuRenderer gpuRenderer)
@@ -27,9 +25,9 @@ internal unsafe class SdlGpuColorPipeline : ISdlGpuPipeline
             throw new InvalidOperationException($"Shader creation failed: {SDL_GetError()}");
 
         var vertexBufferDescriptions = stackalloc SDL_GPUVertexBufferDescription[1];
-        vertexBufferDescriptions[0] = GpuVertexLayout.CreateVertexBufferDescription(VertexFormat);
+        vertexBufferDescriptions[0] = GpuVertexLayout.CreateVertexBufferDescription(VertexPct2D.Components);
 
-        var vertexAttributesManaged = GpuVertexLayout.CreateVertexAttributes(VertexFormat);
+        var vertexAttributesManaged = GpuVertexLayout.CreateVertexAttributes(VertexPct2D.Components);
 
         var colorTargetDescriptions = stackalloc SDL_GPUColorTargetDescription[1];
         colorTargetDescriptions[0] = new SDL_GPUColorTargetDescription
