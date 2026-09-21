@@ -10,7 +10,7 @@ internal unsafe class SdlGpuPrimitiveRenderer(SdlGpuRenderer renderer, ISdlGpuPi
 {
     private readonly SDL_GPUTexture*[] _sdlGpuTextures =  new SDL_GPUTexture*[3];
 
-    internal void RenderVertices(PrimitiveType type, VertexComponents components, SDL_GPUBuffer* sdlBuffer, int start, int count, ITexture texture = null, Matrix4x4? transform = null)
+    internal void RenderVertices(PrimitiveType type, VertexComponents components, SDL_GPUBuffer* sdlBuffer, int start, int count, ITexture texture = null)
     {
         if (texture is ISdlGpuTexture sdlTexture)
         {
@@ -35,7 +35,9 @@ internal unsafe class SdlGpuPrimitiveRenderer(SdlGpuRenderer renderer, ISdlGpuPi
         var commandBuffer = renderer.CommandBuffer;
         var renderPass = renderer.CurrentGpuRenderPass;
         
-        pipeline.Bind(commandBuffer, renderPass, _sdlGpuTextures, transform ?? Matrix4x4.Identity);
+        var transform = Matrix4x4.CreateTranslation(new Vector3(renderer.RenderStateProvider.Offset, 0)) * Matrix4x4.CreateScale(renderer.RenderStateProvider.Scale);
+        
+        pipeline.Bind(commandBuffer, renderPass, _sdlGpuTextures, transform);
         
         int strideBytes = GpuVertexLayout.GetStrideBytes(components);
 
@@ -49,7 +51,7 @@ internal unsafe class SdlGpuPrimitiveRenderer(SdlGpuRenderer renderer, ISdlGpuPi
         SDL_DrawGPUPrimitives(renderPass, (uint)count, 1, 0, 0);
     }
     
-    public void RenderVertices(PrimitiveType type, IVertexBuffer vertices, int start, int count, ITexture texture = null, Matrix4x4? transform = null)
+    public void RenderVertices(PrimitiveType type, IVertexBuffer vertices, int start, int count, ITexture texture = null)
     {
         var sdlBuffer = vertices as SdlGpuVertexBuffer;
 
@@ -58,6 +60,6 @@ internal unsafe class SdlGpuPrimitiveRenderer(SdlGpuRenderer renderer, ISdlGpuPi
             throw new ArgumentException($"{nameof(vertices)} must be a {nameof(SdlGpuVertexBuffer)}", nameof(vertices));
         }
         
-        RenderVertices(type, vertices.Components, sdlBuffer.Handle, start, count, texture, transform);
+        RenderVertices(type, vertices.Components, sdlBuffer.Handle, start, count, texture);
     }
 }

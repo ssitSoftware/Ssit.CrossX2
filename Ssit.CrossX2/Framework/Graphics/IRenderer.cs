@@ -18,4 +18,5 @@ public interface IRenderer
     ISpriteRenderer SpriteRenderer { get; }
     ITextRenderer TextRenderer { get; }
     IRenderQueue RenderQueue { get; }
+    void SetRenderTarget(IRenderTarget renderTarget);
 }

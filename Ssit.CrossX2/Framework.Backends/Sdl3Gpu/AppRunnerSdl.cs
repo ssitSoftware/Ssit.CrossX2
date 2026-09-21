@@ -126,7 +126,7 @@ internal static class AppRunnerSdl
         
         var component = appInitializer.CreateAppComponent(services);
 
-        var appHost = services.Get<RenderHost>();
+        var renderHost = services.Get<RenderHost>();
         
         component.Initialize();
         component.SetActive(true);
@@ -223,9 +223,14 @@ internal static class AppRunnerSdl
                     case SDL_EventType.SDL_EVENT_WINDOW_ENTER_FULLSCREEN:
                     case SDL_EventType.SDL_EVENT_WINDOW_LEAVE_FULLSCREEN:
                     {
-                        component.Resize();
                         appWindowManager.EnsureWindowSize();
 
+                        int w, h;
+                        SDL_GetWindowSizeInPixels(window, &w, &h);
+                        
+                        renderHost.Resize(new Size(w, h));
+                        component.Resize();
+                        
                         SDL_SetWindowMouseGrab(window, false);
                         SDL_SetWindowMouseGrab(window, pointingDevices.LockMouseInWindow);
                         
@@ -281,7 +286,7 @@ internal static class AppRunnerSdl
             eventSource.OnUpdated();
             gameControllers.PostUpdate();
             
-            Render(component,  appHost, sdlRenderer);
+            Render(component,  renderHost, sdlRenderer);
 
             eventSource.OnRenderFinished();
         }
@@ -318,7 +323,10 @@ internal static class AppRunnerSdl
         {
             sdlGpuRenderer.DefaultOutputTarget = new SdlGpuRenderTargetStruct(swapchainTexture, new Size((int)swapchainWidth, (int)swapchainHeight));
 
-            renderHost.Begin();
+            if (renderHost.Begin())
+            {
+                component.Resize();
+            }
             component.Draw();
             renderHost.End();
         }

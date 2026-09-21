@@ -16,5 +16,4 @@ public interface ILightingManager
     void SetSpotLights(IReadOnlyList<SpotLight> lights);
     void SetDirectionalLights(IReadOnlyList<DirectionalLight> lights);
     void SetCellShades(bool global, int shades);
-    void SetPositionsScale(float positionsScale);
 }

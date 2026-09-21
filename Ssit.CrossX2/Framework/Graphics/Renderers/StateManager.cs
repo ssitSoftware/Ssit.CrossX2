@@ -2,24 +2,16 @@ using System.Numerics;
 
 namespace Ssit.CrossX2.Framework.Graphics.Renderers;
 
-public class StateManager(StateManager.IUpdateHwModeHandler handler) : IStateManager, IRenderStateProvider
+public class StateManager : IStateManager
 {
     public interface IUpdateHwModeHandler
     {
-        void UpdateHwMode();
+        void HwModeUpdated();
     }
 
-    private readonly struct State(float scale, Vector2 offset, BlendMode blendMode, TextureFilter textureFilter, RectangleF? clipRect, IRenderTarget renderTarget)
-    {
-        public readonly float Scale = scale;
-        public readonly Vector2 Offset = offset;
-        public readonly BlendMode BlendMode = blendMode;
-        public readonly TextureFilter TextureFilter = textureFilter;
-        public readonly RectangleF? ClipRect = clipRect; 
-        public readonly IRenderTarget RenderTarget = renderTarget;
-    }
+    public IRenderStateProvider StateProvider => _stateProvider;
     
-    private readonly Stack<State> _savedStates = new ();
+    private readonly Stack<RenderState> _savedStates = new ();
     
     public void SaveState()
     {
@@ -42,31 +34,31 @@ public class StateManager(StateManager.IUpdateHwModeHandler handler) : IStateMan
     public void Reset()
     {
         _savedStates.Clear();
-        _state = new State(1, Vector2.Zero, BlendMode.AlphaBlend, TextureFilter.Point, null, null);
+        _state = new RenderState(1, Vector2.Zero, BlendMode.AlphaBlend, TextureFilter.Point, null);
         UpdateHwMode();
     }
 
     public void Scale(float scale)
     {
-        _state = new State(_state.Scale * scale, _state.Offset, _state.BlendMode, _state.TextureFilter, _state.ClipRect, _state.RenderTarget);
+        if (Math.Abs(scale - 1) < float.Epsilon) return;
+        
+        _state = new RenderState(_state.Scale * scale, _state.Offset, _state.BlendMode, _state.TextureFilter, _state.ClipRect);
+        UpdateHwMode();
     }
 
     public void Translate(Vector2 offset)
     {
-        _state = new State(_state.Scale, _state.Offset + offset * _state.Scale, _state.BlendMode, _state.TextureFilter, _state.ClipRect, _state.RenderTarget);
+        if(offset == Vector2.Zero) return;
+        
+        _state = new RenderState(_state.Scale, _state.Offset + offset * _state.Scale, _state.BlendMode, _state.TextureFilter, _state.ClipRect);
+        UpdateHwMode();
     }
     
     public void SetBlendMode(BlendMode blendMode)
     {
         if(_state.BlendMode == blendMode) return;
         
-        _state = new State(_state.Scale, _state.Offset, blendMode, _state.TextureFilter, _state.ClipRect, _state.RenderTarget);
-        UpdateHwMode();
-    }
-
-    public void SetRenderTarget(IRenderTarget renderTarget)
-    {
-        _state = new State(_state.Scale, _state.Offset, _state.BlendMode, _state.TextureFilter, _state.ClipRect, renderTarget);
+        _state = new RenderState(_state.Scale, _state.Offset, blendMode, _state.TextureFilter, _state.ClipRect);
         UpdateHwMode();
     }
     
@@ -96,23 +88,31 @@ public class StateManager(StateManager.IUpdateHwModeHandler handler) : IStateMan
             }
         }
         
-        _state = new State(_state.Scale, _state.Offset, _state.BlendMode, _state.TextureFilter, clipRect, _state.RenderTarget);
+        _state = new RenderState(_state.Scale, _state.Offset, _state.BlendMode, _state.TextureFilter, clipRect);
         UpdateHwMode();
     }
 
     public void SetTextureFilter(TextureFilter filter)
     {
-        _state = new State(_state.Scale, _state.Offset, _state.BlendMode, filter, _state.ClipRect, _state.RenderTarget);
+        if(_state.TextureFilter == filter) return;
+        
+        _state = new RenderState(_state.Scale, _state.Offset, _state.BlendMode, filter, _state.ClipRect);
+        UpdateHwMode();
     }
 
-    private void UpdateHwMode() => handler?.UpdateHwMode();
+    private void UpdateHwMode()
+    {
+        _handler?.HwModeUpdated();
+        _stateProvider.Update(_state);
+    }
 
-    private State _state = new(1, Vector2.Zero, BlendMode.AlphaBlend, TextureFilter.Point, null, null);
+    private RenderState _state = new(1, Vector2.Zero, BlendMode.AlphaBlend, TextureFilter.Point, null);
+    private RenderStateProvider _stateProvider = new();
+    private readonly IUpdateHwModeHandler _handler;
 
-    float IRenderStateProvider.Scale => _state.Scale;
-    Vector2 IRenderStateProvider.Offset => _state.Offset;
-    public BlendMode BlendMode => _state.BlendMode;
-    public TextureFilter TextureFilter => _state.TextureFilter;
-    public RectangleF? ClipRect => _state.ClipRect;
-    public IRenderTarget RenderTarget => _state.RenderTarget;
+    public StateManager(IUpdateHwModeHandler handler)
+    {
+        _handler = handler;
+        _stateProvider.Update(_state);
+    }
 }

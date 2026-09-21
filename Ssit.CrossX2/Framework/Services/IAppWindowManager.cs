@@ -6,7 +6,7 @@ public interface IAppWindowManager
     event Action<WindowClosingEventArgs> Closing; 
     void Close();
     bool SetFullscreen();
-    bool SetWindowed(Size size);
+    bool SetWindowed(Size size, bool keepSize = true);
     void SetTitle(string title);
     bool IsTouchScreen { get; }
     Size GetWindowMaxSize();

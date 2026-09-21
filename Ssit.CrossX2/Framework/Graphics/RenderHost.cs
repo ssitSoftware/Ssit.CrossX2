@@ -1,5 +1,4 @@
 using System.Numerics;
-using SkiaSharp;
 using Ssit.CrossX2.Framework.Core;
 using Ssit.CrossX2.Framework.IoC;
 
@@ -12,21 +11,35 @@ internal class RenderHost(IRenderHostParameters parameters, IRenderer renderer, 
     private IRenderTarget _renderTarget;
     private IRenderTarget _endRenderTarget;
     
-    public void Begin()
+    private Size _minMaxScale = Size.Zero;
+    private bool _pixelPerfect;
+    
+    public bool Begin()
     {
-        if (_targetSize != renderer.TargetSize)
+        var resize= Check();
+        if (resize)
         {
             Resize();
         }
         
         renderer.StateManager.Reset();
-        renderer.StateManager.SetRenderTarget(_renderTarget);
+        renderer.SetRenderTarget(_renderTarget);
+        return resize;
     }
 
-    private void Resize()
+    private bool Check()
     {
-        _targetSize = renderer.TargetSize;
+        return _targetSize != renderer.TargetSize ||
+               _minMaxScale.Width != parameters.MinScale || _minMaxScale.Height != parameters.MaxScale
+               || _pixelPerfect != ((parameters.Flags & RenderHostFlags.PixelPerfect) != 0);
+    }
 
+    public void Resize(Size? targetSize = null)
+    {
+        _targetSize = targetSize ?? renderer.TargetSize;
+        _minMaxScale = new Size(parameters.MinScale, parameters.MaxScale);
+        _pixelPerfect = (parameters.Flags & RenderHostFlags.PixelPerfect) != 0;
+        
         var scaleWidth = _targetSize.Width / (float)parameters.DesignSize.Width;
         var scaleHeight = _targetSize.Height / (float)parameters.DesignSize.Height;
         var pixelPerfect = (parameters.Flags & RenderHostFlags.PixelPerfect) != 0;
@@ -36,6 +49,9 @@ internal class RenderHost(IRenderHostParameters parameters, IRenderer renderer, 
             scaleWidth = (int)scaleWidth;
             scaleHeight = (int)scaleHeight;
         }
+        
+        scaleWidth = MathF.Min(MathF.Max(scaleWidth, parameters.MinScale), parameters.MaxScale);
+        scaleHeight = MathF.Min(MathF.Max(scaleHeight, parameters.MinScale), parameters.MaxScale);
 
         int scale = 1;
         var aspect = _targetSize.Width / (float)_targetSize.Height;
@@ -44,17 +60,19 @@ internal class RenderHost(IRenderHostParameters parameters, IRenderer renderer, 
         switch (parameters.Flags & RenderHostFlags.ExactSize)
         {
             case RenderHostFlags.ExactSize:
-                scale = (int)Math.Min(MathF.Ceiling(scaleWidth), MathF.Ceiling(scaleHeight));
+                var es = Math.Min(scaleWidth, scaleHeight);
+                es = pixelPerfect ? MathF.Floor(es) : MathF.Ceiling(es);
+                scale = (int)es;
                 size = parameters.DesignSize.ToVector() * scale;
                 break;
             
             case RenderHostFlags.MatchWidth:
-                scale = (int)MathF.Ceiling(scaleWidth);
+                scale = pixelPerfect ? (int)MathF.Floor(scaleWidth) : (int)MathF.Ceiling(scaleWidth);
                 size = new Vector2(parameters.DesignSize.Width * scale, parameters.DesignSize.Width * scale / aspect);
                 break;
             
             case RenderHostFlags.MatchHeight:
-                scale = (int)MathF.Ceiling(scaleHeight);
+                scale = pixelPerfect ? (int)MathF.Floor(scaleHeight) : (int)MathF.Ceiling(scaleHeight);
                 size = new Vector2(parameters.DesignSize.Height * scale * aspect, parameters.DesignSize.Height * scale);
                 break;
             case 0:
@@ -114,12 +132,12 @@ internal class RenderHost(IRenderHostParameters parameters, IRenderer renderer, 
         if (_endRenderTarget != null)
         {
             renderer.StateManager.SetTextureFilter(TextureFilter.Point);
-            renderer.StateManager.SetRenderTarget(_endRenderTarget);
+            renderer.SetRenderTarget(_endRenderTarget);
             renderer.SpriteRenderer.Draw(sourceTexture, new RectangleF(0, 0, _endRenderTarget.Size.Width, _endRenderTarget.Size.Height), null, Vector2.Zero);
             sourceTexture = _endRenderTarget;
         }
         
-        renderer.StateManager.SetRenderTarget(null);
+        renderer.SetRenderTarget(null);
         renderer.Clear(RgbaColor.Black);
         
         var scaleXy = renderer.TargetSize.ToVector() / sourceTexture.Size.ToVector();

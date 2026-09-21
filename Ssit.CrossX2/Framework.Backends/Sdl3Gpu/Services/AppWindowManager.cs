@@ -10,6 +10,7 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
     public bool ShouldContinue { get; private set; } = true;
 
     private Size _windowSize = new Size(800, 600);
+    private bool _keepSize = false;
     
     public event Action<WindowClosingEventArgs> Closing;
 
@@ -32,6 +33,11 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
                 var flags = SDL_GetWindowFlags(window);
                 if ((flags & SDL_WindowFlags.SDL_WINDOW_FULLSCREEN) == 0)
                 {
+                    
+                    int w, h;
+                    SDL_GetWindowSizeInPixels(window, &w, &h);
+                    _windowSize = new Size(w, h);
+                    
                     SDL_SetWindowFullscreen(window, true);
                 }
             }
@@ -39,7 +45,7 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
         return true;
     }
 
-    public bool SetWindowed(Size size)
+    public bool SetWindowed(Size size, bool keepSize)
     {
         _actionScheduler.Schedule(() =>
         {
@@ -50,6 +56,8 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
             }
 
             _windowSize = size;
+            _keepSize = keepSize;
+            
             SDL_SetWindowSize(window, size.Width, size.Height);
             SDL_SetWindowPosition(window, (int)SDL_WINDOWPOS_CENTERED, (int)SDL_WINDOWPOS_CENTERED);
         });
@@ -59,6 +67,8 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
 
     public void EnsureWindowSize()
     {
+        if (!_keepSize) return;
+        
         var flags = SDL_GetWindowFlags(window);
         if ((flags & SDL_WindowFlags.SDL_WINDOW_FULLSCREEN) != 0)
         {

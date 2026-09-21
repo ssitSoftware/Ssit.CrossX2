@@ -43,8 +43,8 @@ public class GameAppInitializer: IAppInitializer
     void IAppInitializer.InitializeRenderHost(IRenderHostParameters parameters)
     {
         parameters.Flags = RenderHostFlags.EnableGlowPass | RenderHostFlags.ExactSize | RenderHostFlags.EnableCrtSimulation;
-        parameters.DesignSize = new Size(480, 270);
+        parameters.DesignSize = new Size(640, 360);
         parameters.MinScale = 2;
-        parameters.MaxScale = 2;
+        parameters.MaxScale = 6;
     }
 }

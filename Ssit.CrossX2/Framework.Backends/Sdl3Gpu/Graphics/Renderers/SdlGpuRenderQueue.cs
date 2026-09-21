@@ -86,14 +86,6 @@ internal unsafe class SdlGpuRenderQueue: IDisposable, IRenderQueueInternal
             _currentTexture = texture;
             _currentPrimitiveType = primitiveType;
         }
-
-        var scale = _renderer.RenderStateProvider.Scale;
-        var offset = _renderer.RenderStateProvider.Offset;
-
-        p1.Position = p1.Position * scale + new Vector3(offset, 0);
-        p2.Position = p2.Position * scale + new Vector3(offset, 0);
-        p3.Position = p3.Position * scale + new Vector3(offset, 0);
-        
         
         if (primitiveType == PrimitiveType.TrianglesWithTangents)
         {
@@ -120,12 +112,7 @@ internal unsafe class SdlGpuRenderQueue: IDisposable, IRenderQueueInternal
     public void PushVertices(PrimitiveType type, IVertexBuffer vertices, int start, int count, ITexture texture = null)
     {
         Flush();
-        
-        var scale = _renderer.RenderStateProvider.Scale;
-        var offset = _renderer.RenderStateProvider.Offset;
-        
-        var matrix =  Matrix4x4.CreateScale(scale) * Matrix4x4.CreateTranslation(new Vector3(offset, 0));
-        _renderer.PrimitiveRenderer.RenderVertices(type, vertices, start, count, texture, matrix);
+        _renderer.PrimitiveRenderer.RenderVertices(type, vertices, start, count, texture);
     }
 
     private void CheckBufferOverflow(int count)

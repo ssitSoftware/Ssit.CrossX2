@@ -4,7 +4,6 @@ namespace Ssit.CrossX2.Framework.Graphics;
 
 internal class LightingManager(LightingManager.IUpdateLightsHandler handler) : ILightingManager
 {
-    public float Scale { get; set; } = 1;
     public RgbaColor AmbientLight { get; private set; }
     
     public int PointLightsCount { get; private set; }
@@ -138,12 +137,6 @@ internal class LightingManager(LightingManager.IUpdateLightsHandler handler) : I
     {
         LocalCellShades = global ? 0 : shades;
         GlobalCellShades = global ? shades : 0;
-        handler.OnLightsUpdated();
-    }
-
-    public void SetPositionsScale(float positionsScale)
-    {
-        Scale = positionsScale;
         handler.OnLightsUpdated();
     }
 }

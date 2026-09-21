@@ -5,7 +5,7 @@ struct VertexOut
 {
     float4 position [[position]];
     float4 color;
-    float3 screenPosition; // xy = screen-space position, z = height above the observer-facing plane
+    float3 originalPosition; // xy = original untransformed position, z = height above the observer-facing plane
 };
 
 struct LightingUniforms
@@ -33,8 +33,8 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
 	float globalCellShading = lights.ambient.a;
 
     float3 fragPosition = resolution > 0.0
-            ? floor(in.screenPosition / resolution) * resolution
-            : in.screenPosition;
+            ? floor(in.originalPosition / resolution) * resolution
+            : in.originalPosition;
 
     for (int i = 0; i < 8; i++)
     {

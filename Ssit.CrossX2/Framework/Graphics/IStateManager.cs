@@ -13,5 +13,4 @@ public interface IStateManager
     void SetBlendMode(BlendMode blendMode);
     void SetTextureFilter(TextureFilter filter);
     void SetClipRect(RectangleF? clipRect, bool intersectExisting = true);
-    void SetRenderTarget(IRenderTarget renderTarget);
 }

@@ -13,7 +13,6 @@ internal static unsafe class SdlGpuLightingUniforms
     {
         
         var lightingManager = (LightingManager)renderer.LightingManager;
-        var scale = lightingManager.Scale;
 
         var pointLights = lightingManager.PointLights;
         var pointCount = Math.Min(lightingManager.PointLightsCount, ILightingManager.MaxPointLights);
@@ -24,7 +23,7 @@ internal static unsafe class SdlGpuLightingUniforms
         for (int i = 0; i < pointCount; i++)
         {
             PointLight light = pointLights[i];
-            positionRadius[i] = new Vector4(light.Position.X, light.Position.Y, light.Position.Z, light.Radius) * scale;
+            positionRadius[i] = new Vector4(light.Position.X, light.Position.Y, light.Position.Z, light.Radius);
             colorIntensity[i] = new Vector4(light.Color.Rf, light.Color.Gf, light.Color.Bf, light.Intensity);
         }
 
@@ -38,7 +37,7 @@ internal static unsafe class SdlGpuLightingUniforms
         for (int i = 0; i < spotCount; i++)
         {
             SpotLight spot = spotLights[i];
-            spotPositionRadius[i] = new Vector4(spot.Position.X, spot.Position.Y, spot.Position.Z, spot.Radius) * scale;
+            spotPositionRadius[i] = new Vector4(spot.Position.X, spot.Position.Y, spot.Position.Z, spot.Radius);
             spotDirectionAngle[i] = new Vector4(spot.Direction.X, spot.Direction.Y,
                 MathF.Cos(spot.OuterAngle * MathF.PI / 180f), MathF.Cos(spot.InnerAngle * MathF.PI / 180f));
             spotColorIntensity[i] = new Vector4(spot.Color.Rf, spot.Color.Gf, spot.Color.Bf, spot.Intensity);
@@ -100,7 +99,7 @@ internal static unsafe class SdlGpuLightingUniforms
             SpotColorIntensity5 = spotColorIntensity[5],
             SpotColorIntensity6 = spotColorIntensity[6],
             SpotColorIntensity7 = spotColorIntensity[7],
-            LightCount = new Vector4(pointCount, lightingManager.Resolution * scale, spotCount, lightingManager.LocalCellShades),
+            LightCount = new Vector4(pointCount, lightingManager.Resolution, spotCount, lightingManager.LocalCellShades),
             DirDirection0 = dirDirection[0],
             DirDirection1 = dirDirection[1],
             DirDirection2 = dirDirection[2],

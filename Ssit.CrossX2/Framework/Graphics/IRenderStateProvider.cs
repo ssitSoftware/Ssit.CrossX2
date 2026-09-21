@@ -9,5 +9,4 @@ public interface IRenderStateProvider
     BlendMode BlendMode { get; }
     TextureFilter TextureFilter { get; }
     RectangleF? ClipRect { get; }
-    IRenderTarget RenderTarget { get; }
 }

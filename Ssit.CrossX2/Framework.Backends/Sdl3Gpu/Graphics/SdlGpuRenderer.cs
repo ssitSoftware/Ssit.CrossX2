@@ -10,8 +10,6 @@ namespace Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Graphics;
 
 internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHandler, LightingManager.IUpdateLightsHandler, IIoCPostRegisterHandler
 {
-    private bool UseBumpMapping = true;
-    
     private readonly IIoCContainer _container;
     public SDL_GPUDevice* Device { get; }
     public SDL_Window* Window { get; }
@@ -19,17 +17,26 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
     public Size TargetSize => CurrentOutputTarget.Size;
 
     public RenderPass CurrentPass { get; internal set; }
+    
+    public void SetRenderTarget(IRenderTarget renderTarget)
+    { 
+        var newRt = renderTarget is SdlGpuRenderTarget rt ? new(rt.Handle, rt.Size) : DefaultOutputTarget;
+
+        if (newRt.Handle == CurrentOutputTarget.Handle)
+            return;
+        
+        EndCurrentGpuRenderPass();
+        CurrentOutputTarget = newRt;
+    }
 
     private readonly StateManager _stateManager;
-    private LightingManager _lightingManager;
+    private readonly LightingManager _lightingManager;
 
     public ILightingManager LightingManager => _lightingManager;
     
     public IStateManager StateManager => _stateManager;
-    public IRenderStateProvider RenderStateProvider => _stateManager;
-
+    public IRenderStateProvider RenderStateProvider => _stateManager.StateProvider;
     public SdlGpuPrimitiveRenderer PrimitiveRenderer { get; private set; }
-    
     
     public IGeometryRenderer GeometryRenderer => field ??= new GeometryRendererImpl(RenderQueue);
     public ISpriteRenderer SpriteRenderer => field ??= new SpriteRendererImpl(RenderQueue);
@@ -129,20 +136,13 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
     
     public void OnLightsUpdated() => EndCurrentGpuRenderPass();
 
-    public void UpdateHwMode()
-    {
-        EndCurrentGpuRenderPass();
-
-        CurrentOutputTarget = RenderStateProvider.RenderTarget is not SdlGpuRenderTarget rt ? 
-            DefaultOutputTarget :
-            new(rt.Handle, rt.Size);
-    }
+    public void HwModeUpdated() => EndCurrentGpuRenderPass();
 
     public void BeginNewRenderPass(RgbaColor? clearColor = null)
     {
         if (_gpuRenderPass != null)
             return;
-
+        
         var clrClr =  clearColor ?? RgbaColor.Transparent;
         
         var colorTargetInfo = new SDL_GPUColorTargetInfo

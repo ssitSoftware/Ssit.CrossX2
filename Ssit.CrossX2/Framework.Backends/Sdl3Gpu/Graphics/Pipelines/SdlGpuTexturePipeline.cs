@@ -129,8 +129,6 @@ internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
         SDL_BindGPUGraphicsPipeline(renderPass, Pipeline);
 
         var targetSize = GpuRenderer.TargetSize;
-        var offset = GpuRenderer.RenderStateProvider.Offset;
-        var scale = GpuRenderer.RenderStateProvider.Scale;
 
         SDL_GPUTexture* texture = null;
         Vector4 globalColor = new Vector4(1f, 1f, 1f, 1f);
@@ -161,7 +159,6 @@ internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
         var screenUniforms = new ScreenUniforms
         {
             ScreenSize = new Vector4(targetSize.Width, targetSize.Height, 0f, 0f),
-            OffsetScale = new Vector4(offset.X, offset.Y, scale, 0f),
             GlobalColor = globalColor,
             Transform = transform,
         };
@@ -191,7 +188,6 @@ internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
     private struct ScreenUniforms
     {
         public Vector4 ScreenSize;
-        public Vector4 OffsetScale; // xy = offset, z = scale, w unused
         public Vector4 GlobalColor;
         public Matrix4x4 Transform;
     }
