@@ -1,8 +1,8 @@
-using Ssit.CrossX2.Core;
-using Ssit.CrossX2.Graphics;
-using Ssit.CrossX2.Input;
-using Ssit.CrossX2.IoC;
-using Ssit.CrossX2.Services;
+using Ssit.CrossX2.Framework.Core;
+using Ssit.CrossX2.Framework.Graphics;
+using Ssit.CrossX2.Framework.Input;
+using Ssit.CrossX2.Framework.IoC;
+using Ssit.CrossX2.Framework.Services;
 
 namespace Samples;
 

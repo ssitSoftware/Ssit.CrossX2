@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Fonts>
+    <Font Name="PxPlus_IBM_EGA_8x8" Family="PxPlus IBM EGA 8x8"
+          Sizes="8"
+          Antialiasing="false"
+          CharSets="Ascii, Dos, Polish, German, French, Spanish, Special"
+          Outline="2"
+          Spacing="2"
+          SheetWidthFactor="16.0"/>
+
+    <Font Name="PxPlus_IBM_EGA_9x14" Family="PxPlus IBM EGA 9x14"
+          Sizes="16"
+          Antialiasing="false"
+          CharSets="Ascii, Dos, Polish, German, French, Spanish, Special"
+          Outline="2"
+          Spacing="2"
+          SheetWidthFactor="16.0"/>
+
+    <Font Name="PxPlus_ToshibaSat_9x16" Family="PxPlus ToshibaSat 9x16"
+          Sizes="16"
+          Antialiasing="false"
+          CharSets="Ascii, Dos, Polish, German, French, Spanish, Special"
+          Outline="2"
+          Spacing="2"
+          SheetWidthFactor="16.0"/>
+
+    <Font Name="PxPlus_Tandy1K_II_200L" Family="PxPlus Tandy1K-II 200L"
+          Sizes="24"
+          Antialiasing="false"
+          CharSets="Ascii, Dos, Polish, German, French, Spanish, Special"
+          Outline="2"
+          Spacing="2"
+          SheetWidthFactor="16.0"/>
+
+    <Font Name="PxPlus_HP_100LX_16x12" Family="PxPlus HP 100LX 16x12"
+          Sizes="12"
+          Antialiasing="false"
+          CharSets="Ascii, Dos, Polish, German, French, Spanish, Special"
+          Outline="2"
+          Spacing="2"
+          SheetWidthFactor="16.0"/>
+
+    <Font Name="PxPlus_AST_PremiumExec" Family="PxPlus AST PremiumExec"
+          Sizes="20"
+          Antialiasing="false"
+          CharSets="Ascii, Dos, Polish, German, French, Spanish, Special"
+          Outline="2"
+          Spacing="2"
+          SheetWidthFactor="16.0"/>
+
+</Fonts>

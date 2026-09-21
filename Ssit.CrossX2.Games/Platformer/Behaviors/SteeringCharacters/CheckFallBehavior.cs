@@ -1,0 +1,17 @@
+using Ssit.CrossX2.Framework.Games.Logic.Objects.Characters;
+using Ssit.CrossX2.Framework.Games.Logic.Stering;
+using Ssit.CrossX2.Framework.Games.Platformer.Helpers;
+
+namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
+
+public class CheckFallBehavior(CheckAdditionalGroundHelper additionalGroundHelper) : SteeringBehavior<ISteeringCharacter>
+{
+    protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
+    {
+        if (additionalGroundHelper.IsOnGroundExtra(obj))
+            return false;
+        
+        obj.SetSteeringState("Fall");
+        return true;
+    }
+}

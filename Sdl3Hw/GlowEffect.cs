@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using SDL;
 using Ssit.CrossX2;
+using Ssit.CrossX2.Framework;
 using static SDL.SDL3;
 
 namespace Sdl3Hw;

@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Assets\Ssit.CrossX2.Fonts.RetroPixel\Ssit.CrossX2.Fonts.RetroPixel.csproj" />
       <ProjectReference Include="..\Ssit.CrossX2\Ssit.CrossX2.csproj" />
     </ItemGroup>
 

@@ -1,4 +1,4 @@
-using Ssit.CrossX2.Input;
+using Ssit.CrossX2.Framework.Input;
 
 namespace Samples;
 

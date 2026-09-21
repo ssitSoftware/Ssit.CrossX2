@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+        <LangVersion>default</LangVersion>
+        <Version>0.0.5</Version>
+        <Authors>Sebastian Sejud IT</Authors>
+        <Copyright>Sebastian Sejud IT</Copyright>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <TargetFramework>net10.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="Fonts\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Ssit.CrossX2\Ssit.CrossX2.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -24,51 +24,25 @@
     </ItemGroup>
 
     <ItemGroup>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\Color.frag.metal">
-        <LogicalName>Pipelines.Shaders.Color.frag.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\Color.vert.metal">
-        <LogicalName>Pipelines.Shaders.Color.vert.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\Texture.frag.metal">
-        <LogicalName>Pipelines.Shaders.Texture.frag.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\Texture.vert.metal">
-        <LogicalName>Pipelines.Shaders.Texture.vert.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\TextureLight.frag.metal">
-        <LogicalName>Pipelines.Shaders.TextureLight.frag.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\TextureLight.vert.metal">
-        <LogicalName>Pipelines.Shaders.TextureLight.vert.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\TextureLightBump.frag.metal">
-        <LogicalName>Pipelines.Shaders.TextureLightBump.frag.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\TextureLightBump.vert.metal">
-        <LogicalName>Pipelines.Shaders.TextureLightBump.vert.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\ColorLight.frag.metal">
-        <LogicalName>Pipelines.Shaders.ColorLight.frag.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Pipelines\Shaders\Metal\ColorLight.vert.metal">
-        <LogicalName>Pipelines.Shaders.ColorLight.vert.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Shaders\Blur.frag.metal">
-        <LogicalName>Shaders.Blur.frag.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Shaders\Crt.frag.metal">
-        <LogicalName>Shaders.Crt.frag.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Shaders\Crt.vert.metal">
-        <LogicalName>Shaders.Crt.vert.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Shaders\FullscreenQuad.vert.metal">
-        <LogicalName>Shaders.FullscreenQuad.vert.metal</LogicalName>
-      </EmbeddedResource>
-      <EmbeddedResource Include="_Sdl3Impl\Graphics\Shaders\GlowComposite.frag.metal">
-        <LogicalName>Shaders.GlowComposite.frag.metal</LogicalName>
-      </EmbeddedResource>
+      <Folder Include="Framework\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Effects\Blur.frag.metal" />
+      <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Effects\Crt.frag.metal" />
+      <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Effects\Crt.vert.metal" />
+      <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Effects\FullscreenQuad.vert.metal" />
+      <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Effects\GlowComposite.frag.metal" />
+      <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Pipelines\Color.frag.metal" />
+      <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Pipelines\Color.vert.metal" />
+      <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Pipelines\ColorLight.frag.metal" />
+      <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Pipelines\ColorLight.vert.metal" />
+      <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Pipelines\Texture.frag.metal" />
+      <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Pipelines\Texture.vert.metal" />
+      <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Pipelines\TextureLight.frag.metal" />
+      <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Pipelines\TextureLight.vert.metal" />
+      <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Pipelines\TextureLightBump.frag.metal" />
+      <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Pipelines\TextureLightBump.vert.metal" />
     </ItemGroup>
 
 </Project>
