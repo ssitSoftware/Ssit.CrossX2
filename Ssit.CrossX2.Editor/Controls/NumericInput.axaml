@@ -1,0 +1,32 @@
+<UserControl
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d"
+    x:Class="Ssit.CrossX2.Editor.Controls.NumericInput"
+    x:Name="Root"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid ColumnDefinitions="*, 10, Auto">
+        <Slider
+            Grid.Column="0"
+            IsSnapToTickEnabled="True"
+            LostFocus="Slider_OnLostFocus"
+            Maximum="{Binding #Root.Maximum}"
+            Minimum="{Binding #Root.Minimum}"
+            TickFrequency="{Binding #Root.Step}"
+            Value="{Binding #Root.Value}"
+            VerticalAlignment="Center"
+            x:Name="Slider" />
+        <NumericUpDown
+            Grid.Column="2"
+            Increment="{Binding #Root.Step}"
+            LostFocus="Slider_OnLostFocus"
+            Maximum="{Binding #Root.Maximum}"
+            Minimum="{Binding #Root.Minimum}"
+            Value="{Binding #Root.Value}"
+            VerticalAlignment="Center"
+            Width="160" />
+    </Grid>
+</UserControl>

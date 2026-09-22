@@ -1,0 +1,18 @@
+<Window
+    Background="{DynamicResource BackgroundColor}"
+    Closing="Window_OnClosing"
+    Icon="/Assets/avalonia-logo.ico"
+    Title="{Binding Title}"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d"
+    x:Class="Ssit.CrossX2.Editor.Views.MainWindow"
+    x:DataType="viewModels:MainViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:viewModels="clr-namespace:Ssit.CrossX2.Editor.ViewModels"
+    xmlns:views="clr-namespace:Ssit.CrossX2.Editor.Views">
+    <views:MainView x:Name="MainView" />
+</Window>

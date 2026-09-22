@@ -1,0 +1,32 @@
+<UserControl
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d"
+    x:Class="Ssit.CrossX2.Editor.Panels.AssetsPanel"
+    x:DataType="viewModels:MainViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:viewModels="clr-namespace:Ssit.CrossX2.Editor.ViewModels"
+    xmlns:panels="clr-namespace:Ssit.CrossX2.Editor.Panels">
+
+    <TabControl
+        HorizontalAlignment="Stretch"
+        Background="{StaticResource ControlBackground}"
+        Padding="0"
+        TabStripPlacement="Top"
+        x:Name="TabControl">
+        <TabControl.Items>
+            <TabItem Header="Tiles">
+                <panels:TilesetSelector />
+            </TabItem>
+            <TabItem Header="Images">
+                <panels:ImagesSelector DataContext="{Binding ImagesSelector}" />
+            </TabItem>
+            <TabItem Header="Objects">
+                <panels:ImagesSelector DataContext="{Binding ObjectsSelector}" />
+            </TabItem>
+        </TabControl.Items>
+    </TabControl>
+</UserControl>

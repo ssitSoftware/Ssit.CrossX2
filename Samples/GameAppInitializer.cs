@@ -2,6 +2,7 @@ using Ssit.CrossX2.Fonts.RetroPixel;
 using Ssit.CrossX2.Framework;
 using Ssit.CrossX2.Framework.Core;
 using Ssit.CrossX2.Framework.Graphics;
+using Ssit.CrossX2.Framework.Graphics.Effects;
 using Ssit.CrossX2.Framework.Graphics.Font;
 using Ssit.CrossX2.Framework.Input;
 using Ssit.CrossX2.Framework.Input.Internal;
@@ -34,6 +35,15 @@ public class GameAppInitializer: IAppInitializer
         
         builder
             .WithInstance<IFilesProvider>(assetsProvider)
+            .WithInstance(new CrtSimulationEffectParameters
+            {
+                ScanlineIntensity = 0.75f,
+                RgbDisplacement = 0.25f,
+                BarrelDistortion = 0,
+                RestoreLightness = 1.33f,
+                Vignette = 0.5f,
+                BleedFactor = 1.0f
+            })
             .WithSingleton<GameAppStateManager, GameAppStateManager>()
             .WithPostBuildDelegate<IPointingDevices>(pd => pd.Mode = PointingDevicesMode.Touch | PointingDevicesMode.Mouse)
             .WithPostBuildDelegate<IInputMappings>(GameInitializer.MapInput)
@@ -44,7 +54,7 @@ public class GameAppInitializer: IAppInitializer
     {
         parameters.Flags = RenderHostFlags.EnableGlowPass | RenderHostFlags.ExactSize | RenderHostFlags.EnableCrtSimulation;
         parameters.DesignSize = new Size(640, 360);
-        parameters.MinScale = 2;
-        parameters.MaxScale = 6;
+        parameters.MinScale = 1;
+        parameters.MaxScale = 1;
     }
 }

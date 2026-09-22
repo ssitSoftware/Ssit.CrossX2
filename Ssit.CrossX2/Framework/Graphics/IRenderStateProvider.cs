@@ -4,9 +4,9 @@ namespace Ssit.CrossX2.Framework.Graphics;
 
 public interface IRenderStateProvider
 {
-    float Scale { get; }
-    Vector2 Offset { get; }
+    Matrix4x4 Transform { get; }
     BlendMode BlendMode { get; }
     TextureFilter TextureFilter { get; }
     RectangleF? ClipRect { get; }
+    float Scale { get;}
 }

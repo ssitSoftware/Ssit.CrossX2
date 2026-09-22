@@ -62,12 +62,6 @@ internal unsafe class SdlGpuRenderQueue: IDisposable, IRenderQueueInternal
             _currentTexture = null;
         }
 
-        var scale = _renderer.RenderStateProvider.Scale;
-        var offset = _renderer.RenderStateProvider.Offset;
-
-        p1.Position = p1.Position * scale + new Vector3(offset, 0);
-        p2.Position = p2.Position * scale + new Vector3(offset, 0);
-
         _buffer[_currentPosition++] = p1;
         _buffer[_currentPosition++] = p2;
     }

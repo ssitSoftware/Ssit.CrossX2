@@ -11,7 +11,7 @@ struct VertexOut
 struct CrtUniforms
 {
     float4 distortion; // x = barrel distortion, y = RGB displacement, z = scanline intensity, w = vignette strength
-    float4 params; // x = output pixels per source texel (uniform fit scale), yzw unused
+    float4 params; // x = output pixels per source texel (uniform fit scale), y = gamma, zw unused
 };
 
 fragment float4 fragmentMain(VertexOut in [[stage_in]],
@@ -23,6 +23,7 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
     float rgbShift = crt.distortion.y;
     float scanline = crt.distortion.z;
     float vignette = crt.distortion.w;
+    float scale = crt.params.z;
 
     float2 centered = in.uv * 2.0 - 1.0;
     float r2 = dot(centered, centered);
@@ -37,6 +38,7 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
 
     float centeredLength = length(centered);
     float2 dir = centeredLength > 0.0001 ? centered / centeredLength : float2(0.0, 0.0);
+    //dir = (dir + float2(1,0)) /  2;
     float2 offset = dir * rgbShift * 0.01;
 
     float rCh = tex.sample(samp, uv + offset).r;
@@ -48,12 +50,24 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
 
     // Each scanline band (bright or dark half of the cycle) spans half a source texel,
     // so a full bright+dark cycle spans one source texel's worth of output pixels.
-    float pixelScale = max(crt.params.x, 0.0001);
-    float scanlineEffect = 1.0 - scanline * (0.5 + 0.5 * sin(in.position.y * (2.0 * 3.14159265 / pixelScale)));
-    rgb *= scanlineEffect;
+    float pixelScale = max(crt.params.x * crt.params.z * 1.5, 0.0001);
+    float scanlinePhase = 0.5 + 0.5 * sin(in.position.y * (2.0 * 3.14159265 / pixelScale));
 
     float vignetteEffect = saturate(1.0 - vignette * r2);
     rgb *= vignetteEffect;
+
+	float restoreLightness = crt.params.y;
+    float gamma = sqrt(sqrt(max(restoreLightness, 0.1)));
+    rgb = pow(max(rgb, 0.0), gamma) * restoreLightness * restoreLightness;
+
+	// Bright pixels bleed through the dark scanline gap instead of being darkened as much.
+	float luma = dot(rgb, float3(0.299, 0.587, 0.114));
+	float bleed = saturate(luma);
+	bleed *= crt.params.w;
+	
+	float scanlineDarken = scanline * (1.0 - scanlinePhase) * (1.0 - bleed);
+	
+	rgb *= (1.0 - scanlineDarken);
 
     return float4(rgb, aCh) * in.color;
 }

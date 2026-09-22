@@ -44,7 +44,7 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
     float3 perturbedNormal = normalize(T * normalSample.x + B * normalSample.y + N0 * normalSample.z);
 
     // Dampen the normal-map contribution: 0 = flat (ignore the map), 1 = full strength.
-    const float bumpStrength = 1.0;
+    const float bumpStrength = 1;
     float3 N = normalize(mix(N0, perturbedNormal, bumpStrength));
 
     float3 lighting = lights.ambient.rgb;

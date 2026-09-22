@@ -1,0 +1,58 @@
+<Window
+    Background="{StaticResource ControlBackground}"
+    CanResize="False"
+    ExtendClientAreaToDecorationsHint="True"
+    Height="100"
+    Title="{Binding Title}"
+    Width="300"
+    d:DesignHeight="200"
+    d:DesignWidth="400"
+    mc:Ignorable="d"
+    x:Class="Ssit.CrossX2.Editor.Views.MessageBox"
+    x:DataType="models:MessageBoxModel"
+    x:Name="Root"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:models="clr-namespace:Ssit.CrossX2.Editor.Models">
+    <Grid>
+        <StackPanel
+            Margin="0,22,0,0"
+            Orientation="Vertical"
+            x:Name="Pnl">
+
+            <TextBlock
+                HorizontalAlignment="Center"
+                Margin="10,10,10,0"
+                Text="{Binding Message}" />
+
+            <StackPanel
+                HorizontalAlignment="Center"
+                Margin="10"
+                Orientation="Horizontal"
+                Spacing="10">
+                <Button
+                    Click="YesButton_OnClick"
+                    Content="OK"
+                    HorizontalAlignment="Left"
+                    IsVisible="{Binding ShowOk}" />
+                <Button
+                    Click="YesButton_OnClick"
+                    Content="Yes"
+                    HorizontalAlignment="Left"
+                    IsVisible="{Binding ShowYes}" />
+                <Button
+                    Click="NoButton_OnClick"
+                    Content="No"
+                    HorizontalAlignment="Center"
+                    IsVisible="{Binding ShowNo}" />
+                <Button
+                    Click="CancelButton_OnClick"
+                    Content="Cancel"
+                    HorizontalAlignment="Right"
+                    IsVisible="{Binding ShowCancel}" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

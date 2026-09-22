@@ -6,7 +6,7 @@ public interface ILightingManager
     public const int MaxSpotLights = 8;
     public const int MaxDirectionalLights = 4;
 
-    void EnableLighting(bool enable);
+    void EnableLighting(bool enable, bool enableBumpMapping);
     void SetResolution(float resolution);
     void SetAmbientLight(RgbaColor color);
     void SetPointLights(ReadOnlySpan<PointLight> lights);

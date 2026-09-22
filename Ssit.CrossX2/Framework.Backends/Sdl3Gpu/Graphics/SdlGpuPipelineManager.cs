@@ -23,7 +23,7 @@ internal class SdlGpuPipelineManager(IIoCContainer ioCContainer, IRenderer rende
         if (texturedRendering) type |= Texture;
         if (manager.LightingEnabled) type |= Lighting;
         if (primitiveType == PrimitiveType.Lines) type |= Lines;
-        if (primitiveType == PrimitiveType.TrianglesWithTangents && manager.LightingEnabled) type |= BumpMapping;
+        if (primitiveType == PrimitiveType.TrianglesWithTangents && manager.BumpMappingEnabled) type |= BumpMapping;
 
         if (_pipelines.TryGetValue(type, out var pipeline)) return pipeline;
 

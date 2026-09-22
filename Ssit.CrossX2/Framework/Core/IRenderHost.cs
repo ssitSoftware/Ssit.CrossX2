@@ -9,4 +9,5 @@ public interface IRenderHost : IDisposable
     Size TargetSize { get; }
     Size LogicalSize => TargetSize / Scale;
     int Scale { get; }
+    void Apply();
 }

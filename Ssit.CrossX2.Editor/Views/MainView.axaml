@@ -1,0 +1,74 @@
+<UserControl
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d"
+    x:Class="Ssit.CrossX2.Editor.Views.MainView"
+    x:DataType="vm:MainViewModel"
+    x:Name="Root"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:Ssit.CrossX2.Editor.ViewModels"
+    xmlns:controls="clr-namespace:Ssit.CrossX2.Editor.Controls"
+    xmlns:helpers="clr-namespace:Ssit.CrossX2.Editor.Helpers"
+    xmlns:models="clr-namespace:Ssit.CrossX2.Editor.Models"
+    xmlns:panels="clr-namespace:Ssit.CrossX2.Editor.Panels">
+
+    <Design.DataContext>
+        <!-- ReSharper disable once Xaml.ConstructorWarning -->
+        <vm:MainViewModel />
+    </Design.DataContext>
+
+    <DockPanel>
+        <controls:HotKeysPanel />
+        <Grid
+            Background="{StaticResource HeaderBackground}"
+            DockPanel.Dock="Top"
+            IsVisible="{Binding EditorViewModel.IsFullscreen, Converter={StaticResource InvertBoolConverter}}">
+            <Menu
+                HorizontalAlignment="Left"
+                IsVisible="{x:Static helpers:Platform.ShowMenu}"
+                ItemsSource="{Binding Menu}">
+                <Menu.Styles>
+                    <Style Selector="MenuItem" x:DataType="models:MenuItemModel">
+                        <Setter Property="Header" Value="{Binding Header}" />
+                        <Setter Property="ItemsSource" Value="{Binding Items}" />
+                        <Setter Property="Command" Value="{Binding Command}" />
+                        <Setter Property="CommandParameter" Value="{Binding CommandParameter}" />
+                    </Style>
+                </Menu.Styles>
+            </Menu>
+        </Grid>
+
+        <Grid Background="#101010">
+            <Grid
+                IsVisible="{Binding EditorViewModel.IsFullscreen, Converter={StaticResource InvertBoolConverter}}"
+                Margin="0,1,0,0"
+                RowDefinitions="Auto, *">
+
+                <Grid Grid.Row="1" x:Name="MainGrid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition MinWidth="256" Width="416" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition MinWidth="256" Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Grid Grid.Column="0" RowDefinitions="*, Auto, *">
+                        <panels:AssetsPanel Grid.Column="0" />
+                        <GridSplitter Grid.Row="1" ResizeDirection="Rows" />
+                        <controls:PropertiesControl DataContext="{Binding EditorViewModel.PropertiesView}" Grid.Row="2" />
+                    </Grid>
+                    <GridSplitter Grid.Column="1" ResizeDirection="Columns" />
+                    <panels:EditorPanel Grid.Column="2" />
+
+                </Grid>
+
+            </Grid>
+
+            <panels:EditorPanel IsVisible="{Binding EditorViewModel.IsFullscreen}" />
+
+        </Grid>
+    </DockPanel>
+
+</UserControl>

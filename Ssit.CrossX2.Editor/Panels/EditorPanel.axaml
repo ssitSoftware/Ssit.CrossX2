@@ -1,0 +1,235 @@
+<UserControl
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d"
+    x:Class="Ssit.CrossX2.Editor.Panels.EditorPanel"
+    x:DataType="viewModels:MainViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:i="clr-namespace:Projektanker.Icons.Avalonia;assembly=Projektanker.Icons.Avalonia"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    
+    xmlns:viewModels="clr-namespace:Ssit.CrossX2.Editor.ViewModels"
+    xmlns:controls1="clr-namespace:Ssit.CrossX2.Editor.Controls"
+    xmlns:tools="clr-namespace:Ssit.CrossX2.Editor.Tools"
+    xmlns:helpers="clr-namespace:Ssit.CrossX2.Editor.Helpers"
+    xmlns:map="clr-namespace:Ssit.CrossX2.Framework.Games.Map;assembly=Ssit.CrossX2.Games"
+    xmlns:template="clr-namespace:Ssit.CrossX2.Framework.Games.Template;assembly=Ssit.CrossX2.Games">
+
+    <Grid RowDefinitions="Auto, *">
+
+        <Grid
+            Background="{DynamicResource ControlBackground}"
+            IsVisible="{Binding EditorViewModel.IsFullscreen, Converter={StaticResource InvertBoolConverter}}"
+            Margin="0,0,0,1">
+            <WrapPanel Margin="4" Orientation="Horizontal">
+
+                <StackPanel
+                    Margin="0,1,4,1"
+                    Orientation="Horizontal"
+                    Spacing="4">
+
+                    <Label Classes="Toolbar" Content="Layer:" />
+
+                    <ComboBox ItemsSource="{Binding MapFile.Layers}" SelectedValue="{Binding EditorViewModel.SelectedLayer}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="map:MapLayer">
+                                <Label Content="{Binding Name}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+                <StackPanel
+                    Margin="0,1,4,1"
+                    Orientation="Horizontal"
+                    Spacing="4">
+
+                    <Label Classes="Toolbar" Content="Tools:" />
+
+                    <controls1:SelectionToggleButton
+                        Classes="Toolbar"
+                        Icon="mdi-button-cursor"
+                        SelectedValue="{Binding EditorViewModel.SelectedTool}"
+                        ToolTip.Tip="Selection tool"
+                        Value="{x:Static tools:SelectionTool.Name}" />
+
+                    <controls1:SelectionToggleButton
+                        Classes="Toolbar"
+                        Icon="mdi-wall"
+                        SelectedValue="{Binding EditorViewModel.SelectedTool}"
+                        ToolTip.Tip="Place tiles tool"
+                        Value="{x:Static tools:InsertTilesTool.Name}" />
+
+                    <controls1:SelectionToggleButton
+                        Classes="Toolbar"
+                        Icon="mdi-eraser"
+                        SelectedValue="{Binding EditorViewModel.SelectedTool}"
+                        ToolTip.Tip="Eraser tool"
+                        Value="{x:Static tools:EraserTool.Name}" />
+
+                    <controls1:SelectionToggleButton
+                        Classes="Toolbar"
+                        Icon="fa-solid fa-image"
+                        SelectedValue="{Binding EditorViewModel.SelectedTool}"
+                        ToolTip.Tip="Insert image tool"
+                        Value="{x:Static tools:InsertImageTool.Name}" />
+
+                    <controls1:SelectionToggleButton
+                        Classes="Toolbar"
+                        Icon="mdi-human-greeting"
+                        SelectedValue="{Binding EditorViewModel.SelectedTool}"
+                        ToolTip.Tip="Insert object tool"
+                        Value="{x:Static tools:InsertObjectTool.Name}" />
+
+                    <controls1:SelectionToggleButton
+                        Classes="Toolbar"
+                        Icon="mdi-soy-sauce"
+                        SelectedValue="{Binding EditorViewModel.SelectedTool, Mode=TwoWay}"
+                        ToolTip.Tip="Set material"
+                        Value="{x:Static tools:SetMaterialTool.Name}" />
+
+                    <ComboBox
+                        IsVisible="{Binding EditorViewModel.SelectedTool, Converter={StaticResource StringEqualsConverter}, ConverterParameter={x:Static tools:SetMaterialTool.Name}}"
+                        ItemsSource="{Binding Instances.Template.Materials}"
+                        SelectedIndex="{Binding EditorViewModel.SelectedMaterial}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="template:MaterialInfo">
+                                <Label Content="{Binding Name}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <Border Classes="ToolbarSeparator" />
+                </StackPanel>
+
+
+                <StackPanel
+                    Margin="0,1,4,1"
+                    Orientation="Horizontal"
+                    Spacing="4">
+                    <Label Classes="Toolbar" Content="View:" />
+
+                    <ToggleButton
+                        Classes="Toolbar"
+                        IsChecked="{Binding EditorViewModel.ShowGrid}"
+                        ToolTip.Tip="Show grid"
+                        i:Attached.Icon="mdi-grid" />
+
+                    <ToggleButton
+                        Classes="Toolbar"
+                        IsChecked="{Binding EditorViewModel.ShowAllLayers}"
+                        ToolTip.Tip="Show all layers"
+                        i:Attached.Icon="mdi-animation" />
+
+                    <ToggleButton
+                        Classes="Toolbar"
+                        IsChecked="{Binding EditorViewModel.OnionMode}"
+                        IsEnabled="{Binding EditorViewModel.ShowAllLayers, Converter={StaticResource InvertBoolConverter}}"
+                        ToolTip.Tip="Show other matching layers&#13;as semi transparent"
+                        i:Attached.Icon="mdi-format-wrap-tight" />
+
+                    <ToggleButton
+                        Classes="Toolbar"
+                        IsChecked="{Binding EditorViewModel.Animate}"
+                        ToolTip.Tip="Animate editor view"
+                        i:Attached.Icon="mdi-movie" />
+
+                    <Border Classes="ToolbarSeparator" />
+
+                    <ToggleButton
+                        Classes="Toolbar"
+                        IsChecked="{Binding EditorViewModel.ShowObjects}"
+                        ToolTip.Tip="Show objects"
+                        i:Attached.Icon="mdi-human-greeting" />
+
+                    <ToggleButton
+                        Classes="Toolbar"
+                        IsChecked="{Binding EditorViewModel.ShowLinks}"
+                        IsEnabled="{Binding EditorViewModel.ShowObjects}"
+                        ToolTip.Tip="Show links"
+                        i:Attached.Icon="mdi-link-variant" />
+
+                    <ToggleButton
+                        Classes="Toolbar"
+                        IsChecked="{Binding EditorViewModel.ShowMaterials}"
+                        ToolTip.Tip="Show materials"
+                        i:Attached.Icon="mdi-soy-sauce" />
+                    
+                    <ToggleButton
+                        Classes="Toolbar"
+                        IsChecked="{Binding EditorViewModel.ShowCollisions}"
+                        ToolTip.Tip="Show collisions"
+                        i:Attached.Icon="mdi-checkbox-multiple-blank-circle" />
+
+                    <Border Classes="ToolbarSeparator" />
+                </StackPanel>
+
+
+                <StackPanel
+                    Margin="0,1,4,1"
+                    Orientation="Horizontal"
+                    Spacing="4">
+                    <Label Classes="Toolbar" Content="Zoom:" />
+
+                    <Label
+                        Classes="Toolbar"
+                        Content="{Binding EditorViewModel.Zoom.Info}"
+                        HorizontalContentAlignment="Right"
+                        Width="50" />
+
+                    <Button
+                        Classes="Toolbar"
+                        Command="{Binding EditorViewModel.Zoom.ZoomInCommand}"
+                        HotKey="{x:Static helpers:HotKeys.EditorZoomIn}"
+                        ToolTip.Tip="Zoom In"
+                        i:Attached.Icon="mdi-magnify-plus-outline" />
+
+                    <Button
+                        Classes="Toolbar"
+                        Command="{Binding EditorViewModel.Zoom.ZoomOutCommand}"
+                        HotKey="{x:Static helpers:HotKeys.EditorZoomOut}"
+                        ToolTip.Tip="Zoom Out"
+                        i:Attached.Icon="mdi-magnify-minus-outline" />
+
+                    <Border Classes="ToolbarSeparator" />
+                </StackPanel>
+
+
+                <StackPanel
+                    Margin="0,1,4,1"
+                    Orientation="Horizontal"
+                    Spacing="4">
+                    <Label Classes="Toolbar" Content="Run:" />
+
+                    <Button
+                        Classes="Toolbar"
+                        ToolTip.Tip="Run map"
+                        i:Attached.Icon="mdi-play"
+                        Command="{Binding RunCommand}"/>
+
+                    <Border Classes="ToolbarSeparator" />
+                </StackPanel>
+            </WrapPanel>
+
+            <Button
+                Classes="Toolbar"
+                Command="{Binding EnterFullscreenCommand}"
+                HorizontalAlignment="Right"
+                Margin="0,0,10,0"
+                ToolTip.Tip="Fullscreen Preview"
+                VerticalAlignment="Center"
+                i:Attached.Icon="mdi-fullscreen" />
+
+        </Grid>
+
+        <controls1:SkPanel
+            Background="{StaticResource EmptyBackground}"
+            ContinuousRedraw="False"
+            Grid.Row="1"
+            Margin="0,1,0,0"
+            MouseHandler="{Binding EditorViewModel.Tools.Current}"
+            Renderer="{Binding EditorViewModel}" />
+
+    </Grid>
+</UserControl>

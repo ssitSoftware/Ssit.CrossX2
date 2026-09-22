@@ -11,6 +11,7 @@ internal class LightingManager(LightingManager.IUpdateLightsHandler handler) : I
 
     public float Resolution { get; private set; } = 0.1f;
     public bool LightingEnabled { get; private set; }
+    public bool BumpMappingEnabled { get; private set; }
     
     public int DirectionalLightsCount { get; private set; }
 
@@ -25,9 +26,10 @@ internal class LightingManager(LightingManager.IUpdateLightsHandler handler) : I
         void OnLightsUpdated();
     }
 
-    public void EnableLighting(bool enable)
+    public void EnableLighting(bool enable, bool enableBumpMapping)
     {
         LightingEnabled = enable;
+        BumpMappingEnabled = enableBumpMapping & enable;
         handler.OnLightsUpdated();
     }
 

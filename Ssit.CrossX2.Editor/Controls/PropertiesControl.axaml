@@ -1,0 +1,127 @@
+<UserControl
+    Background="#101010"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d"
+    x:Class="Ssit.CrossX2.Editor.Controls.PropertiesControl"
+    x:DataType="viewModels:PropertiesViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:colorpicker="clr-namespace:AvaloniaColorPicker;assembly=AvaloniaColorPicker"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:viewModels="clr-namespace:Ssit.CrossX2.Editor.ViewModels"
+    xmlns:controls="clr-namespace:Ssit.CrossX2.Editor.Controls"
+    xmlns:parameters="clr-namespace:Ssit.CrossX2.Editor.Models.Parameters">
+    <Grid RowDefinitions="Auto, *">
+        <Label
+            Background="{DynamicResource HeaderBackground}"
+            Content="{Binding Title}"
+            Grid.Row="0"
+            Margin="0,0,0,1"
+            Padding="10" />
+        <ListBox
+            Background="{DynamicResource ControlBackground}"
+            Grid.Row="1"
+            ItemsSource="{Binding Parameters}"
+            Padding="0"
+            SelectedItem="{Binding Selected}">
+            <ListBox.ItemTemplate>
+
+                <controls:PropertiesTemplateSelector>
+
+                    <DataTemplate x:DataType="parameters:ParameterInfoModel" x:Key="ParameterInfoModel">
+                        <Label Content="{Binding Name}" FontWeight="Bold" />
+                    </DataTemplate>
+
+                    <DataTemplate x:DataType="parameters:ParameterColorModel" x:Key="ParameterColorModel">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Label Content="{Binding Name}" VerticalAlignment="Center" />
+                            <colorpicker:ColorButton Color="{Binding Value, Converter={StaticResource RgbaColorConverter}, Mode=TwoWay}" />
+                        </StackPanel>
+                    </DataTemplate>
+
+                    <DataTemplate x:DataType="parameters:ParameterBooleanModel" x:Key="ParameterBooleanModel">
+                        <CheckBox
+                            Content="{Binding Name}"
+                            IsChecked="{Binding Value}"
+                            IsEnabled="{Binding Enabled}" />
+                    </DataTemplate>
+
+                    <DataTemplate x:DataType="parameters:ParameterLayerSizeModel" x:Key="ParameterLayerSizeModel">
+                        <StackPanel>
+                            <Label Content="{Binding Name}" />
+                            <Grid ColumnDefinitions="*, 5, Auto">
+                                <TextBox
+                                    Grid.Column="0"
+                                    IsReadOnly="True"
+                                    Text="{Binding Info}" />
+                                <Button
+                                    Command="{Binding ResizeLayerCommand}"
+                                    Content="..."
+                                    Grid.Column="2" />
+                            </Grid>
+                        </StackPanel>
+
+                    </DataTemplate>
+
+                    <DataTemplate x:DataType="parameters:ParameterTargetModel" x:Key="ParameterTargetModel">
+                        <StackPanel>
+                            <Label Content="{Binding Name}" />
+                            <Grid ColumnDefinitions="*, 5, Auto">
+                                <TextBox
+                                    Grid.Column="0"
+                                    IsReadOnly="True"
+                                    Text="{Binding Info}" />
+                                <Button
+                                    Command="{Binding SelectObjectCommand}"
+                                    Content="..."
+                                    Grid.Column="2" />
+                            </Grid>
+                        </StackPanel>
+
+                    </DataTemplate>
+
+                    <DataTemplate x:DataType="parameters:ParameterStringModel" x:Key="ParameterStringModel">
+                        <StackPanel Background="{Binding IsInvalid, Converter={StaticResource InvalidPropertyConverter}}">
+                            <Label Content="{Binding Name}" />
+                            <TextBox
+                                IsEnabled="{Binding Enabled}"
+                                LostFocus="InputElement_OnLostFocus"
+                                Text="{Binding Value}" />
+                        </StackPanel>
+                    </DataTemplate>
+
+                    <DataTemplate x:DataType="parameters:ParameterFloatModel" x:Key="ParameterFloatModel">
+                        <StackPanel Background="{Binding IsInvalid, Converter={StaticResource InvalidPropertyConverter}}">
+                            <Label Content="{Binding Name}" />
+
+                            <controls:NumericInput
+                                FocusLostCommand="{Binding FocusLostCommand}"
+                                IsEnabled="{Binding Enabled}"
+                                Maximum="{Binding Max}"
+                                Minimum="{Binding Min}"
+                                Step="{Binding Step}"
+                                Value="{Binding Value}" />
+                        </StackPanel>
+                    </DataTemplate>
+
+                    <DataTemplate x:DataType="parameters:ParameterIntModel" x:Key="ParameterIntModel">
+                        <StackPanel Background="{Binding IsInvalid, Converter={StaticResource InvalidPropertyConverter}}">
+                            <Label Content="{Binding Name}" />
+                            <controls:NumericInput
+                                FocusLostCommand="{Binding FocusLostCommand}"
+                                IsEnabled="{Binding Enabled}"
+                                Maximum="{Binding Max}"
+                                Minimum="{Binding Min}"
+                                Step="{Binding Step}"
+                                Value="{Binding Value}" />
+                        </StackPanel>
+                    </DataTemplate>
+
+                </controls:PropertiesTemplateSelector>
+
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </Grid>
+</UserControl>

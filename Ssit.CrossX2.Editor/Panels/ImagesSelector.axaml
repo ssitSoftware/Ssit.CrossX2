@@ -1,0 +1,88 @@
+<UserControl
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d"
+    x:Class="Ssit.CrossX2.Editor.Panels.ImagesSelector"
+    x:DataType="viewModels:ImageSelectorViewModel"
+    x:Name="Root"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:viewModels="clr-namespace:Ssit.CrossX2.Editor.ViewModels"
+    xmlns:helpers="clr-namespace:Ssit.CrossX2.Editor.Helpers"
+    xmlns:controls="clr-namespace:Ssit.CrossX2.Editor.Controls">
+
+    <Grid RowDefinitions="Auto, *">
+        <ItemsControl
+            Grid.Row="0"
+            ItemsSource="{Binding Categories}"
+            Margin="5"
+            VerticalAlignment="Top">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.DataTemplates>
+                <DataTemplate x:DataType="viewModels:CategoryClass">
+                    <ToggleButton
+                        Content="{Binding Name}"
+                        IsChecked="{Binding IsSelected}"
+                        Margin="5" />
+                </DataTemplate>
+            </ItemsControl.DataTemplates>
+        </ItemsControl>
+        <ScrollViewer
+            Grid.Row="1"
+            HorizontalScrollBarVisibility="Disabled"
+            VerticalScrollBarVisibility="Auto">
+            <ItemsControl
+                ItemsSource="{Binding Objects}"
+                Margin="5"
+                VerticalAlignment="Top">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.DataTemplates>
+                    <DataTemplate x:DataType="helpers:EditorImage">
+
+                        <controls:ToggleButtonEx
+                            HorizontalAlignment="Center"
+                            Margin="5"
+                            SelectedValue="{Binding #Root.ViewModel.SelectedObject}"
+                            Value="{Binding}"
+                            VerticalAlignment="Top">
+                            <controls:ToggleButtonEx.View>
+                                <Grid Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Image
+                                        Grid.Row="1"
+                                        HorizontalAlignment="Center"
+                                        Margin="10"
+                                        Source="{Binding Preview}"
+                                        Stretch="None"
+                                        VerticalAlignment="Center" />
+                                    <TextBlock
+                                        Grid.Row="3"
+                                        HorizontalAlignment="Center"
+                                        Margin="10"
+                                        Text="{Binding Name}"
+                                        VerticalAlignment="Bottom" />
+                                </Grid>
+                            </controls:ToggleButtonEx.View>
+                        </controls:ToggleButtonEx>
+
+                    </DataTemplate>
+                </ItemsControl.DataTemplates>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

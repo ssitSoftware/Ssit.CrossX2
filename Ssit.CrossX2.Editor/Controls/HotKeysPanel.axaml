@@ -1,0 +1,54 @@
+<UserControl
+    IsVisible="False"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d"
+    x:Class="Ssit.CrossX2.Editor.Controls.HotKeysPanel"
+    x:DataType="viewModels:MainViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:viewModels="clr-namespace:Ssit.CrossX2.Editor.ViewModels"
+    xmlns:helpers="clr-namespace:Ssit.CrossX2.Editor.Helpers"
+    xmlns:tools="clr-namespace:Ssit.CrossX2.Editor.Tools">
+    <Design.DataContext>
+        <!-- ReSharper disable once Xaml.ConstructorWarning -->
+        <viewModels:MainViewModel />
+    </Design.DataContext>
+
+    <StackPanel IsVisible="False">
+
+        <!--  File Menu  -->
+        <Button Command="{Binding NewCommand}" HotKey="{x:Static helpers:HotKeys.FileNew}" />
+        <Button Command="{Binding OpenCommand}" HotKey="{x:Static helpers:HotKeys.FileOpen}" />
+        <Button Command="{Binding SaveCommand}" HotKey="{x:Static helpers:HotKeys.FileSave}" />
+        <Button Command="{Binding SaveAsCommand}" HotKey="{x:Static helpers:HotKeys.FileSaveAs}" />
+
+        <!--  Edit Menu  -->
+        <Button Command="{Binding UndoCommand}" HotKey="{x:Static helpers:HotKeys.EditUndo}" />
+        <Button Command="{Binding RedoCommand}" HotKey="{x:Static helpers:HotKeys.EditRedo}" />
+        <Button Command="{Binding RedoCommand}" HotKey="{x:Static helpers:HotKeys.EditRedoAlt}" />
+
+        <!--  Tools  -->
+        <Button Command="{Binding EscapeCommand}" HotKey="Escape" />
+        <Button
+            Command="{Binding HotkeyCommand}"
+            CommandParameter="{x:Static helpers:HotkeyActions.Delete}"
+            HotKey="Delete" />
+
+        <Button Command="{Binding HorizontalFlipCommand}" HotKey="{x:Static helpers:HotKeys.HorizontalFlip}" />
+
+        <Button
+            Command="{Binding EditorViewModel.SetToolCommand}"
+            CommandParameter="{x:Static tools:InsertTilesTool.Name}"
+            HotKey="{x:Static helpers:HotKeys.ToolsInsertTiles}" />
+
+        <Button
+            Command="{Binding EditorViewModel.SetToolCommand}"
+            CommandParameter="{x:Static tools:EraserTool.Name}"
+            HotKey="{x:Static helpers:HotKeys.ToolsEraser}" />
+
+
+    </StackPanel>
+</UserControl>

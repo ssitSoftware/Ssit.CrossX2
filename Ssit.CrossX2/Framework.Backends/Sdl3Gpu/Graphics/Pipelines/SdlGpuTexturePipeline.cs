@@ -141,7 +141,7 @@ internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
                 if (glowTexture == null)
                 {
                     texture = textures[0];
-                    globalColor = new Vector4(0f, 0f, 0f, 0f);
+                    globalColor = new Vector4(0f, 0f, 0f, 1f);
                 }
                 else
                 {

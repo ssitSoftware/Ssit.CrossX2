@@ -1,0 +1,74 @@
+<Window
+    CanResize="False"
+    Height="240"
+    Title="{Binding Title}"
+    Width="1024"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d"
+    x:Class="Ssit.CrossX2.Editor.Views.ResizeLayerDialog"
+    x:DataType="viewModels:ResizeLayerDialogViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:viewModels="clr-namespace:Ssit.CrossX2.Editor.ViewModels">
+    <Grid
+        ColumnDefinitions="Auto, 10, 160"
+        Margin="10"
+        RowDefinitions="Auto, 10, Auto, 10, Auto 20, Auto"
+        x:Name="Pnl">
+        <Label
+            Content="Width: "
+            Grid.Column="0"
+            Grid.Row="0"
+            VerticalAlignment="Center" />
+        <NumericUpDown
+            Grid.Column="2"
+            Grid.Row="0"
+            Increment="1"
+            Maximum="8192"
+            Minimum="8"
+            Value="{Binding Width}" />
+
+        <Label
+            Content="Height: "
+            Grid.Column="0"
+            Grid.Row="2"
+            VerticalAlignment="Center" />
+        <NumericUpDown
+            Grid.Column="2"
+            Grid.Row="2"
+            Increment="1"
+            Maximum="8192"
+            Minimum="8"
+            Value="{Binding Height}" />
+
+        <Label
+            Content="Align: "
+            Grid.Column="0"
+            Grid.Row="4"
+            VerticalAlignment="Center" />
+        <ComboBox
+            Grid.Column="2"
+            Grid.Row="4"
+            HorizontalAlignment="Stretch"
+            ItemsSource="{Binding Aligns}"
+            SelectedItem="{Binding Align}" />
+
+        <Button
+            Command="{Binding CloseCommand}"
+            Content="Cancel"
+            Grid.Column="0"
+            Grid.Row="6"
+            HorizontalAlignment="Left" />
+
+        <Button
+            Command="{Binding ApplyCommand}"
+            Content="Apply"
+            Grid.Column="2"
+            Grid.Row="6"
+            HorizontalAlignment="Right" />
+
+    </Grid>
+</Window>

@@ -3,12 +3,14 @@ using Ssit.CrossX2.Framework.Audio;
 using Ssit.CrossX2.Framework.Audio.Internal;
 using Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Audio;
 using Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Graphics;
+using Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Graphics.Effects;
 using Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Input;
 using Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Services;
 using Ssit.CrossX2.Framework.Content;
 using Ssit.CrossX2.Framework.Content.Internal;
 using Ssit.CrossX2.Framework.Core;
 using Ssit.CrossX2.Framework.Graphics;
+using Ssit.CrossX2.Framework.Graphics.Effects;
 using Ssit.CrossX2.Framework.Graphics.Font;
 using Ssit.CrossX2.Framework.Graphics.Internal;
 using Ssit.CrossX2.Framework.Input;
@@ -53,6 +55,8 @@ internal static class AppRunnerSdl
             .WithSingleton<ISmartTextRenderer, SmartTextRenderer>()
             .WithSingleton<IAppTimer, AppTimer>()
             .WithImplementation<ITexture, SdlGpuTexture>()
+            .WithImplementation<ICrtSimEffect, CrtSimEffect>()
+            .WithImplementation<IGlowEffect, GlowEffect>()
             .WithImplementation<IRenderTarget, SdlGpuRenderTarget>()
             .WithImplementation<IVertexBuffer, SdlGpuVertexBuffer>()
             .WithImplementation<ISoundEffect, SdlSoundEffectImpl>()
@@ -294,6 +298,8 @@ internal static class AppRunnerSdl
         component.Dispose();
         services.Dispose();
         
+        actionScheduler.Process();
+        
         SDL_ReleaseWindowFromGPUDevice(device, window);
         SDL_DestroyGPUDevice(device);
         SDL_DestroyWindow(window);
@@ -322,15 +328,125 @@ internal static class AppRunnerSdl
         if (swapchainTexture != null)
         {
             sdlGpuRenderer.DefaultOutputTarget = new SdlGpuRenderTargetStruct(swapchainTexture, new Size((int)swapchainWidth, (int)swapchainHeight));
-
+            
+            sdlGpuRenderer.CurrentPass = RenderPass.Normal;
             if (renderHost.Begin())
             {
                 component.Resize();
             }
+            
             component.Draw();
+
+            if (renderHost.BeginGlowPass())
+            {
+                sdlGpuRenderer.CurrentPass = RenderPass.Glow;
+                component.Draw();
+                sdlGpuRenderer.EndCurrentGpuRenderPass();
+                sdlGpuRenderer.SubmitCommandBuffer();
+                
+                sdlGpuRenderer.CurrentPass = RenderPass.Normal;
+            }
+            
             renderHost.End();
         }
 
         sdlGpuRenderer.SubmitCommandBuffer();
+
+        DebugScreenshot.MaybeCapture(sdlGpuRenderer.Device, window, swapchainTexture, swapchainWidth, swapchainHeight);
+    }
+}
+
+internal static unsafe class DebugScreenshot
+{
+    private static int _frame;
+
+    public static void MaybeCapture(SDL_GPUDevice* device, SDL_Window* window, SDL_GPUTexture* texture, uint width, uint height)
+    {
+        var path = Environment.GetEnvironmentVariable("CROSSX2_SCREENSHOT");
+        if (path == null) return;
+
+        _frame++;
+        if (_frame != 10) return;
+
+        var format = SDL_GetGPUSwapchainTextureFormat(device, window);
+        Console.Error.WriteLine($"[DebugScreenshot] swapchain format = {format}, size = {width}x{height}");
+
+        uint rowBytes = width * 4;
+        uint dataSize = rowBytes * height;
+
+        var transferBufferCreateInfo = new SDL_GPUTransferBufferCreateInfo
+        {
+            usage = SDL_GPUTransferBufferUsage.SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD,
+            size = dataSize,
+        };
+        SDL_GPUTransferBuffer* transferBuffer = SDL_CreateGPUTransferBuffer(device, &transferBufferCreateInfo);
+
+        SDL_GPUCommandBuffer* commandBuffer = SDL_AcquireGPUCommandBuffer(device);
+        SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(commandBuffer);
+
+        var region = new SDL_GPUTextureRegion
+        {
+            texture = texture,
+            mip_level = 0,
+            layer = 0,
+            x = 0,
+            y = 0,
+            z = 0,
+            w = width,
+            h = height,
+            d = 1,
+        };
+        var transferInfo = new SDL_GPUTextureTransferInfo
+        {
+            transfer_buffer = transferBuffer,
+            offset = 0,
+            pixels_per_row = width,
+            rows_per_layer = height,
+        };
+        SDL_DownloadFromGPUTexture(copyPass, &region, &transferInfo);
+        SDL_EndGPUCopyPass(copyPass);
+
+        SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(commandBuffer);
+        SDL_WaitForGPUFences(device, true, &fence, 1);
+        SDL_ReleaseGPUFence(device, fence);
+
+        byte* mapped = (byte*)SDL_MapGPUTransferBuffer(device, transferBuffer, false);
+
+        using var fs = new FileStream(path, FileMode.Create);
+        using var writer = new BinaryWriter(fs);
+        var header = System.Text.Encoding.ASCII.GetBytes($"P6\n{width} {height}\n255\n");
+        writer.Write(header);
+
+        bool bgra = format == SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM;
+
+        for (int y = 0; y < height; y++)
+        {
+            byte* row = mapped + y * rowBytes;
+            for (int x = 0; x < width; x++)
+            {
+                byte b0 = row[x * 4 + 0];
+                byte b1 = row[x * 4 + 1];
+                byte b2 = row[x * 4 + 2];
+
+                if (bgra)
+                {
+                    writer.Write(b2);
+                    writer.Write(b1);
+                    writer.Write(b0);
+                }
+                else
+                {
+                    writer.Write(b0);
+                    writer.Write(b1);
+                    writer.Write(b2);
+                }
+            }
+        }
+
+        SDL_UnmapGPUTransferBuffer(device, transferBuffer);
+        SDL_ReleaseGPUTransferBuffer(device, transferBuffer);
+
+        Console.Error.WriteLine($"[DebugScreenshot] wrote {path}");
+        Environment.Exit(0);
     }
 }

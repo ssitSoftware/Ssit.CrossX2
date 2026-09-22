@@ -34,8 +34,8 @@ internal unsafe class SdlGpuPrimitiveRenderer(SdlGpuRenderer renderer, ISdlGpuPi
         
         var commandBuffer = renderer.CommandBuffer;
         var renderPass = renderer.CurrentGpuRenderPass;
-        
-        var transform = Matrix4x4.CreateTranslation(new Vector3(renderer.RenderStateProvider.Offset, 0)) * Matrix4x4.CreateScale(renderer.RenderStateProvider.Scale);
+
+        var transform = renderer.RenderStateProvider.Transform;
         
         pipeline.Bind(commandBuffer, renderPass, _sdlGpuTextures, transform);
         
