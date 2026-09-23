@@ -1,5 +1,7 @@
 using Ssit.CrossX2.Framework.Graphics;
 using Ssit.CrossX2.Framework.Graphics.Misc;
+using Ssit.CrossX2.Framework.Graphics.Sprites;
+using Ssit.CrossX2.Framework.Graphics.Sprites.Json;
 using Ssit.CrossX2.Framework.IO;
 using Ssit.CrossX2.Framework.IoC;
 using Ssit.CrossX2.Framework.Services;
@@ -30,6 +32,8 @@ internal class ContentManager: IContentManager
         _scheduler = scheduler;
 
         RegisterLoader<ITexture>(LoadTextureFunc);
+        RegisterLoader<Sprite>(path => JsonSpriteLoader.Load(path, filesProvider));
+        RegisterLoader<SpriteEx>(path => SpriteEx.Load(path, filesProvider, this, _iocContainer));
     }
 
     public void RemoveCache<TResource>(string path) where TResource : class, IDisposable
