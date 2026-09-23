@@ -1,5 +1,6 @@
 using System.Numerics;
 using Ssit.CrossX2.Framework.Graphics.Font;
+using Ssit.CrossX2.Framework.Graphics.Renderers;
 using Ssit.CrossX2.Framework.Text;
 
 namespace Ssit.CrossX2.Framework.Graphics.Internal;

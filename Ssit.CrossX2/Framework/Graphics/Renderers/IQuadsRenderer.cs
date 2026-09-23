@@ -1,4 +1,4 @@
-namespace Ssit.CrossX2.Framework.Graphics;
+namespace Ssit.CrossX2.Framework.Graphics.Renderers;
 
 public interface IQuadsRenderer
 {

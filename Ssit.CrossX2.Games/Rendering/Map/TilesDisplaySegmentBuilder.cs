@@ -102,7 +102,9 @@ public class TilesDisplaySegmentBuilder
                     xbr.X -= epsilon;
                     xbr.Y -= epsilon;
                     
-                    quads.Add(new Quad(new RectangleF(tl, br - tl), new RectangleF(xtl, xbr - xtl)));
+                    throw new NotImplementedException("Should be implemented with Vertex Buffers");
+                    // quads.Add(new Quad(new RectangleF(tl, br - tl), 
+                    //     new Rectangle(xtl, xbr - xtl)));
                 }
             }
 

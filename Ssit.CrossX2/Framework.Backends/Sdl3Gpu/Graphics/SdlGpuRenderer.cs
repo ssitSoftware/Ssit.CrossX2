@@ -1,6 +1,7 @@
 using SDL;
 using Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Graphics.Renderers;
 using Ssit.CrossX2.Framework.Graphics;
+using Ssit.CrossX2.Framework.Graphics.Internal;
 using Ssit.CrossX2.Framework.Graphics.Lighting;
 using Ssit.CrossX2.Framework.Graphics.Renderers;
 using Ssit.CrossX2.Framework.IoC;
@@ -40,7 +41,7 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
     
     public IGeometryRenderer GeometryRenderer => field ??= new GeometryRendererImpl(RenderQueue);
     public ISpriteRenderer SpriteRenderer => field ??= new SpriteRendererImpl(RenderQueue);
-    public ITextRenderer TextRenderer { get; private set; }
+    public ITextRenderer TextRenderer => field ??= new TextRenderer(RenderQueue);
     public IRenderQueue RenderQueue { get; private set; }
 
     public SdlGpuRenderTargetStruct DefaultOutputTarget { get; set; }
@@ -134,9 +135,7 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
         _gpuRenderPass = null;
     }
     
-    public void OnLightsUpdated() => EndCurrentGpuRenderPass();
-
-    public void HwModeUpdated() => EndCurrentGpuRenderPass();
+    public void Flush() => EndCurrentGpuRenderPass();
 
     public void BeginNewRenderPass(RgbaColor? clearColor = null)
     {

@@ -15,5 +15,4 @@ public interface ILightingManager
     void SetPointLights(IReadOnlyList<PointLight> lights);
     void SetSpotLights(IReadOnlyList<SpotLight> lights);
     void SetDirectionalLights(IReadOnlyList<DirectionalLight> lights);
-    void SetCellShades(bool global, int shades);
 }

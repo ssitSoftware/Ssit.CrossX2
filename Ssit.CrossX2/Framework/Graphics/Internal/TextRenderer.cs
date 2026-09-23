@@ -5,8 +5,10 @@ using Ssit.CrossX2.Framework.Text;
 
 namespace Ssit.CrossX2.Framework.Graphics.Internal;
 
-public class TextRenderer(IQuadsRenderer quadsRenderer): ITextRenderer
+public class TextRenderer(IRenderQueue renderQueue): ITextRenderer
 {
+    private readonly IQuadsRenderer _quadsRenderer = new QuadsRenderer(renderQueue);
+    
     public void DrawText(IFont font, TextSource text, Vector2 position, ContentAlign align = ContentAlign.Left, float scale = 1,
         RgbaColor? color = null, TextSpacing spacing = TextSpacing.Normal, RgbaColor? outlineColor = null, int lineSpacing = 1,
         TextRenderingContext context = null)
@@ -16,7 +18,7 @@ public class TextRenderer(IQuadsRenderer quadsRenderer): ITextRenderer
             return;
         }
         
-        GlyphFontRenderer.RenderText(quadsRenderer, glyphFont, text, position, align, scale, color ?? RgbaColor.White, outlineColor ?? RgbaColor.Black, spacing, lineSpacing, context);
+        GlyphFontRenderer.RenderText(_quadsRenderer, glyphFont, text, position, align, scale, color ?? RgbaColor.White, outlineColor ?? RgbaColor.Black, spacing, lineSpacing, context);
     }
 
     public void DrawText(IFont font, TextSource text, RectangleF position, ContentAlign align = ContentAlign.Left, float scale = 1,
@@ -33,7 +35,7 @@ public class TextRenderer(IQuadsRenderer quadsRenderer): ITextRenderer
             paragraphSpacing = glyphFont.Metrics.LineHeight / 4f;
         }
 
-        GlyphFontRenderer.RenderText(quadsRenderer, glyphFont, text, position, align, scale, color ?? RgbaColor.White,
+        GlyphFontRenderer.RenderText(_quadsRenderer, glyphFont, text, position, align, scale, color ?? RgbaColor.White,
             outlineColor ?? RgbaColor.Black, spacing, paragraphSpacing, lineSpacing, context);
     }
 }

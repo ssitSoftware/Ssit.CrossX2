@@ -13,13 +13,13 @@ struct VertexOut
 
 struct LightingUniforms
 {
-    float4 ambient;                    // rgb ambient color, a - global cell shades
+    float4 ambient;                    // rgb ambient color, a unused
     float4 lightPositionRadius[8];     // xyz = position, w = radius
     float4 lightColorIntensity[8];     // rgb = color, a = intensity
     float4 spotPositionRadius[8];      // xyz = position, w = radius
     float4 spotDirectionAngle[8];      // xy = normalized 2D direction (screen plane), z = cos(outerAngle), w = cos(innerAngle)
     float4 spotColorIntensity[8];      // rgb = color, a = intensity
-    float4 lightCount;                 // x = point light count, y = position quantization resolution in pixels, z = spot light count, w - local cell shades
+    float4 lightCount;                 // x = point light count, y = position quantization resolution in pixels, z = spot light count, w unused
     float4 dirDirection[4];            // xyz = normalized 3D light-travel direction, w unused
     float4 dirColorIntensity[4];       // rgb = color, a = intensity
     float4 directionalCount;           // x = directional light count, yzw unused
@@ -51,9 +51,6 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
     int count = int(lights.lightCount.x);
     float resolution = lights.lightCount.y;
 
-	float localCellShading = lights.lightCount.w;
-	float globalCellShading = lights.ambient.a;
-
     float3 fragPosition = resolution > 0.0
         ? floor(in.originalPosition / resolution) * resolution
         : in.originalPosition;
@@ -82,8 +79,6 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
         attenuation *= diffuse;
 
         intensity *= attenuation;
-		intensity = localCellShading > 0 ? floor(intensity * localCellShading) / localCellShading : intensity;
-
 		lighting += lightColor * intensity;
     }
 
@@ -123,8 +118,6 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
         attenuation *= diffuse;
 
 		intensity *= attenuation;
-        intensity = localCellShading > 0 ? floor(intensity * localCellShading) / localCellShading : intensity;
-
         lighting += lightColor * intensity;
     }
 
@@ -147,12 +140,8 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
         float diffuse = max(dot(N, lightDir), 0.0);
 
         intensity *= diffuse;
-        intensity = localCellShading > 0 ? floor(intensity * localCellShading) / localCellShading : intensity;
-
         lighting += lightColor * intensity;
     }
-
-    lighting = globalCellShading > 0 ? floor(lighting * globalCellShading) / globalCellShading : lighting;
 
     return float4(texColor.rgb * lighting, texColor.a);
 }

@@ -24,17 +24,17 @@ public static class TextureHelper
                 if (color.A > 0)
                 {
                     int outlineAlpha = color.A;
-                    int fillAlpha = color.G;
+                    int fillAlpha = color.G * color.A / 255;
 
-                    if (fillAlpha > 128)
+                    if (fillAlpha > 192)
                     {
                         outlineAlpha = 255 - (fillAlpha - 128) * 2;
                         outlineAlpha = Math.Max(0, outlineAlpha) * color.A / 255;
                         outlineAlpha = Math.Min(255, outlineAlpha);
                     }
                     
-                    fillColors[x, y] = RgbaColor.FromNonPremultiplied(255, 255, 255, (byte)fillAlpha);
-                    outlineColors[x, y] = RgbaColor.FromNonPremultiplied(255, 255, 255, (byte)outlineAlpha);
+                    fillColors[x, y] = new RgbaColor(255, 255, 255, (byte)fillAlpha);
+                    outlineColors[x, y] = new RgbaColor(255, 255, 255, (byte)outlineAlpha);
                 }
             }
         }

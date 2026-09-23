@@ -6,7 +6,7 @@ public class StateManager : IStateManager
 {
     public interface IUpdateHwModeHandler
     {
-        void HwModeUpdated();
+        void Flush();
     }
 
     public IRenderStateProvider StateProvider => _stateProvider;
@@ -27,7 +27,7 @@ public class StateManager : IStateManager
         
         if (blendMode != _state.BlendMode || clipRect != _state.ClipRect)
         {
-            UpdateHwMode();
+            OnStateUpdated();
         }
     }
 
@@ -35,7 +35,7 @@ public class StateManager : IStateManager
     {
         _savedStates.Clear();
         _state = new();
-        UpdateHwMode();
+        OnStateUpdated();
     }
 
     public void Scale(float scale)
@@ -43,7 +43,7 @@ public class StateManager : IStateManager
         if (Math.Abs(scale - 1) < float.Epsilon) return;
 
         _state.Transform = Matrix4x4.CreateScale(scale) * _state.Transform;
-        UpdateHwMode();
+        OnStateUpdated();
     }
 
     public void Translate(Vector2 offset)
@@ -51,7 +51,7 @@ public class StateManager : IStateManager
         if(offset == Vector2.Zero) return;
         
         _state.Transform = Matrix4x4.CreateTranslation(new Vector3(offset, 0)) * _state.Transform;
-        UpdateHwMode();
+        OnStateUpdated();
     }
     
     public void SetBlendMode(BlendMode blendMode)
@@ -59,7 +59,7 @@ public class StateManager : IStateManager
         if(_state.BlendMode == blendMode) return;
         
         _state.BlendMode = blendMode;
-        UpdateHwMode();
+        OnStateUpdated();
     }
     
     public void SetClipRect(RectangleF? clipRect, bool intersectExisting = true)
@@ -91,7 +91,7 @@ public class StateManager : IStateManager
         }
         
         _state.ClipRect = clipRect;
-        UpdateHwMode();
+        OnStateUpdated();
     }
 
     public void SetTextureFilter(TextureFilter filter)
@@ -99,12 +99,12 @@ public class StateManager : IStateManager
         if(_state.TextureFilter == filter) return;
         
         _state.TextureFilter = filter;
-        UpdateHwMode();
+        OnStateUpdated();
     }
 
-    private void UpdateHwMode()
+    private void OnStateUpdated()
     {
-        _handler?.HwModeUpdated();
+        _handler?.Flush();
         _stateProvider.Update(_state);
     }
 

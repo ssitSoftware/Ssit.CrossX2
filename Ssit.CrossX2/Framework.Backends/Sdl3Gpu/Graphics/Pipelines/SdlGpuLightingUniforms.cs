@@ -58,7 +58,7 @@ internal static unsafe class SdlGpuLightingUniforms
 
         var uniforms = new LightingUniforms
         {
-            Ambient = new Vector4(lightingManager.AmbientLight.Rf, lightingManager.AmbientLight.Gf, lightingManager.AmbientLight.Bf, lightingManager.GlobalCellShades),
+            Ambient = new Vector4(lightingManager.AmbientLight.Rf, lightingManager.AmbientLight.Gf, lightingManager.AmbientLight.Bf, 0f),
             LightPositionRadius0 = positionRadius[0],
             LightPositionRadius1 = positionRadius[1],
             LightPositionRadius2 = positionRadius[2],
@@ -99,7 +99,7 @@ internal static unsafe class SdlGpuLightingUniforms
             SpotColorIntensity5 = spotColorIntensity[5],
             SpotColorIntensity6 = spotColorIntensity[6],
             SpotColorIntensity7 = spotColorIntensity[7],
-            LightCount = new Vector4(pointCount, lightingManager.Resolution, spotCount, lightingManager.LocalCellShades),
+            LightCount = new Vector4(pointCount, lightingManager.Resolution, spotCount, 0f),
             DirDirection0 = dirDirection[0],
             DirDirection1 = dirDirection[1],
             DirDirection2 = dirDirection[2],
@@ -158,7 +158,7 @@ internal static unsafe class SdlGpuLightingUniforms
         public Vector4 SpotColorIntensity5;
         public Vector4 SpotColorIntensity6;
         public Vector4 SpotColorIntensity7;
-        public Vector4 LightCount; // x = point light count, y = position quantization resolution in pixels, z = spot light count, w = cell shades
+        public Vector4 LightCount; // x = point light count, y = position quantization resolution in pixels, z = spot light count, w unused
         public Vector4 DirDirection0; // xyz = normalized 3D light-travel direction, w unused
         public Vector4 DirDirection1;
         public Vector4 DirDirection2;

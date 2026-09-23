@@ -2,6 +2,7 @@ using System.Numerics;
 using Newtonsoft.Json;
 using SkiaSharp;
 using Ssit.CrossX2.Framework;
+using Ssit.CrossX2.Framework.Graphics.Font;
 using Ssit.CrossX2.Framework.Graphics.Internal;
 using Ssit.CrossX2.Framework.Xml;
 
@@ -14,19 +15,6 @@ internal class XmlToFontConverter(string fullPath, XNode xmlNode) : IXmlFileConv
         public string[] Fonts { get; set; }
     }
     
-    [Flags]
-    private enum CharSets
-    {
-        Ascii = 1,
-        Polish = 2,
-        German = 4,
-        French = 8,
-        Spanish = 16,
-        Special = 32,
-        Dos = 64,
-        Icons = 128
-    }
-
     private const string PolishCharacters = "ĄĆĘŁŃÓŚŹŻąćęłńóśźż";
     private const string GermanCharacters = "ÄäÖöÜüẞß";
     private const string FrenchCharacters = "ÀÂÄÆÇÈÉÊËÎÏÔŒÙÛÜèéêëîïôœùûüàâäæç";
@@ -37,7 +25,6 @@ internal class XmlToFontConverter(string fullPath, XNode xmlNode) : IXmlFileConv
         
     
     public async Task Generate()
-    
     {
         var list = new List<string>();
         

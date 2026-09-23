@@ -31,6 +31,13 @@ public interface IFontsManager
     /// <param name="imagePath">The path to the image file containing the font's bitmap representation.</param>
     /// <param name="size">The dimensions of the font's single character.</param>
     void LoadBitmapFont(string name, string imagePath, Size size);
+
+    /// <summary>
+    /// Loads a font with the specified name using the provided font description.
+    /// </summary>
+    /// <param name="name">The name to assign to the loaded font.</param>
+    /// <param name="description">An object containing the description and properties required for loading the font.</param>
+    void LoadFont(string name, LoadFontDescription description);
     
     /// <summary>
     /// Retrieves a font with the specified name and size from the font manager.

@@ -85,6 +85,11 @@ internal class FontsManager: IFontsManager, IDisposable
         list.Add(bitmapFont);
     }
 
+    public void LoadFont(string name, LoadFontDescription description)
+    {
+        throw new NotImplementedException();
+    }
+
     public IFont GetFont(string name, float size = 0)
     {
         var diff = float.MaxValue;
