@@ -12,7 +12,7 @@ struct CrtUniforms
 {
     float4 distortion; // x = barrel distortion, y = RGB displacement, z = scanline intensity, w = vignette strength
     float4 params; // x = output pixels per source texel (uniform fit scale), y = gamma, z = source scale, w = bleed factor
-    float4 resolution; // x = fitted output height in pixels, y = lightness multiplier, zw unused
+    float4 resolution; // x = fitted output height in pixels, y = lightness multiplier, z = saturation (0..1), w unused
 };
 
 fragment float4 fragmentMain(VertexOut in [[stage_in]],
@@ -37,10 +37,16 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
         return float4(0.0, 0.0, 0.0, 1.0) * in.color.a;
     }
 
+  	//centered.x *= abs(centered.x);
+	//centered.y *= abs(centered.y);
+
     float centeredLength = length(centered);
-    float2 dir = centeredLength > 0.0001 ? centered / centeredLength : float2(0.0, 0.0);
-    //dir = (dir + float2(1,0)) /  2;
-    float2 offset = dir * rgbShift * 0.01;
+    float2 dir = centeredLength > 0.0001 ? centered / sqrt(centeredLength) : float2(0.0, 0.0);
+    float2 dir2 = centeredLength > 0.0001 ? centered / centeredLength : float2(0.0, 0.0);
+
+    dir = (dir+dir2) * 0.5;
+
+    float2 offset = dir2 * rgbShift * 0.005;
 
     float rCh = tex.sample(samp, uv + offset).r;
     float gCh = tex.sample(samp, uv).g;
@@ -64,6 +70,10 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
 	float gamma = crt.params.y;
     float lightnessMultiplier = crt.resolution.y;
     rgb = pow(max(rgb, 0.0), gamma) * lightnessMultiplier;
+
+    float saturation = crt.resolution.z;
+    float desaturatedLuma = dot(rgb, float3(0.299, 0.587, 0.114));
+    rgb = mix(float3(desaturatedLuma), rgb, saturation);
 
 	// Bright pixels bleed through the dark scanline gap instead of being darkened as much.
 	float luma = dot(rgb, float3(0.299, 0.587, 0.114));

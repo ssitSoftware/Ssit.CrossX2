@@ -108,7 +108,7 @@ internal sealed unsafe class CrtSimEffect : ICrtSimEffect
         {
             Distortion = new Vector4(_parameters.BarrelDistortion, _parameters.RgbDisplacement, _parameters.ScanlineIntensity, _parameters.Vignette),
             Params = new Vector4(fitScale, _parameters.Gamma, sourceScale, _parameters.BleedFactor),
-            Resolution = new Vector4(fittedHeightPixels, _parameters.LightnessMultiplier, 0f, 0f),
+            Resolution = new Vector4(fittedHeightPixels, _parameters.LightnessMultiplier, _parameters.Saturation, 0f),
         };
         SDL_PushGPUFragmentUniformData(commandBuffer, 0, (IntPtr)(&crtUniforms), (uint)sizeof(CrtUniforms));
 

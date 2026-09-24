@@ -9,4 +9,7 @@ public class CrtSimulationEffectParameters
     public float Gamma { get; set; } = 0.94f;
     public float LightnessMultiplier { get; set; } = 1.2f;
     public float BleedFactor { get; set; } = 1f;
+
+    /// <summary>0 = grayscale, 1 = original color saturation.</summary>
+    public float Saturation { get; set; } = 1f;
 }
