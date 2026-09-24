@@ -82,6 +82,11 @@ internal static class AppRunnerSdl
 #elif ANDROID
         flags = SDL_WindowFlags.SDL_WINDOW_BORDERLESS | SDL_WindowFlags.SDL_WINDOW_FULLSCREEN |
                 SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY;
+#else
+        // Without this, macOS defaults to "auto" and hides the menu/title bar
+        // (and its green button) because fullscreen was toggled programmatically
+        // rather than via the window's own fullscreen button.
+        SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_MENU_VISIBILITY, "1");
 #endif
         
         SDL_Window* window = SDL_CreateWindow("SDL# GPU Samples"u8, size.Width, size.Height, flags);
@@ -225,6 +230,11 @@ internal static class AppRunnerSdl
                     case SDL_EventType.SDL_EVENT_WINDOW_ENTER_FULLSCREEN:
                     case SDL_EventType.SDL_EVENT_WINDOW_LEAVE_FULLSCREEN:
                     {
+                        // Make sure the OS-driven transition (e.g. the window's own
+                        // fullscreen button) has fully settled before touching swapchain-sized
+                        // resources below, otherwise we can race the animation on macOS.
+                        SDL_SyncWindow(window);
+
                         appWindowManager.EnsureWindowSize();
 
                         int w, h;

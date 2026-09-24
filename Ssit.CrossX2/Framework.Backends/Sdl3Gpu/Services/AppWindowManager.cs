@@ -37,8 +37,8 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
                     SDL_GetWindowSizeInPixels(window, &w, &h);
                     _windowSize = new Size(w, h);
                     
-                    SDL_SetWindowAspectRatio(window, 0.1f, 2f);
                     SDL_SetWindowFullscreen(window, true);
+                    SDL_SyncWindow(window);
                 }
             }
         );
@@ -53,6 +53,7 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
             if ((flags & SDL_WindowFlags.SDL_WINDOW_FULLSCREEN) != 0)
             {
                 SDL_SetWindowFullscreen(window, false);
+                SDL_SyncWindow(window);
             }
 
             _windowSize = size;
