@@ -6,4 +6,5 @@ public interface IRenderHostParameters
     RenderHostFlags Flags { get; set; }
     int MinScale { get; set; }
     int MaxScale { get; set; }
+    IPostRenderer PostRenderer { get; set; }
 }

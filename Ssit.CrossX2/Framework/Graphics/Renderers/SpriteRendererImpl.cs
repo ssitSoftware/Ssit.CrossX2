@@ -11,7 +11,17 @@ public class SpriteRendererImpl(IRenderQueue renderQueue): ISpriteRenderer
         var source = sourceRectangle ?? new RectangleF(0, 0, texture.Size.Width, texture.Size.Height);
         var color = nullableColor ?? RgbaColor.White;
         var originValue = origin ?? Vector2.Zero;
-
+     
+        if ((imageTransform & ImageTransform.FlipHorizontal) != 0)
+        {
+            originValue.X = source.Width - originValue.X;
+        }
+        
+        if ((imageTransform & ImageTransform.FlipVertical) != 0)
+        {
+            originValue.Y = source.Height - originValue.Y;
+        }
+        
         var scaleX = source.Width != 0 ? target.Width / source.Width : 1f;
         var scaleY = source.Height != 0 ? target.Height / source.Height : 1f;
 
@@ -57,10 +67,10 @@ public class SpriteRendererImpl(IRenderQueue renderQueue): ISpriteRenderer
     public void Draw(ITexture texture, Vector2 position, RectangleF? sourceRectangle = null, Vector2? origin = null, float rotation = 0,
         float scale = 1, RgbaColor? color = null, ImageTransform imageTransform = ImageTransform.None, float depth = 0)
     {
-        var source = sourceRectangle ?? new RectangleF(0, 0, texture.Size.Width, texture.Size.Height);
-        var target = new RectangleF(position.X, position.Y, source.Width * scale, source.Height * scale);
-
-        Draw(texture, target, sourceRectangle, origin, rotation, color, imageTransform);
+        var sourceRect = sourceRectangle ?? new RectangleF(0, 0, texture.Size.Width, texture.Size.Height);
+        
+        var targetRect = new RectangleF(position.X, position.Y, sourceRect.Width * scale, sourceRect.Height * scale);
+        Draw(texture, targetRect, sourceRect, origin, rotation, color, imageTransform);
     }
 
     public void Draw(SpriteInstance sprite, Vector2 position, float rotation = 0, float scale = 1, RgbaColor? color = null, ImageTransform transform = ImageTransform.None, float depth = 0) 

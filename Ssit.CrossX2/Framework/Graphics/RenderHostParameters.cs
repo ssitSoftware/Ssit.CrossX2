@@ -27,4 +27,6 @@ internal class RenderHostParameters: BindableModel, IRenderHostParameters
         get;
         set => SetField(ref field, value);
     } = 32;
+
+    public IPostRenderer PostRenderer { get; set; }
 }

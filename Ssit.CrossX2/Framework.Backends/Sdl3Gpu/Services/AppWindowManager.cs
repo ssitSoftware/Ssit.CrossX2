@@ -33,11 +33,11 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
                 var flags = SDL_GetWindowFlags(window);
                 if ((flags & SDL_WindowFlags.SDL_WINDOW_FULLSCREEN) == 0)
                 {
-                    
                     int w, h;
                     SDL_GetWindowSizeInPixels(window, &w, &h);
                     _windowSize = new Size(w, h);
                     
+                    SDL_SetWindowAspectRatio(window, 0.1f, 2f);
                     SDL_SetWindowFullscreen(window, true);
                 }
             }
@@ -57,7 +57,13 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
 
             _windowSize = size;
             _keepSize = keepSize;
-            
+
+            if (!_keepSize)
+            {
+                float aspect = (float)_windowSize.Width / _windowSize.Height;
+                SDL_SetWindowAspectRatio(window, aspect, aspect);
+            }
+
             SDL_SetWindowSize(window, size.Width, size.Height);
             SDL_SetWindowPosition(window, (int)SDL_WINDOWPOS_CENTERED, (int)SDL_WINDOWPOS_CENTERED);
         });
@@ -67,7 +73,10 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
 
     public void EnsureWindowSize()
     {
-        if (!_keepSize) return;
+        if (!_keepSize)
+        {
+            return;
+        }
         
         var flags = SDL_GetWindowFlags(window);
         if ((flags & SDL_WindowFlags.SDL_WINDOW_FULLSCREEN) != 0)
@@ -76,6 +85,7 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
         }
         
         int w, h;
+        
         SDL_GetWindowSizeInPixels(window, &w, &h);
 
         if (w != _windowSize.Width || h != _windowSize.Height)
@@ -102,6 +112,14 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
         SDL_Rect rect;
         SDL_GetDisplayBounds(displayId, &rect);
         return new Size(rect.w, rect.h);
+    }
+
+    public void SetMinimumSize(Size size)
+    {
+        _actionScheduler.Schedule(() =>
+        {
+            SDL_SetWindowMinimumSize(window, size.Width, size.Height);
+        });
     }
 
     public (int w, int h, int hz) GetDisplayMode()

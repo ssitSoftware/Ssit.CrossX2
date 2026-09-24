@@ -10,6 +10,7 @@ public interface IAppWindowManager
     void SetTitle(string title);
     bool IsTouchScreen { get; }
     Size GetWindowMaxSize();
+    void SetMinimumSize(Size size);
     
     (int w, int h, int hz) GetDisplayMode();
 }

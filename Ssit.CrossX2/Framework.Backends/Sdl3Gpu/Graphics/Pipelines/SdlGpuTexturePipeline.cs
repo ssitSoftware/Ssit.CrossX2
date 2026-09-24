@@ -11,7 +11,7 @@ internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
     protected readonly SdlGpuRenderer GpuRenderer;
     
     private readonly SDL_GPUDevice* _device;
-    public SDL_GPUGraphicsPipeline* Pipeline { get; }
+    private readonly SDL_GPUGraphicsPipeline*[] _pipelines = new SDL_GPUGraphicsPipeline*[SdlGpuBlendStateFactory.AllModes.Length];
     public SDL_GPUSampler* LinearSampler { get; }
     public SDL_GPUSampler* PointSampler { get; }
 
@@ -43,49 +43,48 @@ internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
 
         var vertexAttributesManaged = GpuVertexLayout.CreateVertexAttributes(VertexPcttb.Components);
 
+        var swapchainFormat = SDL_GetGPUSwapchainTextureFormat(_device, window);
+
         var colorTargetDescriptions = stackalloc SDL_GPUColorTargetDescription[1];
-        colorTargetDescriptions[0] = new SDL_GPUColorTargetDescription
-        {
-            format = SDL_GetGPUSwapchainTextureFormat(_device, window),
-            blend_state = new SDL_GPUColorTargetBlendState
-            {
-                enable_blend = true,
-                src_color_blendfactor = SDL_GPUBlendFactor.SDL_GPU_BLENDFACTOR_ONE,
-                dst_color_blendfactor = SDL_GPUBlendFactor.SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-                color_blend_op = SDL_GPUBlendOp.SDL_GPU_BLENDOP_ADD,
-                src_alpha_blendfactor = SDL_GPUBlendFactor.SDL_GPU_BLENDFACTOR_ONE,
-                dst_alpha_blendfactor = SDL_GPUBlendFactor.SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-                alpha_blend_op = SDL_GPUBlendOp.SDL_GPU_BLENDOP_ADD,
-            },
-        };
 
         fixed (SDL_GPUVertexAttribute* vertexAttributes = vertexAttributesManaged)
         {
-            var pipelineCreateInfo = new SDL_GPUGraphicsPipelineCreateInfo
+            foreach (var blendMode in SdlGpuBlendStateFactory.AllModes)
             {
-                vertex_shader = vertexShader,
-                fragment_shader = fragmentShader,
-                primitive_type = SDL_GPUPrimitiveType.SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-                vertex_input_state = new SDL_GPUVertexInputState
+                colorTargetDescriptions[0] = new SDL_GPUColorTargetDescription
                 {
-                    vertex_buffer_descriptions = vertexBufferDescriptions,
-                    num_vertex_buffers = 1,
-                    vertex_attributes = vertexAttributes,
-                    num_vertex_attributes = (uint)vertexAttributesManaged.Length,
-                },
-                target_info = new SDL_GPUGraphicsPipelineTargetInfo
+                    format = swapchainFormat,
+                    blend_state = SdlGpuBlendStateFactory.Create(blendMode),
+                };
+
+                var pipelineCreateInfo = new SDL_GPUGraphicsPipelineCreateInfo
                 {
-                    color_target_descriptions = colorTargetDescriptions,
-                    num_color_targets = 1,
-                },
-            };
+                    vertex_shader = vertexShader,
+                    fragment_shader = fragmentShader,
+                    primitive_type = SDL_GPUPrimitiveType.SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+                    vertex_input_state = new SDL_GPUVertexInputState
+                    {
+                        vertex_buffer_descriptions = vertexBufferDescriptions,
+                        num_vertex_buffers = 1,
+                        vertex_attributes = vertexAttributes,
+                        num_vertex_attributes = (uint)vertexAttributesManaged.Length,
+                    },
+                    target_info = new SDL_GPUGraphicsPipelineTargetInfo
+                    {
+                        color_target_descriptions = colorTargetDescriptions,
+                        num_color_targets = 1,
+                    },
+                };
 
-            Pipeline = SDL_CreateGPUGraphicsPipeline(_device, &pipelineCreateInfo);
-        }
+                var pipeline = SDL_CreateGPUGraphicsPipeline(_device, &pipelineCreateInfo);
 
-        if (Pipeline == null)
-        {
-            throw new InvalidOperationException($"SDL_CreateGPUGraphicsPipeline failed: {SDL_GetError()}");
+                if (pipeline == null)
+                {
+                    throw new InvalidOperationException($"SDL_CreateGPUGraphicsPipeline failed: {SDL_GetError()}");
+                }
+
+                _pipelines[(int)blendMode] = pipeline;
+            }
         }
 
         SDL_ReleaseGPUShader(_device, vertexShader);
@@ -126,7 +125,8 @@ internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
 
     public virtual void Bind(SDL_GPUCommandBuffer* commandBuffer, SDL_GPURenderPass* renderPass, SDL_GPUTexture*[] textures, Matrix4x4 transform)
     {
-        SDL_BindGPUGraphicsPipeline(renderPass, Pipeline);
+        var pipeline = _pipelines[(int)GpuRenderer.RenderStateProvider.BlendMode];
+        SDL_BindGPUGraphicsPipeline(renderPass, pipeline);
 
         var targetSize = GpuRenderer.TargetSize;
 
@@ -181,7 +181,14 @@ internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
     {
         SDL_ReleaseGPUSampler(_device, LinearSampler);
         SDL_ReleaseGPUSampler(_device, PointSampler);
-        SDL_ReleaseGPUGraphicsPipeline(_device, Pipeline);
+
+        foreach (var pipeline in _pipelines)
+        {
+            if (pipeline != null)
+            {
+                SDL_ReleaseGPUGraphicsPipeline(_device, pipeline);
+            }
+        }
     }
 
     [StructLayout(LayoutKind.Sequential)]

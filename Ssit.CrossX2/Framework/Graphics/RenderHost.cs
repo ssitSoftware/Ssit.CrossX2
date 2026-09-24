@@ -245,6 +245,9 @@ internal class RenderHost : IRenderHost
         
         var pos = _renderer.TargetSize.ToVector() / 2f - sourceTexture.Size.ToVector() * scale / 2f;
         _renderer.SpriteRenderer.Draw(sourceTexture, pos, null, Vector2.Zero, scale: scale);
+        
+        _renderer.StateManager.Reset();
+        _parameters.PostRenderer?.Render();
     }
     
     public void Dispose()
