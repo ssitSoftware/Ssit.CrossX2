@@ -16,7 +16,7 @@ public class LabelButtonHandler<TLabelButton>: LabelHandler<TLabelButton>, IInpu
     private readonly PageInputContext _pageInputContext;
     protected override RgbaColor? BackgroundColor(IRenderer renderer) => AttachedView.BackgroundColors?.GetColor(renderer, _buttonHelper.IsHovered, Focused && _pageInputContext.ShowFocus, _buttonHelper.IsPressed || _buttonHelper.IsExecutingCommand, Enabled, IsChecked);
     protected override RgbaColor? TextColor(IRenderer renderer, bool? focused = null) => AttachedView.TextColors?.GetColor(renderer, _buttonHelper.IsHovered, (focused ?? Focused) && _pageInputContext.ShowFocus, _buttonHelper.IsPressed || _buttonHelper.IsExecutingCommand, Enabled, IsChecked);
-    protected override RgbaColor? TextOutlineColor(IRenderer renderer) => AttachedView.TextOutlineColors?.GetColor(renderer, _buttonHelper.IsHovered, Focused && _pageInputContext.ShowFocus, _buttonHelper.IsPressed || _buttonHelper.IsExecutingCommand, Enabled, IsChecked);
+    protected override RgbaColor? TextOutlineColor(IRenderer renderer) => AttachedView.TextOutlineColors?.GetColor(renderer, _buttonHelper.IsHovered, Focused , _buttonHelper.IsPressed || _buttonHelper.IsExecutingCommand, Enabled, IsChecked);
  
     protected virtual bool IsChecked => false;
     

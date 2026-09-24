@@ -44,7 +44,8 @@ public static class TextureHelper
         {
             outlineSheet = container.IoCConstruct<ITexture>(new LoadTextureParameters
             {
-                DiffuseMapStream = outlineStream
+                DiffuseMapStream = outlineStream,
+                GlowFromDiffuse = true
             });
         }
         
@@ -53,7 +54,8 @@ public static class TextureHelper
         {
             fillSheet = container.IoCConstruct<ITexture>(new LoadTextureParameters
             {
-                DiffuseMapStream = fillStream
+                DiffuseMapStream = fillStream,
+                GlowFromDiffuse = true
             });
         }
         

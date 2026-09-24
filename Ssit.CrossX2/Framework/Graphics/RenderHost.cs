@@ -55,6 +55,7 @@ internal class RenderHost : IRenderHost
         _renderer.StateManager.Reset();
         _renderer.SetRenderTarget(_glowRenderTarget);
         _renderer.LightingManager.EnableLighting(false, false);
+        _renderer.StateManager.SetBlendMode(BlendMode.AlphaBlend);
         _renderer.Clear(RgbaColor.Black);
 
         return true;
@@ -208,6 +209,7 @@ internal class RenderHost : IRenderHost
         
         if (_glowRenderTarget != null)
         {
+            _renderer.StateManager.SetTextureFilter(TextureFilter.Point);
              _glowEffect?.Render(_glowRenderIntermediateTarget, _renderTarget, _glowRenderTarget, Scale);
              sourceTexture = _glowEffect != null ? _glowRenderIntermediateTarget : _renderTarget;
         }

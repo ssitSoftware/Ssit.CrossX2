@@ -100,10 +100,15 @@ internal sealed unsafe class CrtSimEffect : ICrtSimEffect
         var scaleUniforms = new ScaleUniforms { Scale = new Vector4(scaleX, scaleY, 0f, 0f) };
         SDL_PushGPUVertexUniformData(commandBuffer, 0, (IntPtr)(&scaleUniforms), (uint)sizeof(ScaleUniforms));
 
+        // Height, in output pixels, of the fitted (letterboxed) image - lets the shader convert the
+        // normalized barrel-warped y back into pixel space so scanlines curve along with the distortion.
+        float fittedHeightPixels = sourceHeight * fitScale;
+
         var crtUniforms = new CrtUniforms
         {
             Distortion = new Vector4(_parameters.BarrelDistortion, _parameters.RgbDisplacement, _parameters.ScanlineIntensity, _parameters.Vignette),
-            Params = new Vector4(fitScale, _parameters.RestoreLightness, sourceScale, _parameters.BleedFactor),
+            Params = new Vector4(fitScale, _parameters.Gamma, sourceScale, _parameters.BleedFactor),
+            Resolution = new Vector4(fittedHeightPixels, _parameters.LightnessMultiplier, 0f, 0f),
         };
         SDL_PushGPUFragmentUniformData(commandBuffer, 0, (IntPtr)(&crtUniforms), (uint)sizeof(CrtUniforms));
 
@@ -264,5 +269,6 @@ internal sealed unsafe class CrtSimEffect : ICrtSimEffect
     {
         public Vector4 Distortion;
         public Vector4 Params;
+        public Vector4 Resolution;
     }
 }

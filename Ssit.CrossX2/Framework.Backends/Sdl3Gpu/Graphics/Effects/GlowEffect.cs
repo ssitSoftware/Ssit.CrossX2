@@ -17,7 +17,7 @@ internal sealed unsafe class GlowEffect : IGlowEffect
     private readonly SdlGpuRenderer _renderer;
     private readonly IActionScheduler _scheduler;
     private const float BlurSpreadPixels = 1f;
-    private const int BlurIterations = 4;
+    private const int BlurIterations = 2;
     private const float BlurPadding = 240f;
 
     private readonly SDL_GPUDevice* _device;
@@ -158,7 +158,7 @@ internal sealed unsafe class GlowEffect : IGlowEffect
 
         for (int i = 0; i < BlurIterations; i++)
         {
-            float scale = (i + 1) * sourceScale;
+            float scale = sourceScale;
             RunBlurPass(commandBuffer, _blurTextureA, _blurTextureB, new Vector2(_spreadU * scale, 0f), _fullscreenVertexBuffer);
             RunBlurPass(commandBuffer, _blurTextureB, _blurTextureA, new Vector2(0f, _spreadV * scale), _fullscreenVertexBuffer);
         }

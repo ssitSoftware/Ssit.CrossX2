@@ -11,7 +11,8 @@ struct VertexOut
 struct CrtUniforms
 {
     float4 distortion; // x = barrel distortion, y = RGB displacement, z = scanline intensity, w = vignette strength
-    float4 params; // x = output pixels per source texel (uniform fit scale), y = gamma, zw unused
+    float4 params; // x = output pixels per source texel (uniform fit scale), y = gamma, z = source scale, w = bleed factor
+    float4 resolution; // x = fitted output height in pixels, y = lightness multiplier, zw unused
 };
 
 fragment float4 fragmentMain(VertexOut in [[stage_in]],
@@ -50,15 +51,19 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
 
     // Each scanline band (bright or dark half of the cycle) spans half a source texel,
     // so a full bright+dark cycle spans one source texel's worth of output pixels.
+    // The phase is driven by the barrel-warped y (scaled back into pixel space) rather than
+    // the flat screen-space position, so the scanlines bow along with the tube curvature
+    // instead of staying perfectly straight.
     float pixelScale = max(crt.params.x * crt.params.z * 1.5, 0.0001);
-    float scanlinePhase = 0.5 + 0.5 * sin(in.position.y * (2.0 * 3.14159265 / pixelScale));
+    float warpedPixelY = warped.y * (crt.resolution.x * 0.5);
+    float scanlinePhase = 0.5 + 0.5 * sin(warpedPixelY * (2.0 * 3.14159265 / pixelScale));
 
     float vignetteEffect = saturate(1.0 - vignette * r2);
     rgb *= vignetteEffect;
 
-	float restoreLightness = crt.params.y;
-    float gamma = sqrt(sqrt(max(restoreLightness, 0.1)));
-    rgb = pow(max(rgb, 0.0), gamma) * restoreLightness * restoreLightness;
+	float gamma = crt.params.y;
+    float lightnessMultiplier = crt.resolution.y;
+    rgb = pow(max(rgb, 0.0), gamma) * lightnessMultiplier;
 
 	// Bright pixels bleed through the dark scanline gap instead of being darkened as much.
 	float luma = dot(rgb, float3(0.299, 0.587, 0.114));

@@ -14,6 +14,8 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
     private SDL_GPUTexture* _diffuse = null;
     private SDL_GPUTexture* _glow = null;
     private SDL_GPUTexture* _normal = null;
+
+    private bool _glowFromDiffuse;
     
     public SdlGpuTexture(SdlHandles handles, LoadTextureParameters parameters)
     {
@@ -21,6 +23,8 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
         TextureMaps maps = 0; 
         
         Size? size = null;
+
+        _glowFromDiffuse = parameters.GlowFromDiffuse;
         
         if (parameters.DiffuseMapStream is not null)
         {
@@ -51,6 +55,11 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
             maps |= TextureMaps.Normal;
         }
 
+        if (_glowFromDiffuse && _diffuse != null)
+        {
+            maps |= TextureMaps.Glow;
+        }
+        
         Size = size.GetValueOrDefault();
         Maps = maps;
     }
@@ -215,7 +224,7 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
             case TextureMaps.Diffuse:
                 return _diffuse;
             case TextureMaps.Glow:
-                return _glow;
+                return _glow != null ? _glow : _glowFromDiffuse ? _diffuse : null;
             case TextureMaps.Normal:
                 return _normal;
             default:
