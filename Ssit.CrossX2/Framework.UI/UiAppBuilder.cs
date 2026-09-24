@@ -95,11 +95,11 @@ internal class UiAppBuilder(IIoCContainer container, IRenderHost renderHost) : I
             .WithInstance<IInputCoordinateSystem>(new InputCoordinateSystem(renderHost))
             .WithSingleton<PageInputContext, PageInputContext>();
 
-        _initializeServicesDelegate.Invoke(builder);
-        _mapHandlersDelegate.Invoke(handlers);
+        _initializeServicesDelegate?.Invoke(builder);
+        _mapHandlersDelegate?.Invoke(handlers);
         
-        _autoScanAssembiles.ForEach(x => map.AutoScan(x));
-        _mapNavigationDelegate.Invoke(map);
+        _autoScanAssembiles?.ForEach(x => map.AutoScan(x));
+        _mapNavigationDelegate?.Invoke(map);
         
         var services = builder.Build();
         var navigation = services.Get<INavigation>();

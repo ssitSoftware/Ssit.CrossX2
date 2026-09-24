@@ -18,17 +18,18 @@ public class FrameHandler(ViewHandler.CreateHandlerParameters parameters) : Back
         
         if (frameColor.HasValue)
         {
+            var color = renderer.CurrentPass == RenderPass.Glow ? RgbaColor.Black : frameColor.Value;
             var topRect =  new RectangleF(ScreenBounds.X, ScreenBounds.Y, ScreenBounds.Width, frameWidth);
-            renderer.GeometryRenderer.FillRectangle(topRect, frameColor.Value);
+            renderer.GeometryRenderer.FillRectangle(topRect, color);
             
             var bottomRect = new RectangleF(ScreenBounds.X, ScreenBounds.Bottom - frameWidth, ScreenBounds.Width, frameWidth);
-            renderer.GeometryRenderer.FillRectangle(bottomRect, frameColor.Value);
+            renderer.GeometryRenderer.FillRectangle(bottomRect, color);
             
             var leftRect = new RectangleF(ScreenBounds.X, ScreenBounds.Y + frameWidth, frameWidth, ScreenBounds.Height - frameWidth * 2);
-            renderer.GeometryRenderer.FillRectangle(leftRect, frameColor.Value);
+            renderer.GeometryRenderer.FillRectangle(leftRect, color);
             
             var rightRect = new RectangleF(ScreenBounds.Right - frameWidth, ScreenBounds.Y + frameWidth, frameWidth, ScreenBounds.Height - frameWidth * 2);
-            renderer.GeometryRenderer.FillRectangle(rightRect, frameColor.Value);
+            renderer.GeometryRenderer.FillRectangle(rightRect, color);
         }
     }
 }

@@ -21,13 +21,15 @@ public readonly struct ColorWrapper
     
     public RgbaColor? GetColor(IRenderer renderer, IColorSource source = null)
     {
+        if (renderer.CurrentPass == RenderPass.Glow && _color.HasValue) return RgbaColor.Black;
+        
         if (ColorId != null)
         {
             var color = source?.GetColor(ColorId);
             if(color.HasValue) return color.Value * _opacity;
         }
 
-        return _color.Value;
+        return _color;
     }
     
     public static implicit operator ColorWrapper(RgbaColor color) => new(color, null);

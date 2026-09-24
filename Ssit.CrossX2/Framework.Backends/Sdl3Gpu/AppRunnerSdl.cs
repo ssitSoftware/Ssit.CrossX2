@@ -1,3 +1,4 @@
+using System.Text;
 using SDL;
 using Ssit.CrossX2.Framework.Audio;
 using Ssit.CrossX2.Framework.Audio.Internal;
@@ -89,7 +90,7 @@ internal static class AppRunnerSdl
         SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_MENU_VISIBILITY, "1");
 #endif
         
-        SDL_Window* window = SDL_CreateWindow("SDL# GPU Samples"u8, size.Width, size.Height, flags);
+        SDL_Window* window = SDL_CreateWindow(appInitializer.WindowTitle, size.Width, size.Height, flags);
         
         if (window == null)
         {
@@ -225,17 +226,15 @@ internal static class AppRunnerSdl
                         component.SetActive(true);
                         break;
 
+                    case SDL_EventType.SDL_EVENT_WINDOW_ENTER_FULLSCREEN:
                     case SDL_EventType.SDL_EVENT_WINDOW_RESIZED:
                     case SDL_EventType.SDL_EVENT_WINDOW_RESTORED:
-                    case SDL_EventType.SDL_EVENT_WINDOW_ENTER_FULLSCREEN:
                     case SDL_EventType.SDL_EVENT_WINDOW_LEAVE_FULLSCREEN:
                     {
                         // Make sure the OS-driven transition (e.g. the window's own
                         // fullscreen button) has fully settled before touching swapchain-sized
                         // resources below, otherwise we can race the animation on macOS.
                         SDL_SyncWindow(window);
-
-                        appWindowManager.EnsureWindowSize();
 
                         int w, h;
                         SDL_GetWindowSizeInPixels(window, &w, &h);

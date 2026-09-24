@@ -366,14 +366,14 @@ public class TextInputHandler(
         var sb = ScreenBounds;
         if (bgColor?.A > 0)
         {
-            renderer.GeometryRenderer.FillRectangle(sb, bgColor.Value);
+            renderer.GeometryRenderer.FillRectangle(sb, renderer.CurrentPass == RenderPass.Glow ? RgbaColor.Black : bgColor.Value);
         }
 
         var frameColor = GetColor(AttachedView.FrameColors, renderer);
 
         if (frameColor?.A > 0)
         {
-            renderer.GeometryRenderer.DrawFrame(sb, frameColor.Value, AttachedView.FrameThickness?.Calculate(CurrentScale, 1) ?? CurrentScale);
+            renderer.GeometryRenderer.DrawFrame(sb, renderer.CurrentPass == RenderPass.Glow ? RgbaColor.Black : frameColor.Value, AttachedView.FrameThickness?.Calculate(CurrentScale, 1) ?? CurrentScale);
         }
 
         if (_isActiveInput)
@@ -385,7 +385,7 @@ public class TextInputHandler(
                 var thickness = AttachedView.ActiveFrameThickness?.Calculate(CurrentScale, 1) ?? CurrentScale;
                 var frame = sb.Inflate(thickness + CurrentScale);
 
-                renderer.GeometryRenderer.DrawFrame(frame, frameColor.Value, thickness);
+                renderer.GeometryRenderer.DrawFrame(frame, renderer.CurrentPass == RenderPass.Glow ? RgbaColor.Black : frameColor.Value, thickness);
             }
         }
 

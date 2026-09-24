@@ -6,7 +6,7 @@ using Ssit.CrossX2.Framework.UI.Views;
 
 namespace Ssit.CrossX2.Framework.UI;
 
-internal abstract class UiAppComponent(IRenderHost host, IRenderer renderer, UiAppComponent.Parameters parameters) : IAppComponent
+internal class UiAppComponent(IRenderHost host, IRenderer renderer, UiAppComponent.Parameters parameters) : IAppComponent
 {
     public class Parameters
     {

@@ -17,7 +17,7 @@ public class BackgroundHandler<TBackground>(
         var bgColor = BackgroundColor(renderer);
         if (bgColor.HasValue)
         {
-            renderer.GeometryRenderer.FillRectangle(ScreenBounds, bgColor.Value);
+            renderer.GeometryRenderer.FillRectangle(ScreenBounds, renderer.CurrentPass == RenderPass.Glow ? RgbaColor.Black : bgColor.Value);
         }
     }
 }
