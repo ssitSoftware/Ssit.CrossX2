@@ -1,6 +1,7 @@
 using System.Numerics;
 using Ssit.CrossX2.Framework.Commands;
 using Ssit.CrossX2.Framework.Input;
+using Ssit.CrossX2.Framework.Input.Internal;
 using Ssit.CrossX2.Framework.UI.Common.Pages;
 using Ssit.CrossX2.Framework.UI.Services;
 using Ssit.CrossX2.Framework.UI.Values;
@@ -25,6 +26,7 @@ public class ButtonHelper<TView, TViewHandler>: IDisposable where TView: View, I
     private readonly IUiSounds _uiSounds;
     private readonly IHapticDevice _hapticDevice;
     private readonly PageInputContext _pageInputContext;
+    private readonly IPointingDevices _pointingDevices;
 
     private TView AttachedView => (TView)_viewHandler.View;
     
@@ -33,12 +35,13 @@ public class ButtonHelper<TView, TViewHandler>: IDisposable where TView: View, I
 
     private bool HapticEnabled => (_viewHandler?.View as IButtonView)?.HapticFeedback?.Value ?? false;
     
-    public ButtonHelper(TViewHandler viewHandler, IUiSounds uiSounds, IHapticDevice hapticDevice, PageInputContext pageInputContext)
+    public ButtonHelper(TViewHandler viewHandler, IUiSounds uiSounds, IHapticDevice hapticDevice, PageInputContext pageInputContext, IPointingDevices pointingDevices)
     {
         _viewHandler = viewHandler;
         _uiSounds = uiSounds;
         _hapticDevice = hapticDevice;
         _pageInputContext = pageInputContext;
+        _pointingDevices = pointingDevices;
 
         if (AttachedView.Command is not null)
         {
@@ -148,7 +151,7 @@ public class ButtonHelper<TView, TViewHandler>: IDisposable where TView: View, I
                     if (focusable != null)
                     {
                         context.Focus(_viewHandler, _viewHandler);
-                        _pageInputContext.ShowFocus = false;
+                        _pageInputContext.ShowFocus = _pointingDevices.Mode.HasFlag(PointingDevicesMode.AutoHideMouse);
                     }
                     context.CapturePointer(pointer.Id, _viewHandler);
                     return true;

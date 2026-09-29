@@ -9,7 +9,12 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
     private IActionScheduler _actionScheduler;
     public bool ShouldContinue { get; private set; } = true;
     private Size _minimumSize = new(160, 90);
+    private Size _windowSize = new(320, 180);
+    private Size _lastWindowSize = new(320, 180);
+    private WindowedMode _windowedMode = WindowedMode.KeepAspect;
 
+    private bool _firstTimeWindowed = true;
+    
     public event Action<WindowClosingEventArgs> Closing;
 
     public void Initialize(IActionScheduler actionScheduler)
@@ -31,6 +36,12 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
                 var flags = SDL_GetWindowFlags(window);
                 if ((flags & SDL_WindowFlags.SDL_WINDOW_FULLSCREEN) == 0)
                 {
+                    if (_firstTimeWindowed)
+                    {
+                        SDL_SetWindowSize(window, _lastWindowSize.Width, _lastWindowSize.Height);
+                        SDL_SetWindowPosition(window, (int)SDL_WINDOWPOS_CENTERED, (int)SDL_WINDOWPOS_CENTERED);
+                        _firstTimeWindowed = false;
+                    }
                     SDL_SetWindowFullscreen(window, true);
                     SDL_SyncWindow(window);
                 }
@@ -39,7 +50,7 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
         return true;
     }
 
-    public bool SetWindowed(Size size, WindowedMode mode)
+    public bool SetWindowed()
     {
         _actionScheduler.Schedule(() =>
         {
@@ -50,33 +61,51 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
                 SDL_SyncWindow(window);
             }
 
-            switch (mode)
+            var size = _lastWindowSize;
+            
+            switch (_windowedMode)
             {
                 case WindowedMode.None:
                     SDL_SetWindowMinimumSize(window, _minimumSize.Width, _minimumSize.Height);
                     break;
                 
                 case WindowedMode.KeepAspect:
-                    float aspect = (float)size.Width / size.Height;
+                    float aspect = (float)_windowSize.Width / _windowSize.Height;
                     SDL_SetWindowMinimumSize(window, _minimumSize.Width, _minimumSize.Height);
                     SDL_SetWindowAspectRatio(window, aspect, aspect);
                     SDL_SetWindowMaximumSize(window, short.MaxValue, short.MaxValue);
                     break;
                 
                 case WindowedMode.KeepSize:
-                    aspect = (float)size.Width / size.Height;
+                    aspect = (float)_windowSize.Width / _windowSize.Height;
+                    size = _windowSize;
+                    
                     SDL_SetWindowAspectRatio(window, aspect, aspect);
-                    SDL_SetWindowMinimumSize(window, size.Width, size.Height);
-                    SDL_SetWindowMaximumSize(window, size.Width, size.Height);
+                    SDL_SetWindowMinimumSize(window, _windowSize.Width, _windowSize.Height);
+                    SDL_SetWindowMaximumSize(window, _windowSize.Width, _windowSize.Height);
                     break;
             }
 
             SDL_SetWindowSize(window, size.Width, size.Height);
-            SDL_SetWindowPosition(window, (int)SDL_WINDOWPOS_CENTERED, (int)SDL_WINDOWPOS_CENTERED);
+
+            if (_firstTimeWindowed)
+            {
+                SDL_SetWindowPosition(window, (int)SDL_WINDOWPOS_CENTERED, (int)SDL_WINDOWPOS_CENTERED);
+                _firstTimeWindowed = false;
+            }
+
             SDL_SyncWindow(window);
         });
 
         return true;
+    }
+
+    public void SetWindowParameters(Size size, Size minimumSize, WindowedMode mode = WindowedMode.KeepAspect)
+    {
+        _windowSize = size;
+        _lastWindowSize = size;
+        _minimumSize = minimumSize;
+        _windowedMode = mode;
     }
 
     public void SetTitle(string title) => SDL_SetWindowTitle(window, title);
@@ -100,7 +129,7 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
 
     public void SetMinimumSize(Size size)
     {
-        _minimumSize = size;
+        
         _actionScheduler.Schedule(() =>
         {
             SDL_SetWindowMinimumSize(window, size.Width, size.Height);
@@ -121,4 +150,13 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
     }
 
     public SDL_Window* Window => window;
+
+    public void UpdateSize(Size size)
+    {
+        var flags = SDL_GetWindowFlags(window);
+        if ((flags & SDL_WindowFlags.SDL_WINDOW_FULLSCREEN) == 0)
+        {
+            _lastWindowSize = size;
+        }
+    }
 }

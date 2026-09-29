@@ -3,6 +3,7 @@ using Ssit.CrossX2.Framework.Graphics;
 using Ssit.CrossX2.Framework.Graphics.Font;
 using Ssit.CrossX2.Framework.Graphics.Renderers;
 using Ssit.CrossX2.Framework.Input;
+using Ssit.CrossX2.Framework.Input.Internal;
 using Ssit.CrossX2.Framework.Text;
 using Ssit.CrossX2.Framework.UI.Common.Pages;
 using Ssit.CrossX2.Framework.UI.Services;
@@ -17,6 +18,7 @@ public class TextInputHandler(
     PageInputContext pageInputContext,
     IUiSounds uiSounds,
     INativeTextInputService nativeTextInputService,
+    IPointingDevices pointingDevices,
     IInputCoordinateSystem inputCoordinateSystem)
     : ViewHandler<TextInput>(parameters), IFocusable, IInputConsumer, INativeTextInputConsumer
 {
@@ -293,7 +295,7 @@ public class TextInputHandler(
                     if (focusable != null)
                     {
                         context.Focus(this, this);
-                        pageInputContext.ShowFocus = false;
+                        pageInputContext.ShowFocus = pointingDevices.Mode.HasFlag(PointingDevicesMode.AutoHideMouse);
                     }
                     context.CapturePointer(pointer.Id, this);
                     return true;

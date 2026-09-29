@@ -8,6 +8,8 @@ internal class FocusWalker(IPage page)
 {
     private readonly List<IFocusable> _buffer = new();
 
+    private bool ShouldWrap => true;
+    
     public IFocusable FocusedElement
     {
         get;

@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Text;
 using SDL;
 using Ssit.CrossX2.Framework.Audio;
@@ -238,6 +239,13 @@ internal static class AppRunnerSdl
 
                         int w, h;
                         SDL_GetWindowSizeInPixels(window, &w, &h);
+
+                        if ((SDL_EventType)@event.type == SDL_EventType.SDL_EVENT_WINDOW_LEAVE_FULLSCREEN)
+                        {
+                            appWindowManager.SetWindowed();
+                        }
+                        
+                        appWindowManager.UpdateSize(new Size(w, h));
                         
                         renderHost.Resize(new Size(w, h));
                         component.Resize();
@@ -251,6 +259,9 @@ internal static class AppRunnerSdl
                         }
                         break;
                     }
+                    
+                    case SDL_EventType.SDL_EVENT_MOUSE_MOTION:
+                        break;
                     
                     case SDL_EventType.SDL_EVENT_WINDOW_MOUSE_LEAVE:
                         SDL_ShowCursor();

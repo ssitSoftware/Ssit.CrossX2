@@ -28,12 +28,13 @@ public class ButtonHandler : ContainerHandler<Button>, IInputConsumer, IFocusabl
     public ButtonHandler(CreateHandlerParameters parameters, IHandlerMapper handlerMapper,
         IUiSounds uiSounds, IHapticDevice hapticDevice,
         IRenderer renderer,
+        IPointingDevices pointingDevices,
         PageInputContext pageInputContext)
         : base(parameters, handlerMapper)
     {
         _renderer = renderer;
         _pageInputContext = pageInputContext;
-        _buttonHelper = new ButtonHelper<Views.Button, ButtonHandler>(this, AttachedView?.CustomSounds ?? uiSounds, hapticDevice, pageInputContext);
+        _buttonHelper = new ButtonHelper<Button, ButtonHandler>(this, AttachedView?.CustomSounds ?? uiSounds, hapticDevice, pageInputContext, pointingDevices);
     }
 
     public void ProcessHover(Vector2? hoverPosition, int? matchingPointerId, IInputContext context) =>

@@ -21,7 +21,7 @@ internal partial class SdlPointingDevices
 
     private unsafe void AnalyzeMouse()
     {
-        if ((Mode & PointingDevicesMode.Mouse) != 0)
+        if ((Mode & (PointingDevicesMode.AutoHideMouse | PointingDevicesMode.Mouse)) != 0)
         {
             float x, y;
             var state = SDL_GetMouseState(&x, &y);

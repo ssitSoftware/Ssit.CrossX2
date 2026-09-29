@@ -13,11 +13,11 @@ public interface IAppWindowManager
     event Action<WindowClosingEventArgs> Closing; 
     void Close();
     bool SetFullscreen();
-    bool SetWindowed(Size size, WindowedMode mode = WindowedMode.KeepAspect);
+    bool SetWindowed();
+    void SetWindowParameters(Size size, Size minimumSize, WindowedMode mode = WindowedMode.KeepAspect);
     void SetTitle(string title);
     bool IsTouchScreen { get; }
     Size GetWindowMaxSize();
-    void SetMinimumSize(Size size);
     
     (int w, int h, int hz) GetDisplayMode();
 }

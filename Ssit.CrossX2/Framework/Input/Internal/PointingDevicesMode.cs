@@ -5,5 +5,6 @@ public enum PointingDevicesMode
 {
     Disabled = 0,
     Mouse = 1,
-    Touch = 2
+    Touch = 2,
+    AutoHideMouse = 4
 }

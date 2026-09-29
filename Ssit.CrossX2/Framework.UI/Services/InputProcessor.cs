@@ -20,6 +20,14 @@ internal sealed class InputProcessor: IInputContext
 
     private readonly List<Pointer> _processingPointers = new();
     
+    private readonly DateTime[] _lastDirectionExecute = new DateTime[4];
+    
+    private const int Left = 0;
+    private const int Right = 1;
+    private const int Up = 2;
+    private const int Down = 3;
+    
+    
     public InputProcessor(IKeyboard keyboard, IGameControllers gameControllers, IPointingDevices pointingDevices, 
         Navigation navigation, IVirtualGameInput virtualGameInput, IInputCoordinateSystem coordinateSystem = null)
     {
@@ -80,25 +88,25 @@ internal sealed class InputProcessor: IInputContext
         if (page is null)
             return;
         
-        if (GetUiButtonLeft())
+        if (Check(GetUiButtonLeft(), Left))
         {
             OnUiButton(page, UiButton.Left);
             if (page != _navigation.CurrentPage) return;
         }
 
-        if (GetUiButtonRight())
+        if (Check(GetUiButtonRight(), Right))
         {
             OnUiButton(page, UiButton.Right);
             if (page != _navigation.CurrentPage) return;
         }
 
-        if (GetUiButtonUp())
+        if (Check(GetUiButtonUp(), Up))
         {
             OnUiButton(page, UiButton.Up);
             if (page != _navigation.CurrentPage) return;
         }
 
-        if (GetUiButtonDown())
+        if (Check(GetUiButtonDown(), Down))
         {
             OnUiButton(page, UiButton.Down);
             if (page != _navigation.CurrentPage) return;
@@ -184,6 +192,27 @@ internal sealed class InputProcessor: IInputContext
         }
     }
 
+    private bool Check(ButtonState state, int index)
+    {
+        if (!state.IsDown) return false;
+
+        var now = DateTime.Now;
+
+        if (state.IsChanged)
+        {
+            _lastDirectionExecute[index] = now + TimeSpan.FromMilliseconds(150);
+            return true;
+        }
+
+        if (now - _lastDirectionExecute[index] > TimeSpan.FromMilliseconds(150))
+        {
+            _lastDirectionExecute[index] = now;
+            return true;
+        }
+        
+        return false;
+    }
+
     private void ProcessCapturedPointers()
     {
         if (_capturedPointers.Count > 0)
@@ -228,37 +257,37 @@ internal sealed class InputProcessor: IInputContext
         return _keyboard.GetKey(Key.Escape) == ButtonState.JustPressed;
     }
     
-    private bool GetUiButtonLeft()
+    private ButtonState GetUiButtonLeft()
     {
-        return _keyboard.GetKey(Key.Left) == ButtonState.JustPressed ||
-               _gameControllers.GetButton(0, GameControllerButton.DPadLeft) == ButtonState.JustPressed ||
-               _gameControllers.GetButton(0, GameControllerButton.LeftStickLeft) == ButtonState.JustPressed ||
-               _virtualGameInput.GetButton(GameControllerButton.DPadLeft) == ButtonState.JustPressed;
+        return _keyboard.GetKey(Key.Left) |
+               _gameControllers.GetButton(0, GameControllerButton.DPadLeft) |
+               _gameControllers.GetButton(0, GameControllerButton.LeftStickLeft) |
+               _virtualGameInput.GetButton(GameControllerButton.DPadLeft);
     }
     
-    private bool GetUiButtonRight()
+    private ButtonState GetUiButtonRight()
     {
-        return _keyboard.GetKey(Key.Right) == ButtonState.JustPressed ||
-               _gameControllers.GetButton(0, GameControllerButton.DPadRight) == ButtonState.JustPressed ||
-               _gameControllers.GetButton(0, GameControllerButton.LeftStickRight) == ButtonState.JustPressed ||
-               _virtualGameInput.GetButton(GameControllerButton.DPadRight) == ButtonState.JustPressed;
+        return _keyboard.GetKey(Key.Right) |
+               _gameControllers.GetButton(0, GameControllerButton.DPadRight) |
+               _gameControllers.GetButton(0, GameControllerButton.LeftStickRight) |
+               _virtualGameInput.GetButton(GameControllerButton.DPadRight);
 
     }
     
-    private bool GetUiButtonUp()
+    private ButtonState GetUiButtonUp()
     {
-        return _keyboard.GetKey(Key.Up) == ButtonState.JustPressed ||
-               _gameControllers.GetButton(0, GameControllerButton.DPadUp) == ButtonState.JustPressed ||
-               _gameControllers.GetButton(0, GameControllerButton.LeftStickUp) == ButtonState.JustPressed ||
-               _virtualGameInput.GetButton(GameControllerButton.DPadUp) == ButtonState.JustPressed;
+        return _keyboard.GetKey(Key.Up) |
+               _gameControllers.GetButton(0, GameControllerButton.DPadUp) |
+               _gameControllers.GetButton(0, GameControllerButton.LeftStickUp) |
+               _virtualGameInput.GetButton(GameControllerButton.DPadUp);
     }
     
-    private bool GetUiButtonDown()
+    private ButtonState GetUiButtonDown()
     {
-        return _keyboard.GetKey(Key.Down) == ButtonState.JustPressed ||
-               _gameControllers.GetButton(0, GameControllerButton.DPadDown) == ButtonState.JustPressed ||
-               _gameControllers.GetButton(0, GameControllerButton.LeftStickDown) == ButtonState.JustPressed ||
-               _virtualGameInput.GetButton(GameControllerButton.DPadDown) == ButtonState.JustPressed;
+        return _keyboard.GetKey(Key.Down) |
+               _gameControllers.GetButton(0, GameControllerButton.DPadDown) |
+               _gameControllers.GetButton(0, GameControllerButton.LeftStickDown) |
+               _virtualGameInput.GetButton(GameControllerButton.DPadDown);
 
     }
 

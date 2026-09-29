@@ -1,4 +1,5 @@
 using Ssit.CrossX2.Framework.Graphics;
+using Ssit.CrossX2.Framework.Graphics.Internal;
 using Ssit.CrossX2.Framework.Graphics.Misc;
 using Ssit.CrossX2.Framework.Graphics.Sprites;
 using Ssit.CrossX2.Framework.Graphics.Sprites.Json;
@@ -34,6 +35,11 @@ internal class ContentManager: IContentManager
         RegisterLoader<ITexture>(LoadTextureFunc);
         RegisterLoader<Sprite>(path => JsonSpriteLoader.Load(path, filesProvider));
         RegisterLoader<SpriteEx>(path => SpriteEx.Load(path, filesProvider, this, _iocContainer));
+        RegisterLoader<DualTexture>(path =>
+        {
+            var (t1,t2) = TextureHelper.LoadComplexSheet(filesProvider, iocContainer, path);
+            return new DualTexture(t1, t2);
+        });
     }
 
     public void RemoveCache<TResource>(string path) where TResource : class, IDisposable

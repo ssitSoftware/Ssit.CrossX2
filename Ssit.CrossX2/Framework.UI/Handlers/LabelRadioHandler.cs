@@ -11,8 +11,8 @@ public class LabelRadioHandler<TLabelRadio>: LabelButtonHandler<TLabelRadio> whe
     protected override bool IsChecked => (AttachedView.SelectedValue?.Value ?? -1) == AttachedView.Value;
     
     public LabelRadioHandler(CreateHandlerParameters parameters, IFontsManager fontsManager, IUiActionDispatcher uiActionDispatcher,
-        IUiSounds uiSounds, IHapticDevice hapticDevice, PageInputContext pageInputContext) 
-        : base(parameters, fontsManager, uiActionDispatcher, uiSounds, hapticDevice, pageInputContext)
+        IUiSounds uiSounds, IHapticDevice hapticDevice, IPointingDevices pointingDevices, PageInputContext pageInputContext) 
+        : base(parameters, fontsManager, uiActionDispatcher, uiSounds, hapticDevice, pointingDevices, pageInputContext)
     {
     }
 }

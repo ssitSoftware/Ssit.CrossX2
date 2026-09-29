@@ -282,6 +282,8 @@ public readonly partial struct RgbaColor(byte red, byte green, byte blue, byte a
 
     public static implicit operator RgbaColor(string name)
     {
+        if (name is null) return Transparent;
+        
         if (!name.StartsWith('#') || name.Length is not (7 or 9)) return global::Ssit.CrossX2.Framework.RgbaColor.Transparent;
 
         var hexColor = name.AsSpan(1);

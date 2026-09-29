@@ -13,10 +13,10 @@ namespace Ssit.CrossX2.Framework.UI.Handlers;
 
 public class LabelButtonHandler<TLabelButton>: LabelHandler<TLabelButton>, IInputConsumer, IFocusable where TLabelButton: LabelButton
 {
-    private readonly PageInputContext _pageInputContext;
-    protected override RgbaColor? BackgroundColor(IRenderer renderer) => AttachedView.BackgroundColors?.GetColor(renderer, _buttonHelper.IsHovered, Focused && _pageInputContext.ShowFocus, _buttonHelper.IsPressed || _buttonHelper.IsExecutingCommand, Enabled, IsChecked);
-    protected override RgbaColor? TextColor(IRenderer renderer, bool? focused = null) => AttachedView.TextColors?.GetColor(renderer, _buttonHelper.IsHovered, (focused ?? Focused) && _pageInputContext.ShowFocus, _buttonHelper.IsPressed || _buttonHelper.IsExecutingCommand, Enabled, IsChecked);
-    protected override RgbaColor? TextOutlineColor(IRenderer renderer) => AttachedView.TextOutlineColors?.GetColor(renderer, _buttonHelper.IsHovered, Focused , _buttonHelper.IsPressed || _buttonHelper.IsExecutingCommand, Enabled, IsChecked);
+    protected readonly PageInputContext PageInputContext;
+    protected override RgbaColor? BackgroundColor(IRenderer renderer) => AttachedView.BackgroundColors?.GetColor(renderer, _buttonHelper.IsHovered, Focused && PageInputContext.ShowFocus, _buttonHelper.IsPressed || _buttonHelper.IsExecutingCommand, Enabled, IsChecked);
+    protected override RgbaColor? TextColor(IRenderer renderer, bool? focused = null) => AttachedView.TextColors?.GetColor(renderer, _buttonHelper.IsHovered, (focused ?? Focused) && PageInputContext.ShowFocus, _buttonHelper.IsPressed || _buttonHelper.IsExecutingCommand, Enabled, IsChecked);
+    protected override RgbaColor? TextOutlineColor(IRenderer renderer) => AttachedView.TextOutlineColors?.GetColor(renderer, _buttonHelper.IsHovered, Focused && PageInputContext.ShowFocus , _buttonHelper.IsPressed || _buttonHelper.IsExecutingCommand, Enabled, IsChecked);
  
     protected virtual bool IsChecked => false;
     
@@ -33,11 +33,12 @@ public class LabelButtonHandler<TLabelButton>: LabelHandler<TLabelButton>, IInpu
 
     public LabelButtonHandler(CreateHandlerParameters parameters, IFontsManager fontsManager, 
         IUiActionDispatcher uiActionDispatcher, IUiSounds uiSounds, IHapticDevice hapticDevice, 
+        IPointingDevices pointingDevices,
         PageInputContext pageInputContext) 
         : base(parameters, fontsManager, uiActionDispatcher)
     {
-        _pageInputContext = pageInputContext;
-        _buttonHelper = new ButtonHelper<TLabelButton, LabelButtonHandler<TLabelButton>>(this, AttachedView?.CustomSounds ?? uiSounds, hapticDevice, pageInputContext);
+        PageInputContext = pageInputContext;
+        _buttonHelper = new ButtonHelper<TLabelButton, LabelButtonHandler<TLabelButton>>(this, AttachedView?.CustomSounds ?? uiSounds, hapticDevice, pageInputContext, pointingDevices);
     }
 
     public void ProcessHover(Vector2? hoverPosition, int? matchingPointerId, IInputContext context) => _buttonHelper.ProcessHover(hoverPosition, matchingPointerId, context);

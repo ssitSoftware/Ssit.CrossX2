@@ -11,6 +11,9 @@ public class PointingDevicesBase: IPointingDevices, IInputHandler
     public IReadOnlyList<Pointer> Pointers => _pointers;
     public Pointer GetPointer(int id) => _pointers.Find(o => o.Id == id);
     public Vector2? HoverPosition { get; private set; }
+
+    private Vector2? _lastMousePos;
+    private DateTime _lastMousePosTime = DateTime.Now;
     
     public bool LockMouseInWindow { get; set; }
 
@@ -142,6 +145,23 @@ public class PointingDevicesBase: IPointingDevices, IInputHandler
     
     public void UpdateHoverPosition(Vector2? position)
     {
+        if ((Mode & PointingDevicesMode.AutoHideMouse) != 0)
+        {
+            var time = DateTime.Now;
+            if (_lastMousePos != position || _pointers.Count > 0)
+            {
+                Mode |= PointingDevicesMode.Mouse;
+                _lastMousePosTime = time;
+                _lastMousePos = position;
+            }
+            
+            if (time - _lastMousePosTime > TimeSpan.FromSeconds(3f))
+            {
+                Mode &= ~PointingDevicesMode.Mouse;
+                HoverPosition = null;
+            }
+        }
+        
         if ((Mode & PointingDevicesMode.Mouse) == 0)
         {
             ShowPointer(!position.HasValue);

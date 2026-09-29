@@ -16,8 +16,8 @@ public class LabelButtonExHandler: LabelButtonHandler<LabelButtonEx>
     
     public LabelButtonExHandler(CreateHandlerParameters parameters, IFontsManager fontsManager,
         IUiActionDispatcher uiActionDispatcher,
-        IUiSounds uiSounds, IHapticDevice hapticDevice, PageInputContext pageInputContext) 
-        : base(parameters, fontsManager, uiActionDispatcher, uiSounds, hapticDevice, pageInputContext)
+        IUiSounds uiSounds, IHapticDevice hapticDevice, IPointingDevices pointingDevices, PageInputContext pageInputContext) 
+        : base(parameters, fontsManager, uiActionDispatcher, uiSounds, hapticDevice, pointingDevices, pageInputContext)
     {
     }
 
@@ -33,6 +33,8 @@ public class LabelButtonExHandler: LabelButtonHandler<LabelButtonEx>
         
         var bevel = (AttachedView.FocusBevel ?? 0).Calculate(CurrentScale, 0);
         var targetBevel = Focused ? bevel : 0.0f;
+
+        if (IsPushed) targetBevel = bevel / 2;
         
         if (_waveAmplitude < targetAmplitude)
         {

@@ -127,8 +127,16 @@ internal class RenderHost : IRenderHost
 
         PrepareRenderTargets();
     }
-    
-    public void Apply() => PrepareRenderTargets();
+
+    public void Apply()
+    {
+        if (_targetSize.Height == 0 || _targetSize.Width == 0)
+        {
+            return;
+        }
+        
+        PrepareRenderTargets();
+    }
 
     private void PrepareRenderTargets()
     {
@@ -247,6 +255,18 @@ internal class RenderHost : IRenderHost
         
         var pos = _renderer.TargetSize.ToVector() / 2f - sourceTexture.Size.ToVector() * scale / 2f;
         _renderer.SpriteRenderer.Draw(sourceTexture, pos, null, Vector2.Zero, scale: scale);
+
+        scale *= sourceTexture.Size.Width / (float)_renderTarget.Size.Width;
+        
+        Transform = Matrix3x2.CreateScale(scale) * Matrix3x2.CreateTranslation(pos);
+        if (Matrix3x2.Invert(Transform, out var result))
+        {
+            TransformInv = result;
+        }
+        else
+        {
+            TransformInv = Matrix3x2.Identity;
+        }
         
         _renderer.StateManager.Reset();
         _parameters.PostRenderer?.Render();
@@ -267,8 +287,8 @@ internal class RenderHost : IRenderHost
         _endRenderTarget = null;
     }
 
-    public Matrix3x2 Transform { get; }
-    public Matrix3x2 TransformInv { get; }
+    public Matrix3x2 Transform { get; private set; }
+    public Matrix3x2 TransformInv { get; private set; }
     public Size TargetSize { get; private set; }
     public int Scale { get; private set; }
 }

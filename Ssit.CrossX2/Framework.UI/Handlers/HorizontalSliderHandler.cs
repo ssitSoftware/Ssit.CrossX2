@@ -2,6 +2,7 @@ using System.Numerics;
 using Ssit.CrossX2.Framework.Content;
 using Ssit.CrossX2.Framework.Graphics;
 using Ssit.CrossX2.Framework.Input;
+using Ssit.CrossX2.Framework.Input.Internal;
 using Ssit.CrossX2.Framework.UI.Common.Pages;
 using Ssit.CrossX2.Framework.UI.Parameters;
 using Ssit.CrossX2.Framework.UI.Services;
@@ -13,13 +14,15 @@ namespace Ssit.CrossX2.Framework.UI.Handlers;
 public class HorizontalSliderHandler<TSlider> : ViewHandler<TSlider>, IUiCommandHandler, IInputConsumer where TSlider: HorizontalSlider, new()
 {
     private readonly PageInputContext _pageInputContext;
+    private readonly IPointingDevices _pointingDevices;
     private readonly ResourceHandle<DualTexture> _texture;
     private readonly IColorSource _colorSource;
     private int? _currentPointerId;
     
-    public HorizontalSliderHandler(CreateHandlerParameters parameters, IContentManager contentManager, PageInputContext pageInputContext) : base(parameters)
+    public HorizontalSliderHandler(CreateHandlerParameters parameters, IContentManager contentManager, PageInputContext pageInputContext, IPointingDevices pointingDevices) : base(parameters)
     {
         _pageInputContext = pageInputContext;
+        _pointingDevices = pointingDevices;
         _texture = contentManager.Get<DualTexture>(AttachedView.Template.Path);
         _colorSource = parameters.Parent?.GetParent<IColorSource>(true);
     }
@@ -145,7 +148,7 @@ public class HorizontalSliderHandler<TSlider> : ViewHandler<TSlider>, IUiCommand
                 context.CapturePointer(pointer.Id, this);
                 UpdateValueFromPosition(pointer.Position.X);
 
-                _pageInputContext.ShowFocus = false;
+                _pageInputContext.ShowFocus = _pointingDevices.Mode.HasFlag(PointingDevicesMode.AutoHideMouse);
                 
                 var focusable = Parent.GetParent<IFocusable>(true);
                 if (focusable is not null)

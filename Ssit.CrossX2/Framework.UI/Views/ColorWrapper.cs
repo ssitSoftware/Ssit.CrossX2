@@ -46,6 +46,7 @@ public readonly struct ColorWrapper
     public static implicit operator ColorWrapper(RgbaColor color) => new(color, null);
     public static implicit operator ColorWrapper((RgbaColor color, RgbaColor glow) c) => new(c.color, null, glowColor: c.glow);
     public static implicit operator ColorWrapper(int color) => new(null, color);
+    public static implicit operator ColorWrapper(string colorId) => new(null, null, colorId: colorId);
     public static implicit operator ColorWrapper((int color, string colorId) d) => new(null, d.color, colorId: d.colorId);
     public static implicit operator ColorWrapper((int color, float opacity) d) => new(null, d.color, d.opacity);
 }
