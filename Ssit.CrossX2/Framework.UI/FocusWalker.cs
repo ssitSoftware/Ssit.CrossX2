@@ -42,52 +42,33 @@ internal class FocusWalker(IPage page)
         _focusCursorPosition.X = MathF.Max(current.ScreenBounds.X, MathF.Min(current.ScreenBounds.Right, _focusCursorPosition.X));
         _focusCursorPosition.Y = MathF.Max(current.ScreenBounds.Y, MathF.Min(current.ScreenBounds.Bottom, _focusCursorPosition.Y));
         
-        var bounds = page.RootHandler.ScreenBounds;
-        
+        var rootBounds = page.RootHandler.ScreenBounds;
+        var bounds = rootBounds;
+
         switch (direction)
         {
             case FocusDirection.Up:
                 bounds = new RectangleF(bounds.X, bounds.Y, bounds.Width, current.ScreenBounds.Y - bounds.Y);
                 break;
-            
+
             case FocusDirection.Down:
                 bounds = new RectangleF(bounds.X, current.ScreenBounds.Bottom, bounds.Width, bounds.Bottom - current.ScreenBounds.Bottom);
                 break;
-            
+
             case FocusDirection.Left:
                 bounds = new RectangleF(bounds.X, bounds.Y, current.ScreenBounds.X - bounds.X, bounds.Height);
                 break;
-            
+
             case FocusDirection.Right:
                 bounds = new RectangleF(current.ScreenBounds.Right, bounds.Y, bounds.Right - current.ScreenBounds.Right, bounds.Height);
                 break;
         }
 
-        _buffer.Clear();
-        FillWithFocusables(page.RootHandler, _buffer, bounds);
+        var newFocusable = FindClosestFocusable(bounds);
 
-        IFocusable newFocusable = null;
-        
-        float minDistance = float.MaxValue;
-        foreach (var focusable in _buffer)
+        if (newFocusable is null && ShouldWrap)
         {
-            if (!focusable.Enabled)
-                continue;
-            
-            if (focusable.SkipNavigation)
-                continue;
-
-            if (string.IsNullOrWhiteSpace(focusable.UniqueId))
-                continue;
-            
-            var center = focusable.ScreenBounds.Center;
-            var dist = (center - _focusCursorPosition).Length();
-            
-            if ( dist < minDistance)
-            {
-                minDistance = dist;
-                newFocusable = focusable;
-            }
+            newFocusable = FindWrappedFocusable(rootBounds, direction, current);
         }
 
         if (newFocusable != null)
@@ -110,6 +91,68 @@ internal class FocusWalker(IPage page)
 
         return false;
     }
+
+    private IFocusable FindClosestFocusable(RectangleF bounds)
+    {
+        _buffer.Clear();
+        FillWithFocusables(page.RootHandler, _buffer, bounds);
+
+        IFocusable result = null;
+        var minDistance = float.MaxValue;
+
+        foreach (var focusable in _buffer)
+        {
+            if (!IsNavigable(focusable))
+                continue;
+
+            var dist = (focusable.ScreenBounds.Center - _focusCursorPosition).Length();
+
+            if (dist < minDistance)
+            {
+                minDistance = dist;
+                result = focusable;
+            }
+        }
+
+        return result;
+    }
+
+    private IFocusable FindWrappedFocusable(RectangleF rootBounds, FocusDirection direction, IFocusable current)
+    {
+        _buffer.Clear();
+        FillWithFocusables(page.RootHandler, _buffer, rootBounds);
+
+        IFocusable result = null;
+        var bestPrimary = float.MaxValue;
+        var bestSecondary = float.MaxValue;
+
+        foreach (var focusable in _buffer)
+        {
+            if (focusable == current || !IsNavigable(focusable))
+                continue;
+
+            var (primary, secondary) = direction switch
+            {
+                FocusDirection.Down => (focusable.ScreenBounds.Y, MathF.Abs(focusable.ScreenBounds.Center.X - _focusCursorPosition.X)),
+                FocusDirection.Up => (-focusable.ScreenBounds.Bottom, MathF.Abs(focusable.ScreenBounds.Center.X - _focusCursorPosition.X)),
+                FocusDirection.Right => (focusable.ScreenBounds.X, MathF.Abs(focusable.ScreenBounds.Center.Y - _focusCursorPosition.Y)),
+                FocusDirection.Left => (-focusable.ScreenBounds.Right, MathF.Abs(focusable.ScreenBounds.Center.Y - _focusCursorPosition.Y)),
+                _ => (float.MaxValue, float.MaxValue)
+            };
+
+            if (primary < bestPrimary || (primary == bestPrimary && secondary < bestSecondary))
+            {
+                bestPrimary = primary;
+                bestSecondary = secondary;
+                result = focusable;
+            }
+        }
+
+        return result;
+    }
+
+    private static bool IsNavigable(IFocusable focusable) =>
+        focusable.Enabled && !focusable.SkipNavigation && !string.IsNullOrWhiteSpace(focusable.UniqueId);
 
     private void FillWithFocusables(ViewHandler handler, List<IFocusable> buffer, RectangleF bounds)
     {
