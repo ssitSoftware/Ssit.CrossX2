@@ -90,11 +90,16 @@ public class FocusableContainerHandler(ViewHandler.CreateHandlerParameters param
         return false;
     }
 
-    public void SetFocus() => Focused = true;
+    public void SetFocus()
+    {
+        Focused = true;
+        AttachedView.FocusConsumer?.SetValue(true);
+    }
 
     public bool ResetFocus()
     {
         Focused = false;
+        AttachedView.FocusConsumer?.SetValue(false);
         return true;
     }
 

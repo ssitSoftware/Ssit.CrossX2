@@ -16,6 +16,7 @@ public class LabelButton: Label, IButtonView
     public TimeSpan CommandDelay { get; set; } = TimeSpan.FromMilliseconds(33);
     
     public string UniqueId { get; set; }
+    public IValueConsumer<bool> FocusConsumer { get; set; }
     public string CommandSoundId { get; set; }
     public ButtonCommandType EnabledCommandTypes { get; set; } = ButtonCommandType.Select;
     public IUiSounds CustomSounds { get; set; }

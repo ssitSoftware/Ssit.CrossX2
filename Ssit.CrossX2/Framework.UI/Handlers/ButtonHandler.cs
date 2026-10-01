@@ -85,11 +85,16 @@ public class ButtonHandler : ContainerHandler<Button>, IInputConsumer, IFocusabl
         return false;
     }
 
-    public void SetFocus() => Focused = true;
+    public void SetFocus()
+    {
+        Focused = true;
+        AttachedView.FocusConsumer?.SetValue(true);
+    }
 
     public bool ResetFocus()
     {
         Focused = false;
+        AttachedView.FocusConsumer?.SetValue(false);
         return true;
     }
 

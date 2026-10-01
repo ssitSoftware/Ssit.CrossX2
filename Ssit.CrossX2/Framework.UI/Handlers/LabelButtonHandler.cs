@@ -24,7 +24,7 @@ public class LabelButtonHandler<TLabelButton>: LabelHandler<TLabelButton>, IInpu
     public bool DisableAllInput => _buttonHelper.IsExecutingCommand;
     
     public bool Focused { get; private set; }
-    
+
     public bool IsPushed => _buttonHelper.IsPressed;
 
     public bool SkipNavigation => false;
@@ -65,11 +65,13 @@ public class LabelButtonHandler<TLabelButton>: LabelHandler<TLabelButton>, IInpu
     public void SetFocus()
     {
         Focused = true;
+        AttachedView.FocusConsumer?.SetValue(true);
     }
 
     public bool ResetFocus()
     {
         Focused = false;
+        AttachedView.FocusConsumer?.SetValue(false);
         return true;
     }
 

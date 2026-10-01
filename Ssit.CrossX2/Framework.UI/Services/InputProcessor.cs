@@ -19,6 +19,7 @@ internal sealed class InputProcessor: IInputContext
     private readonly List<(int, IInputConsumer)> _capturedPointers = new();
 
     private readonly List<Pointer> _processingPointers = new();
+    private readonly UiParameters _uiParameters;
     
     private readonly DateTime[] _lastDirectionExecute = new DateTime[4];
     
@@ -29,7 +30,8 @@ internal sealed class InputProcessor: IInputContext
     
     
     public InputProcessor(IKeyboard keyboard, IGameControllers gameControllers, IPointingDevices pointingDevices, 
-        Navigation navigation, IVirtualGameInput virtualGameInput, IInputCoordinateSystem coordinateSystem = null)
+        Navigation navigation, IVirtualGameInput virtualGameInput, UiParameters parameters,
+        IInputCoordinateSystem coordinateSystem = null)
     {
         _keyboard = keyboard;
         _gameControllers = gameControllers;
@@ -37,6 +39,7 @@ internal sealed class InputProcessor: IInputContext
         _navigation = navigation;
         _virtualGameInput = virtualGameInput;
         _coordinateSystem = coordinateSystem;
+        _uiParameters = parameters;
     }
 
     private void PrepareInputConsumers(ViewHandler handler)
@@ -200,11 +203,11 @@ internal sealed class InputProcessor: IInputContext
 
         if (state.IsChanged)
         {
-            _lastDirectionExecute[index] = now + TimeSpan.FromMilliseconds(150);
+            _lastDirectionExecute[index] = now + TimeSpan.FromMilliseconds(200);
             return true;
         }
 
-        if (now - _lastDirectionExecute[index] > TimeSpan.FromMilliseconds(150))
+        if (now - _lastDirectionExecute[index] > TimeSpan.FromMilliseconds(100))
         {
             _lastDirectionExecute[index] = now;
             return true;
@@ -236,13 +239,13 @@ internal sealed class InputProcessor: IInputContext
     private bool GetUiButtonSelect()
     {
         return _keyboard.GetKey(Key.Return) == ButtonState.JustPressed ||
-               _gameControllers.GetButton(0, GameControllerButton.A) == ButtonState.JustPressed ||
+               _gameControllers.GetButton(0, _uiParameters.UseJapaneseUiButtons ? GameControllerButton.B : GameControllerButton.A) == ButtonState.JustPressed ||
                _virtualGameInput.GetButton(GameControllerButton.A) == ButtonState.JustPressed;
     }
     
     private bool GetUiButtonBack()
     {
-        return _gameControllers.GetButton(0, GameControllerButton.B) == ButtonState.JustPressed ||
+        return _gameControllers.GetButton(0, _uiParameters.UseJapaneseUiButtons ? GameControllerButton.A : GameControllerButton.B) == ButtonState.JustPressed ||
                _virtualGameInput.GetButton(GameControllerButton.B) == ButtonState.JustPressed;
     }
     

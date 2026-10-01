@@ -14,6 +14,5 @@ public interface IUiAppBuilder
     IUiAppBuilder WithBackgroundColor(ColorWrapper color);
     IUiAppBuilder WithFirstNavigation<TViewModel>(object parameter = null) where TViewModel : class;
     IUiAppBuilder WithUiAppInitialization(AppInitializationDelegate appInitializationDelegate);
-
     IAppComponent Build();
 }

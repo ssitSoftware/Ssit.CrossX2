@@ -21,6 +21,7 @@ internal class Navigation: INavigation
     private readonly NavigationMap _navigationMap;
     private readonly IIoCContainer _iocContainer;
     private readonly IUiServices _uiServices;
+    private readonly IUiSounds _sounds;
     private readonly UiApp _uiApp;
 
     private readonly Stack<StackData> _navigationStack = new();
@@ -43,11 +44,12 @@ internal class Navigation: INavigation
         return false;
     }
 
-    public Navigation(NavigationMap navigationMap, IIoCContainer iocContainer, IUiServices uiServices, IUiApp uiApp)
+    public Navigation(NavigationMap navigationMap, IIoCContainer iocContainer, IUiServices uiServices, IUiApp uiApp, IUiSounds sounds)
     {
         _navigationMap = navigationMap;
         _iocContainer = iocContainer;
         _uiServices = uiServices;
+        _sounds = sounds;
         _uiApp = uiApp as UiApp;
     }
 
@@ -81,6 +83,8 @@ internal class Navigation: INavigation
         }
         CurrentPage.TransitionProgress = 1;
         CurrentPage.TransitionType = TransitionType.NavigateBackTo;
+        
+        _sounds[UiSounds.NavigateBackSound].PlayOnce();
     }
     
     public void ClearNavigateTo<TViewModel>(object parameter = null) where TViewModel : class
@@ -93,7 +97,7 @@ internal class Navigation: INavigation
             }
         }
         _navigationStack.Clear();
-        NavigateTo<TViewModel>(parameter);
+        NavigateTo<TViewModel>(parameter, false, false);
     }
 
     private void InitializePageNavigation(object vm, bool skipTransition = false)
@@ -119,7 +123,9 @@ internal class Navigation: INavigation
         }
     }
 
-    public void NavigateTo<TViewModel>(object parameter = null, bool skipTransition = false) where TViewModel : class
+    public void NavigateTo<TViewModel>(object parameter = null, bool skipTransition = false) where TViewModel : class => NavigateTo<TViewModel>(parameter, skipTransition, true);
+
+    private void NavigateTo<TViewModel>(object parameter, bool skipTransition, bool playSound) where TViewModel : class
     {
         if (_navigationStack.Count > 0)
         {
@@ -131,6 +137,11 @@ internal class Navigation: INavigation
         _navigationStack.Push(new StackData(vm));
         
         InitializePageNavigation(vm, skipTransition);
+
+        if (playSound)
+        {
+            _sounds[UiSounds.NavigateToSound].PlayOnce();
+        }
     }
 
     public void NavigateBack()
@@ -171,6 +182,8 @@ internal class Navigation: INavigation
         {
             handler.OnNavigatedBackTo();
         }
+        
+        _sounds[UiSounds.NavigateBackSound].PlayOnce();
     }
 
     public void NavigateBackTo<TViewModel>() where TViewModel : class
@@ -215,6 +228,8 @@ internal class Navigation: INavigation
         }
         CurrentPage.TransitionProgress = 1;
         CurrentPage.TransitionType = TransitionType.NavigateBackTo;
+        
+        _sounds[UiSounds.NavigateBackSound].PlayOnce();
     }
 
     private IPage InitializePage(object vm, string focusedId)

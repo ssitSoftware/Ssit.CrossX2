@@ -58,5 +58,5 @@ public interface IIoCContainer: IDisposable
     /// <typeparam name="T">The type of the instances to retrieve.</typeparam>
     /// <returns>An enumerable of all instances of the specified type registered in the container.</returns>
     /// <exception cref="KeyNotFoundException">Thrown when the requested type is not registered in the container.</exception>
-    IEnumerable<T> Fetch<T>();
+    IEnumerable<T> Fetch<T>(bool includeParentScope = false);
 }

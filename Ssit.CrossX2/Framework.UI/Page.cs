@@ -76,6 +76,8 @@ public abstract class Page<TViewModel>: View, IPage where TViewModel: class
 
     protected virtual float Scale { get; private set; } = 1;
     
+    protected FocusNavigationMode FocusNavigationMode { get; set; } = FocusNavigationMode.UpDown;
+    
     RectangleF IViewParent.ScreenBounds => _screenBounds;
     
     ViewHandler IPage.RootHandler => _rootHandler;
@@ -103,6 +105,8 @@ public abstract class Page<TViewModel>: View, IPage where TViewModel: class
     void IPage.OnTransitionToFinished() => OnTransitionToFinished();
     bool IPage.MoveFocus(FocusDirection direction) => _focusWalker.MoveFocus(direction);
 
+    FocusNavigationMode IPage.FocusNavigationMode => FocusNavigationMode;
+    
     protected virtual void OnTransitionToFinished()
     {
     }

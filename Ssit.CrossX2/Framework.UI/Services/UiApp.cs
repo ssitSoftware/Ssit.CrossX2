@@ -16,7 +16,7 @@ internal class UiApp(IIoCContainer services, IUiActionDispatcher iUiActionDispat
         }
     }
 
-    public Navigation Navigation { get; private set; }
+    public Navigation Navigation { get; internal set; }
     public RectangleF Bounds { get; private set; }
 
     public float Scale { get; private set; }
@@ -24,15 +24,11 @@ internal class UiApp(IIoCContainer services, IUiActionDispatcher iUiActionDispat
     internal readonly StylesContainer StylesContainer = new();
 
     public IIoCContainer Services { get; private set; } = services;
-    public InputProcessor InputProcessor { get; private set; }
+    public InputProcessor InputProcessor { get; internal set; }
     
     private readonly UiActionDispatcher _uiActionDispatcher = (UiActionDispatcher)iUiActionDispatcher;
-
-    public void Initialize(Navigation navigation)
-    {
-        InputProcessor = Services.IoCConstruct<InputProcessor>(navigation);
-        Navigation = navigation;
-    }
+    
+    
     
     public void Update(float dt)
     {

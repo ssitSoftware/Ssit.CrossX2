@@ -8,7 +8,8 @@ namespace Ssit.CrossX2.Framework.UI.Views;
 public class IconCheckBox : Background, IButtonView
 {
     public string UniqueId { get; set; }
-    
+    public IValueConsumer<bool> FocusConsumer { get; set; }
+
     public ICommand Command { get; set; }
     public object CommandParameter { get; set; }
     public TimeSpan KeyCommandDelay { get; set; } = TimeSpan.FromMilliseconds(100);

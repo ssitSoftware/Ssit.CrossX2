@@ -20,7 +20,7 @@ public class IconCheckBoxHandler<TCheckBox> : BackgroundHandler<TCheckBox>, IInp
     public bool DisableAllInput => _buttonHelper.IsExecutingCommand;
     
     public bool Focused { get; private set; }
-    
+
     private readonly ButtonHelper<TCheckBox, IconCheckBoxHandler<TCheckBox>> _buttonHelper;
 
     public IconCheckBoxHandler(CreateHandlerParameters parameters, IUiSounds uiSounds,
@@ -51,11 +51,16 @@ public class IconCheckBoxHandler<TCheckBox> : BackgroundHandler<TCheckBox>, IInp
         return false;
     }
 
-    public void SetFocus() => Focused = true;
+    public void SetFocus()
+    {
+        Focused = true;
+        AttachedView.FocusConsumer?.SetValue(true);
+    }
 
     public bool ResetFocus()
     {
         Focused = false;
+        AttachedView.FocusConsumer?.SetValue(false);
         return true;
     }
 

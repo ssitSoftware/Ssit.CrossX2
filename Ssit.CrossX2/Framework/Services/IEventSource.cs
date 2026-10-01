@@ -8,4 +8,6 @@ public interface IEventSource
 
     event Action Paused;
     event Action Resumed;
+    event Action EnteredFullscreen;
+    event Action LeftFullscreen;
 }

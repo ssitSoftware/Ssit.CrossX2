@@ -2,11 +2,11 @@ using Ssit.CrossX2.Framework.Graphics;
 
 namespace Ssit.CrossX2.Framework.UI.Transitions;
 
-public class HideTransition: Transition
+public class ShowTransition: Transition
 {
     protected override void OnApply(IRenderer renderer, float scale, float progress)
     {
-        if (progress > 0)
+        if (progress <= 0)
         {
             renderer.StateManager.Scale(0);
         }

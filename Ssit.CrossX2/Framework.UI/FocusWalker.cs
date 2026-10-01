@@ -7,8 +7,6 @@ namespace Ssit.CrossX2.Framework.UI;
 internal class FocusWalker(IPage page)
 {
     private readonly List<IFocusable> _buffer = new();
-
-    private bool ShouldWrap => true;
     
     public IFocusable FocusedElement
     {
@@ -48,25 +46,37 @@ internal class FocusWalker(IPage page)
         switch (direction)
         {
             case FocusDirection.Up:
+                if (!page.FocusNavigationMode.HasFlag(FocusNavigationMode.UpDown))
+                    return false;
+                
                 bounds = new RectangleF(bounds.X, bounds.Y, bounds.Width, current.ScreenBounds.Y - bounds.Y);
                 break;
 
             case FocusDirection.Down:
+                if (!page.FocusNavigationMode.HasFlag(FocusNavigationMode.UpDown))
+                    return false;
+                
                 bounds = new RectangleF(bounds.X, current.ScreenBounds.Bottom, bounds.Width, bounds.Bottom - current.ScreenBounds.Bottom);
                 break;
 
             case FocusDirection.Left:
+                if (!page.FocusNavigationMode.HasFlag(FocusNavigationMode.LeftRight))
+                    return false;
+                
                 bounds = new RectangleF(bounds.X, bounds.Y, current.ScreenBounds.X - bounds.X, bounds.Height);
                 break;
 
             case FocusDirection.Right:
+                if (!page.FocusNavigationMode.HasFlag(FocusNavigationMode.LeftRight))
+                    return false;
+                
                 bounds = new RectangleF(current.ScreenBounds.Right, bounds.Y, bounds.Right - current.ScreenBounds.Right, bounds.Height);
                 break;
         }
 
         var newFocusable = FindClosestFocusable(bounds);
 
-        if (newFocusable is null && ShouldWrap)
+        if (newFocusable is null && page.FocusNavigationMode.HasFlag(FocusNavigationMode.Wrap))
         {
             newFocusable = FindWrappedFocusable(rootBounds, direction, current);
         }
@@ -156,11 +166,14 @@ internal class FocusWalker(IPage page)
 
     private void FillWithFocusables(ViewHandler handler, List<IFocusable> buffer, RectangleF bounds)
     {
+        if (!handler.View.Visible.Value)
+            return;
+
         if (handler is IFocusable focusable && bounds.Contains(focusable.ScreenBounds.TopLeft) && bounds.Contains(focusable.ScreenBounds.BottomRight))
         {
             buffer.Add(focusable);
         }
-        
+
         if (handler is IChildrenContainer container)
         {
             foreach (var child in container.Children ?? [])

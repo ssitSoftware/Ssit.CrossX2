@@ -12,11 +12,12 @@ internal class UiAppComponent(IRenderHost host, IRenderer renderer, UiAppCompone
     {
         public IUiAppInternal UiApp { get; init; }
         public ColorWrapper BackgroundColor { get; init; }
-        
+        public IUpdatable[] Updatables { get; set; }
     }
     
     private readonly IUiAppInternal _app = parameters.UiApp;
     private readonly ColorWrapper _backgroundColor = parameters.BackgroundColor;
+    private readonly IUpdatable[] _updatables = parameters.Updatables;
     
     void IDisposable.Dispose()
     {
@@ -44,5 +45,12 @@ internal class UiAppComponent(IRenderHost host, IRenderer renderer, UiAppCompone
         _app.Draw(renderer, _backgroundColor.GetColor(renderer) ?? RgbaColor.Black);
     }
 
-    private void OnUpdate(float elapsedTime) => _app.Update(elapsedTime);
+    private void OnUpdate(float elapsedTime)
+    {
+        foreach (var updatable in _updatables)
+        {
+            updatable.Update(elapsedTime);
+        }
+        _app.Update(elapsedTime);
+    }
 }

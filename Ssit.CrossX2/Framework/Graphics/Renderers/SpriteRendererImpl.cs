@@ -5,6 +5,11 @@ namespace Ssit.CrossX2.Framework.Graphics.Renderers;
 
 public class SpriteRendererImpl(IRenderQueue renderQueue): ISpriteRenderer
 {
+    private readonly float[] _ninePatchSourceX = new float[4];
+    private readonly float[] _ninePatchSourceY = new float[4];
+    private readonly float[] _ninePatchTargetX = new float[4];
+    private readonly float[] _ninePatchTargetY = new float[4];
+
     public void Draw(ITexture texture, RectangleF target, RectangleF? sourceRectangle = null, Vector2? origin = null, float rotation = 0,
         RgbaColor? nullableColor = null, ImageTransform imageTransform = ImageTransform.None, float depth = 0)
     {
@@ -75,6 +80,66 @@ public class SpriteRendererImpl(IRenderQueue renderQueue): ISpriteRenderer
 
     public void Draw(SpriteInstance sprite, Vector2 position, float rotation = 0, float scale = 1, RgbaColor? color = null, ImageTransform transform = ImageTransform.None, float depth = 0) 
         => Draw(sprite.SpriteSheet, position, sprite.Source, sprite.Origin, rotation, scale, color, transform, depth);
+
+    public void DrawNinePatch(ITexture texture, RectangleF target, float scale = 1, RectangleF? centerPart = null, RgbaColor? nullableColor = null, float depth = 0)
+    {
+        var textureSize = texture.Size;
+        var center = centerPart ?? new RectangleF(textureSize.Width / 3f, textureSize.Height / 3f, textureSize.Width / 3f, textureSize.Height / 3f);
+        var color = nullableColor ?? RgbaColor.White;
+
+        var left = center.X * scale;
+        var top = center.Y * scale;
+        var right = (textureSize.Width - center.Right) * scale;
+        var bottom = (textureSize.Height - center.Bottom) * scale;
+
+        var sourceX = _ninePatchSourceX;
+        var sourceY = _ninePatchSourceY;
+        var targetX = _ninePatchTargetX;
+        var targetY = _ninePatchTargetY;
+
+        sourceX[0] = 0; 
+        sourceX[1] = center.X; 
+        sourceX[2] = center.Right; 
+        sourceX[3] = textureSize.Width;
+        
+        sourceY[0] = 0; 
+        sourceY[1] = center.Y; 
+        sourceY[2] = center.Bottom; 
+        sourceY[3] = textureSize.Height;
+        
+        targetX[0] = target.X; 
+        targetX[1] = target.X + left; 
+        targetX[2] = target.Right - right; 
+        targetX[3] = target.Right;
+        
+        targetY[0] = target.Y; 
+        targetY[1] = target.Y + top; 
+        targetY[2] = target.Bottom - bottom; 
+        targetY[3] = target.Bottom;
+
+        for (var row = 0; row < 3; row++)
+        {
+            var sourceHeight = sourceY[row + 1] - sourceY[row];
+            var targetHeight = targetY[row + 1] - targetY[row];
+
+            if (sourceHeight <= 0 || targetHeight <= 0)
+                continue;
+
+            for (var col = 0; col < 3; col++)
+            {
+                var sourceWidth = sourceX[col + 1] - sourceX[col];
+                var targetWidth = targetX[col + 1] - targetX[col];
+
+                if (sourceWidth <= 0 || targetWidth <= 0)
+                    continue;
+
+                var sourceRect = new RectangleF(sourceX[col], sourceY[row], sourceWidth, sourceHeight);
+                var targetRect = new RectangleF(targetX[col], targetY[row], targetWidth, targetHeight);
+
+                Draw(texture, targetRect, sourceRect, nullableColor: color, depth: depth);
+            }
+        }
+    }
 
     private static Vector2 Rotate(Vector2 v, float sin, float cos) => new(v.X * cos - v.Y * sin, v.X * sin + v.Y * cos);
 

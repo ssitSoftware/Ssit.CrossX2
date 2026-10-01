@@ -14,4 +14,6 @@ public interface ISpriteRenderer
 
     void Draw(SpriteInstance sprite, Vector2 position, float rotation = 0, float scale = 1, RgbaColor? color = null,
         ImageTransform transform = ImageTransform.None, float depth = 0);
+
+    void DrawNinePatch(ITexture texture, RectangleF target, float scale = 1 , RectangleF? centerPart = null, RgbaColor? nullableColor = null, float depth = 0);
 }

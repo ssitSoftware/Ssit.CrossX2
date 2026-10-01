@@ -18,7 +18,7 @@ public class SharedBoolValue(bool value) : SharedBool
     public override bool Value { get; } = value;
 }
 
-public class SharedBoolMutable(bool value) : SharedBool
+public class SharedBoolMutable(bool value) : SharedBool, IValueConsumer<bool>
 {
     private bool _value = value;
 

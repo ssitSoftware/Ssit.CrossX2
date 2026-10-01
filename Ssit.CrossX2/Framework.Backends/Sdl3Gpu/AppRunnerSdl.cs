@@ -176,7 +176,8 @@ internal static class AppRunnerSdl
                     continue;
                 }
                 
-                switch ((SDL_EventType)@event.type)
+                var eventType = (SDL_EventType)@event.type;
+                switch (eventType)
                 {
                     case SDL_EventType.SDL_EVENT_QUIT:
                     {
@@ -256,6 +257,21 @@ internal static class AppRunnerSdl
                         if ((pointingDevices.Mode & PointingDevicesMode.Mouse) == 0)
                         {
                             SDL_HideCursor();
+                        }
+                        
+                        actionScheduler.Schedule(() =>
+                        {
+                            eventSource.OnPause();
+                            eventSource.OnResume();
+                        });
+                        
+                        if (eventType == SDL_EventType.SDL_EVENT_WINDOW_ENTER_FULLSCREEN)
+                        {
+                            eventSource.OnEnteredFullscreen();
+                        }
+                        else if (eventType == SDL_EventType.SDL_EVENT_WINDOW_LEAVE_FULLSCREEN)
+                        {
+                            eventSource.OnLeftFullscreen();
                         }
                         break;
                     }

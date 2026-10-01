@@ -4,7 +4,7 @@ using Ssit.CrossX2.Framework.UI.Values;
 
 namespace Ssit.CrossX2.Framework.UI.Views;
 
-public class TextInput: View
+public class TextInput: View, IFocusableView
 {
     public FontDesc? Font { get; set; }
     
@@ -30,6 +30,7 @@ public class TextInput: View
     public Length? FrameThickness { get; set; }
     public Length? ActiveFrameThickness { get; set; }
     public string UniqueId { get; set; }
+    public IValueConsumer<bool> FocusConsumer { get; set; }
     public TextScaling Scaling { get; set; } = TextScaling.Default;
     public SharedBool Enabled { get; set; }
     public TextUpdateMode? UpdateMode { get; set; }

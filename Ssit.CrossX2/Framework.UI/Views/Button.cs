@@ -17,6 +17,7 @@ public class Button: Container, IButtonView
     public object CommandParameter { get; set; }
     
     public string UniqueId { get; set; }
+    public IValueConsumer<bool> FocusConsumer { get; set; }
     public string CommandSoundId { get; set; }
     public ButtonCommandType EnabledCommandTypes { get; set; } = ButtonCommandType.Select;
     public IUiSounds CustomSounds { get; set; }

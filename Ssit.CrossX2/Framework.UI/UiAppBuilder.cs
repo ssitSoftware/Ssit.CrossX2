@@ -86,14 +86,15 @@ internal class UiAppBuilder(IIoCContainer container, IRenderHost renderHost) : I
 
         builder
             .WithInstance(map)
-            .WithSingleton<INavigation, Navigation>()
+            .WithSingleton<INavigation, Navigation>().As<Navigation>()
             .WithSingleton<IHandlerMapper, FullHandlerMapper>()
             .WithSingleton<IUiServices, UiServices>()
             .WithSingleton<IUiActionDispatcher, UiActionDispatcher>()
             .WithSingleton<IUiSounds, UiSoundsContainer>()
             .WithSingleton<IUiApp, UiApp>()
             .WithInstance<IInputCoordinateSystem>(new InputCoordinateSystem(renderHost))
-            .WithSingleton<PageInputContext, PageInputContext>();
+            .WithSingleton<PageInputContext, PageInputContext>()
+            .WithInstance(new UiParameters());
 
         _initializeServicesDelegate?.Invoke(builder);
         _mapHandlersDelegate?.Invoke(handlers);
@@ -109,7 +110,8 @@ internal class UiAppBuilder(IIoCContainer container, IRenderHost renderHost) : I
         handlerMapper.AddMappings(handlers);
 
         var app = (UiApp)services.Get<IUiApp>();
-        app.Initialize((Navigation)navigation);
+        app.Navigation = navigation as Navigation;
+        app.InputProcessor = services.IoCConstruct<InputProcessor>();
 
         if (_styleTypes != null)
         {
@@ -118,11 +120,14 @@ internal class UiAppBuilder(IIoCContainer container, IRenderHost renderHost) : I
 
         _appInitializationDelegate?.Invoke(app);
         _firstNavigation?.Invoke(navigation);
+
+        var updatables = services.Fetch<IUpdatable>(false).ToArray();
         
         return services.IoCConstruct<UiAppComponent>(new UiAppComponent.Parameters
         {
             UiApp = app,
-            BackgroundColor = _backgroundColor
+            BackgroundColor = _backgroundColor,
+            Updatables = updatables
         });
     }
 
@@ -139,6 +144,7 @@ internal class UiAppBuilder(IIoCContainer container, IRenderHost renderHost) : I
             .AddMapping<LabelRadio, LabelRadioHandler<LabelRadio>>()
             .AddMapping<Button, ButtonHandler>()
             .AddMapping<VerticalStack, VerticalStackHandler<VerticalStack>>()
+            .AddMapping<HorizontalStack, HorizontalStackHandler<HorizontalStack>>()
             .AddMapping<ImageView, ImageViewHandler>()
             .AddMapping<ScrollView, ScrollViewHandler<ScrollView>>()
             .AddMapping<VirtualButton, VirtualButtonHandler>()
@@ -147,6 +153,7 @@ internal class UiAppBuilder(IIoCContainer container, IRenderHost renderHost) : I
             .AddMapping<MarkdownView, MarkdownViewHandler<MarkdownView>>()
             .AddMapping<HorizontalSlider, HorizontalSliderHandler<HorizontalSlider>>()
             .AddMapping<FocusableContainer, FocusableContainerHandler>()
-            .AddMapping<TextInput, TextInputHandler>();
+            .AddMapping<TextInput, TextInputHandler>()
+            .AddMapping<NinePatchCard, NinePatchCardHandler>();
     }
 }

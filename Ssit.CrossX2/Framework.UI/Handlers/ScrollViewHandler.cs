@@ -447,11 +447,17 @@ public class ScrollViewHandler<TScrollView> : BackgroundHandler<TScrollView>, IV
     bool IFocusable.DisableAllInput => false;
     bool IFocusable.SkipNavigation => false;
     string IFocusable.UniqueId => AttachedView?.UniqueId;
-    void IFocusable.SetFocus() => _focused = true;
+
+    void IFocusable.SetFocus()
+    {
+        _focused = true;
+        AttachedView.FocusConsumer?.SetValue(true);
+    }
 
     bool IFocusable.ResetFocus()
     {
         _focused = false;
+        AttachedView.FocusConsumer?.SetValue(false);
         _scrollActive = false;
         return true;
     }

@@ -16,4 +16,5 @@ public class ScrollView: Background, IFocusableView
     public float AutoScrollResumeDelay { get; set; } = 1f;
     
     public string UniqueId { get; set; }
+    public IValueConsumer<bool> FocusConsumer { get; set; }
 }

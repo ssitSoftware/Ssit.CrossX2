@@ -25,4 +25,5 @@ internal interface IPage: IViewParent, IDisposable
     void OnTransitionToFinished();
     bool MoveFocus(FocusDirection direction);
     StylesContainer Styles { get; }
+    FocusNavigationMode FocusNavigationMode { get; }
 }

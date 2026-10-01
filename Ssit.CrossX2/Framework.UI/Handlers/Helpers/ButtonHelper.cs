@@ -185,7 +185,6 @@ public class ButtonHelper<TView, TViewHandler>: IDisposable where TView: View, I
             case UiButton.Left:
                 if (AttachedView.EnabledCommandTypes.HasFlag(ButtonCommandType.Previous))
                 {
-                    _uiSounds[UiSounds.ChangeValueSound]?.PlayOnce();
                     Execute(TimeSpan.Zero, ButtonCommandType.Previous);
                 }
                 else focusDirection = FocusDirection.Left;
@@ -194,7 +193,6 @@ public class ButtonHelper<TView, TViewHandler>: IDisposable where TView: View, I
             case UiButton.Right:
                 if (AttachedView.EnabledCommandTypes.HasFlag(ButtonCommandType.Next) )
                 {
-                    _uiSounds[UiSounds.ChangeValueSound]?.PlayOnce();
                     Execute(TimeSpan.Zero, ButtonCommandType.Next);
                 }
                 else focusDirection = FocusDirection.Right;

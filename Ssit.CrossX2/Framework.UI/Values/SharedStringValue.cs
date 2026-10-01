@@ -8,7 +8,7 @@ public class SharedStringValue : SharedString
     private readonly StringBuilder _builder = new();
 
     public override int Length => _builder.Length;
-    public override char this[int index] => _builder[index];
+    public override char this[int index] => index  < 0 || index >= _builder.Length ? ' ' : _builder[index];
 
     public SharedStringValue()
     {

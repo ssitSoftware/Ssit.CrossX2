@@ -105,7 +105,7 @@ internal class IoCContainer : IIoCContainer, IImplementationMapper
         return ObjectCreationHelper.CreateObject(type, parameters, TryGet);
     }
 
-    public IEnumerable<T> Fetch<T>()
+    public IEnumerable<T> Fetch<T>(bool includeParentScope = false)
     {
         var instances = new HashSet<T>();
         
@@ -114,7 +114,7 @@ internal class IoCContainer : IIoCContainer, IImplementationMapper
             if (instance is T t) instances.Add(t);
         }
         
-        if (Parent is not null)
+        if (includeParentScope && Parent is not null)
         {
             instances.UnionWith(Parent.Fetch<T>());
         }
