@@ -10,7 +10,8 @@ internal class RenderStateProvider : IRenderStateProvider
     public BlendMode BlendMode => _state.BlendMode;
     public TextureFilter TextureFilter => _state.TextureFilter;
     public RectangleF? ClipRect => _state.ClipRect;
-
+    public RgbaColor TintColor => _state.TintColor;
+    
     public float Scale { get; private set; }
 
     public void Update(RenderState state)

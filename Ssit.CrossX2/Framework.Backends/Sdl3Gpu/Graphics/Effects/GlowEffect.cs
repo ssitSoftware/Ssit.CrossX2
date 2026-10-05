@@ -141,7 +141,11 @@ internal sealed unsafe class GlowEffect : IGlowEffect
             new(new Vector2(1f, 1f), new Vector2(compositeUvRight, compositeUvTop), RgbaColor.White),
         ];
 
-        SDL_GPUCommandBuffer* uploadCommandBuffer = _renderer.CommandBuffer;
+        // Use our own command buffer for this one-time upload instead of _renderer.CommandBuffer:
+        // that one is the shared per-frame buffer, which may already have this frame's swapchain
+        // texture bound by the time we're reconstructed mid-resize. Submitting it here would
+        // present an empty frame and leave the renderer holding a retired swapchain texture.
+        SDL_GPUCommandBuffer* uploadCommandBuffer = SDL_AcquireGPUCommandBuffer(_device);
         SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(uploadCommandBuffer);
 
         _fullscreenVertexBuffer = CreateAndUploadVertexBuffer(_device, copyPass, fullscreenVertices);
@@ -149,7 +153,7 @@ internal sealed unsafe class GlowEffect : IGlowEffect
         _glowCompositeVertexBuffer = CreateAndUploadVertexBuffer(_device, copyPass, glowCompositeVertices);
 
         SDL_EndGPUCopyPass(copyPass);
-        _renderer.SubmitCommandBuffer();
+        SDL_SubmitGPUCommandBuffer(uploadCommandBuffer);
     }
 
     public void Render(SDL_GPUCommandBuffer* commandBuffer, SDL_GPUTexture* regularTexture, SDL_GPUTexture* glowTexture, SDL_GPUTexture* outputTexture, float intensity, float sourceScale = 1)

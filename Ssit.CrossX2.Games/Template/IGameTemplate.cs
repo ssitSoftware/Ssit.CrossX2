@@ -30,4 +30,5 @@ public interface IGameTemplate
     RgbaColor EmptyColor { get; }
     RgbaColor TilesBgColor => EmptyColor;
     Size TargetSize { get; }
+    bool EnableLighting => false;
 }

@@ -10,6 +10,7 @@ public interface IStateManager
 
     void Scale(float scale);
     void Translate(Vector2 offset);
+    void Tint(RgbaColor color);
     void SetBlendMode(BlendMode blendMode);
     void SetTextureFilter(TextureFilter filter);
     void SetClipRect(RectangleF? clipRect, bool intersectExisting = true);

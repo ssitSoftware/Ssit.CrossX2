@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO.Compression;
 using System.Text;
+using Ssit.CrossX2.Framework.Games.Editor;
 using Ssit.CrossX2.Framework.Games.Template;
 using Ssit.CrossX2.Framework.Utils;
 
@@ -39,10 +39,20 @@ public class MapFile: BindableModel
             return nextObjectId + 1;
         }
     }
-    
+
     [Editor]
-    public RgbaColor BackgroundColor { get; set; }
-    
+    public RgbaColor BackgroundColor
+    {
+        get;
+        set
+        {
+            if (SetField(ref field, value))
+            {
+                IsModified = true;
+            }
+        }
+    }
+
     public ObservableCollection<MapLayer> Layers { get; } = new();
     
     public bool IsModified

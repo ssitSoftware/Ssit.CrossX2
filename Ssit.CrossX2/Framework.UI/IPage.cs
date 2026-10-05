@@ -1,4 +1,5 @@
 using Ssit.CrossX2.Framework.Graphics;
+using Ssit.CrossX2.Framework.IoC;
 using Ssit.CrossX2.Framework.UI.Handlers;
 using Ssit.CrossX2.Framework.UI.Services;
 using Ssit.CrossX2.Framework.UI.Transitions;
@@ -26,4 +27,5 @@ internal interface IPage: IViewParent, IDisposable
     bool MoveFocus(FocusDirection direction);
     StylesContainer Styles { get; }
     FocusNavigationMode FocusNavigationMode { get; }
+    IIoCContainer Services { get; }
 }

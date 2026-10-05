@@ -11,20 +11,21 @@ using Button = Ssit.CrossX2.Framework.UI.Views.Button;
 
 namespace Ssit.CrossX2.Framework.UI.Handlers;
 
-public class ButtonHandler : ContainerHandler<Button>, IInputConsumer, IFocusable, IColorSource
+public class ButtonHandler<TButton> : ContainerHandler<TButton>, IInputConsumer, IFocusable, IColorSource where TButton : Button
 {
-    private readonly IRenderer _renderer;
-    private readonly PageInputContext _pageInputContext;
-    private readonly ButtonHelper<Views.Button, ButtonHandler> _buttonHelper;
+    protected readonly IRenderer Renderer;
+    protected readonly PageInputContext PageInputContext;
+    private readonly ButtonHelper<TButton, ButtonHandler<TButton>> _buttonHelper;
 
     public bool Enabled => _buttonHelper.IsEnabled;
     public bool Focused { get; private set; }
+    public bool IsPushed => _buttonHelper.IsPressed;
     public bool DisableAllInput => _buttonHelper.IsExecutingCommand;
     public bool SkipNavigation => false;
     public string UniqueId => AttachedView?.UniqueId;
 
     protected override RgbaColor? BackgroundColor(IRenderer renderer) => GetColor(nameof(Views.Button.BackgroundColors)) ?? base.BackgroundColor(renderer);
-    
+
     public ButtonHandler(CreateHandlerParameters parameters, IHandlerMapper handlerMapper,
         IUiSounds uiSounds, IHapticDevice hapticDevice,
         IRenderer renderer,
@@ -32,9 +33,9 @@ public class ButtonHandler : ContainerHandler<Button>, IInputConsumer, IFocusabl
         PageInputContext pageInputContext)
         : base(parameters, handlerMapper)
     {
-        _renderer = renderer;
-        _pageInputContext = pageInputContext;
-        _buttonHelper = new ButtonHelper<Button, ButtonHandler>(this, AttachedView?.CustomSounds ?? uiSounds, hapticDevice, pageInputContext, pointingDevices);
+        Renderer = renderer;
+        PageInputContext = pageInputContext;
+        _buttonHelper = new ButtonHelper<TButton, ButtonHandler<TButton>>(this, AttachedView?.CustomSounds ?? uiSounds, hapticDevice, pageInputContext, pointingDevices);
     }
 
     public void ProcessHover(Vector2? hoverPosition, int? matchingPointerId, IInputContext context) =>
@@ -104,7 +105,7 @@ public class ButtonHandler : ContainerHandler<Button>, IInputConsumer, IFocusabl
         _buttonHelper.Dispose();
     }
 
-    public RgbaColor? GetColor(string id)
+    public virtual RgbaColor? GetColor(string id)
     {
         IButtonStateColors color = null;
         switch (id)
@@ -112,16 +113,25 @@ public class ButtonHandler : ContainerHandler<Button>, IInputConsumer, IFocusabl
             case nameof(Views.Button.ForegroundColors):
                 color = AttachedView?.ForegroundColors;
                 break;
-            
+
             case nameof(Views.Button.OutlineColors):
                 color = AttachedView?.OutlineColors;
                 break;
-            
+
             case nameof(Views.Button.BackgroundColors):
                 color = AttachedView?.BackgroundColors;
                 break;
         }
-        
-        return color?.GetColor(_renderer, _buttonHelper.IsHovered, Focused && _pageInputContext.ShowFocus, _buttonHelper.IsPressed || _buttonHelper.IsExecutingCommand, Enabled, false);
+
+        return color?.GetColor(Renderer, _buttonHelper.IsHovered, Focused && PageInputContext.ShowFocus, _buttonHelper.IsPressed || _buttonHelper.IsExecutingCommand, Enabled, false);
     }
+}
+
+public class ButtonHandler(ViewHandler.CreateHandlerParameters parameters, IHandlerMapper handlerMapper,
+        IUiSounds uiSounds, IHapticDevice hapticDevice,
+        IRenderer renderer,
+        IPointingDevices pointingDevices,
+        PageInputContext pageInputContext)
+    : ButtonHandler<Button>(parameters, handlerMapper, uiSounds, hapticDevice, renderer, pointingDevices, pageInputContext)
+{
 }

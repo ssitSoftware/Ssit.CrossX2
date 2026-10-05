@@ -9,4 +9,5 @@ public interface IRenderStateProvider
     TextureFilter TextureFilter { get; }
     RectangleF? ClipRect { get; }
     float Scale { get;}
+    RgbaColor TintColor { get; }
 }

@@ -45,4 +45,10 @@
       <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Pipelines\TextureLightBump.vert.metal" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Reference Include="Mono.Android">
+        <HintPath>..\..\..\..\..\..\..\usr\local\share\dotnet\packs\Microsoft.Android.Ref.36\36.1.53\ref\net10.0\Mono.Android.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
 </Project>

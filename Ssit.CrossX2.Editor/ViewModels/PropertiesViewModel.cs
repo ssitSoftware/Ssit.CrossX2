@@ -94,12 +94,6 @@ public class PropertiesViewModel: BindableModel
     private readonly IWindowService _windowService;
     private readonly IEditorInstances _instances;
 
-    public string Title
-    {
-        get;
-        set => SetField(ref field, value);
-    }
-
     public MapFile MapFile
     {
         set
@@ -140,9 +134,7 @@ public class PropertiesViewModel: BindableModel
             var obj = _mapFile.FindObject(_editor.SelectedObject);
             if (obj is not null)
             {
-                Title = "Object Properties";
-                
-                Parameters.Add(new ParameterInfoModel(obj.TypeId.Split('/').Last()));
+                Parameters.Add(new ParameterHeaderModel(obj.TypeId.Split('/').Last()));
                 
                 FillProperties(obj);
                 return;
@@ -151,9 +143,11 @@ public class PropertiesViewModel: BindableModel
         
         if (_editor?.SelectedLayer is not null)
         {
-            Title = "Map & Layer Properties";
-            FillProperties(_mapFile);
             
+            Parameters.Add(new ParameterHeaderModel("Map Properties"));
+            FillProperties(_mapFile);
+
+            Parameters.Add(new ParameterHeaderModel("Layer Properties"));
             FillProperties(_editor.SelectedLayer);
         }
     }

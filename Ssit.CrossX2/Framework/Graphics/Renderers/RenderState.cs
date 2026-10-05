@@ -8,4 +8,5 @@ internal struct RenderState()
     public BlendMode BlendMode = BlendMode.AlphaBlend;
     public TextureFilter TextureFilter = TextureFilter.Point;
     public RectangleF? ClipRect = null; 
+    public RgbaColor TintColor = RgbaColor.White;
 }

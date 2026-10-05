@@ -1,15 +1,22 @@
-#if FALSE
-using Ssit.CrossX2.Graphics;
+using Ssit.CrossX2.Framework.Games.Services;
+using Ssit.CrossX2.Framework.Graphics;
+using Ssit.CrossX2.Framework.UI.Handlers;
 
-namespace Ssit.CrossX2.UI.Handlers;
+namespace Ssit.CrossX2.Framework.Games.UI;
 
-internal class GameViewHandler(ViewHandler.CreateHandlerParameters parameters) : BackgroundHandler<GameView>(parameters)
+internal class GameViewHandler : BackgroundHandler<GameView>
 {
+    private readonly IGameDebugService _gameDebugService;
+
+    public GameViewHandler(CreateHandlerParameters parameters, IGameDebugService gameDebugService = null) : base(parameters)
+    {
+        _gameDebugService = gameDebugService;
+        AttachedView.Active.ValueChanged += ActiveOnValueChanged;
+    }
+
     protected override void OnDraw(IRenderer renderer)
     {
         base.OnDraw(renderer);
-        
-        AttachedView.Active.ValueChanged += ActiveOnValueChanged;
         
         var gameInstance = AttachedView.GameInstance;
         for (var pass = 0; pass < gameInstance.RenderPasses; pass++)
@@ -17,7 +24,7 @@ internal class GameViewHandler(ViewHandler.CreateHandlerParameters parameters) :
             gameInstance.Render(renderer, ScreenBounds, pass, CurrentScale);
         }
 
-        if (AttachedView.ShowDebug?.Value ?? false)
+        if (AttachedView.ShowDebug?.Value ?? _gameDebugService?.ShowDebug?.Value ?? false)
         {
             gameInstance.RenderDebug(renderer, ScreenBounds, CurrentScale);
         }
@@ -41,6 +48,10 @@ internal class GameViewHandler(ViewHandler.CreateHandlerParameters parameters) :
             gameInstance.Update(dt * AttachedView.SpeedFactor);
         }
     }
-}
 
-#endif
+    protected override void OnDispose(bool disposing)
+    {
+        base.OnDispose(disposing);
+        AttachedView.Active.ValueChanged -= ActiveOnValueChanged;
+    }
+}

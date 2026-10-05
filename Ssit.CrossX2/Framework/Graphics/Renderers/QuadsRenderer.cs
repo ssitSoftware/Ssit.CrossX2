@@ -20,6 +20,23 @@ internal class QuadsRenderer(IRenderQueue renderQueue): IQuadsRenderer
             new VertexPct(target.TopRight, color, texRect.TopRight),
             texture);
     }
+    
+    private void Draw(ITexture texture, RectangleF target, RectangleF source, RgbaColor? colorAttr = null)
+    {
+        var color = colorAttr ?? RgbaColor.White;
+        
+        var texRect = new RectangleF(source.X / texture.Size.Width, source.Y / texture.Size.Height, 
+            source.Width / texture.Size.Width, source.Height / texture.Size.Height);
+        
+        renderQueue.PushTriangle(new VertexPct(target.TopLeft, color, texRect.TopLeft),
+            new VertexPct(target.BottomLeft, color, texRect.BottomLeft),
+            new VertexPct(target.BottomRight, color, texRect.BottomRight), texture);
+        
+        renderQueue.PushTriangle(new VertexPct(target.TopLeft, color, texRect.TopLeft),
+            new VertexPct(target.BottomRight, color, texRect.BottomRight), 
+            new VertexPct(target.TopRight, color, texRect.TopRight),
+            texture);
+    }
 
     public void Draw(ITexture texture, IReadOnlyList<Quad> quads, RgbaColor colorAttr)
     {

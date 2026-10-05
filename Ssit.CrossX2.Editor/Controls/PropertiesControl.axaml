@@ -13,115 +13,116 @@
     xmlns:viewModels="clr-namespace:Ssit.CrossX2.Editor.ViewModels"
     xmlns:controls="clr-namespace:Ssit.CrossX2.Editor.Controls"
     xmlns:parameters="clr-namespace:Ssit.CrossX2.Editor.Models.Parameters">
-    <Grid RowDefinitions="Auto, *">
-        <Label
-            Background="{DynamicResource HeaderBackground}"
-            Content="{Binding Title}"
-            Grid.Row="0"
-            Margin="0,0,0,1"
-            Padding="10" />
-        <ListBox
-            Background="{DynamicResource ControlBackground}"
-            Grid.Row="1"
-            ItemsSource="{Binding Parameters}"
-            Padding="0"
-            SelectedItem="{Binding Selected}">
-            <ListBox.ItemTemplate>
 
-                <controls:PropertiesTemplateSelector>
+    <ListBox
+        Background="{DynamicResource ControlBackground}"
+        ItemsSource="{Binding Parameters}"
+        SelectedItem="{Binding Selected}">
+        <ListBox.ItemTemplate>
 
-                    <DataTemplate x:DataType="parameters:ParameterInfoModel" x:Key="ParameterInfoModel">
-                        <Label Content="{Binding Name}" FontWeight="Bold" />
-                    </DataTemplate>
+            <controls:PropertiesTemplateSelector>
 
-                    <DataTemplate x:DataType="parameters:ParameterColorModel" x:Key="ParameterColorModel">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <Label Content="{Binding Name}" VerticalAlignment="Center" />
-                            <colorpicker:ColorButton Color="{Binding Value, Converter={StaticResource RgbaColorConverter}, Mode=TwoWay}" />
-                        </StackPanel>
-                    </DataTemplate>
+                <DataTemplate x:DataType="parameters:ParameterInfoModel" x:Key="ParameterInfoModel">
+                    <Label Content="{Binding Name}" FontWeight="Bold" />
+                </DataTemplate>
 
-                    <DataTemplate x:DataType="parameters:ParameterBooleanModel" x:Key="ParameterBooleanModel">
-                        <CheckBox
-                            Content="{Binding Name}"
-                            IsChecked="{Binding Value}"
-                            IsEnabled="{Binding Enabled}" />
-                    </DataTemplate>
+                <DataTemplate x:DataType="parameters:ParameterHeaderModel" x:Key="ParameterHeaderModel">
+                    <Label
+                        Background="{DynamicResource HeaderBackground}"
+                        Content="{Binding Name}"
+                        FontWeight="Bold"
+                        Padding="10" />
+                </DataTemplate>
 
-                    <DataTemplate x:DataType="parameters:ParameterLayerSizeModel" x:Key="ParameterLayerSizeModel">
-                        <StackPanel>
-                            <Label Content="{Binding Name}" />
-                            <Grid ColumnDefinitions="*, 5, Auto">
-                                <TextBox
-                                    Grid.Column="0"
-                                    IsReadOnly="True"
-                                    Text="{Binding Info}" />
-                                <Button
-                                    Command="{Binding ResizeLayerCommand}"
-                                    Content="..."
-                                    Grid.Column="2" />
-                            </Grid>
-                        </StackPanel>
+                <DataTemplate x:DataType="parameters:ParameterColorModel" x:Key="ParameterColorModel">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Label Content="{Binding Name}" VerticalAlignment="Center" />
+                        <colorpicker:ColorButton
+                            Color="{Binding Value, Converter={StaticResource RgbaColorConverter}, Mode=TwoWay}" />
+                    </StackPanel>
+                </DataTemplate>
 
-                    </DataTemplate>
+                <DataTemplate x:DataType="parameters:ParameterBooleanModel" x:Key="ParameterBooleanModel">
+                    <CheckBox
+                        Content="{Binding Name}"
+                        IsChecked="{Binding Value}"
+                        IsEnabled="{Binding Enabled}" />
+                </DataTemplate>
 
-                    <DataTemplate x:DataType="parameters:ParameterTargetModel" x:Key="ParameterTargetModel">
-                        <StackPanel>
-                            <Label Content="{Binding Name}" />
-                            <Grid ColumnDefinitions="*, 5, Auto">
-                                <TextBox
-                                    Grid.Column="0"
-                                    IsReadOnly="True"
-                                    Text="{Binding Info}" />
-                                <Button
-                                    Command="{Binding SelectObjectCommand}"
-                                    Content="..."
-                                    Grid.Column="2" />
-                            </Grid>
-                        </StackPanel>
-
-                    </DataTemplate>
-
-                    <DataTemplate x:DataType="parameters:ParameterStringModel" x:Key="ParameterStringModel">
-                        <StackPanel Background="{Binding IsInvalid, Converter={StaticResource InvalidPropertyConverter}}">
-                            <Label Content="{Binding Name}" />
+                <DataTemplate x:DataType="parameters:ParameterLayerSizeModel" x:Key="ParameterLayerSizeModel">
+                    <StackPanel>
+                        <Label Content="{Binding Name}" />
+                        <Grid ColumnDefinitions="*, 5, Auto">
                             <TextBox
-                                IsEnabled="{Binding Enabled}"
-                                LostFocus="InputElement_OnLostFocus"
-                                Text="{Binding Value}" />
-                        </StackPanel>
-                    </DataTemplate>
+                                Grid.Column="0"
+                                IsReadOnly="True"
+                                Text="{Binding Info}" />
+                            <Button
+                                Command="{Binding ResizeLayerCommand}"
+                                Content="..."
+                                Grid.Column="2" />
+                        </Grid>
+                    </StackPanel>
 
-                    <DataTemplate x:DataType="parameters:ParameterFloatModel" x:Key="ParameterFloatModel">
-                        <StackPanel Background="{Binding IsInvalid, Converter={StaticResource InvalidPropertyConverter}}">
-                            <Label Content="{Binding Name}" />
+                </DataTemplate>
 
-                            <controls:NumericInput
-                                FocusLostCommand="{Binding FocusLostCommand}"
-                                IsEnabled="{Binding Enabled}"
-                                Maximum="{Binding Max}"
-                                Minimum="{Binding Min}"
-                                Step="{Binding Step}"
-                                Value="{Binding Value}" />
-                        </StackPanel>
-                    </DataTemplate>
+                <DataTemplate x:DataType="parameters:ParameterTargetModel" x:Key="ParameterTargetModel">
+                    <StackPanel>
+                        <Label Content="{Binding Name}" />
+                        <Grid ColumnDefinitions="*, 5, Auto">
+                            <TextBox
+                                Grid.Column="0"
+                                IsReadOnly="True"
+                                Text="{Binding Info}" />
+                            <Button
+                                Command="{Binding SelectObjectCommand}"
+                                Content="..."
+                                Grid.Column="2" />
+                        </Grid>
+                    </StackPanel>
 
-                    <DataTemplate x:DataType="parameters:ParameterIntModel" x:Key="ParameterIntModel">
-                        <StackPanel Background="{Binding IsInvalid, Converter={StaticResource InvalidPropertyConverter}}">
-                            <Label Content="{Binding Name}" />
-                            <controls:NumericInput
-                                FocusLostCommand="{Binding FocusLostCommand}"
-                                IsEnabled="{Binding Enabled}"
-                                Maximum="{Binding Max}"
-                                Minimum="{Binding Min}"
-                                Step="{Binding Step}"
-                                Value="{Binding Value}" />
-                        </StackPanel>
-                    </DataTemplate>
+                </DataTemplate>
 
-                </controls:PropertiesTemplateSelector>
+                <DataTemplate x:DataType="parameters:ParameterStringModel" x:Key="ParameterStringModel">
+                    <StackPanel Background="{Binding IsInvalid, Converter={StaticResource InvalidPropertyConverter}}">
+                        <Label Content="{Binding Name}" />
+                        <TextBox
+                            IsEnabled="{Binding Enabled}"
+                            LostFocus="InputElement_OnLostFocus"
+                            Text="{Binding Value}" />
+                    </StackPanel>
+                </DataTemplate>
 
-            </ListBox.ItemTemplate>
-        </ListBox>
-    </Grid>
+                <DataTemplate x:DataType="parameters:ParameterFloatModel" x:Key="ParameterFloatModel">
+                    <StackPanel Background="{Binding IsInvalid, Converter={StaticResource InvalidPropertyConverter}}">
+                        <Label Content="{Binding Name}" />
+
+                        <controls:NumericInput
+                            FocusLostCommand="{Binding FocusLostCommand}"
+                            IsEnabled="{Binding Enabled}"
+                            Maximum="{Binding Max}"
+                            Minimum="{Binding Min}"
+                            Step="{Binding Step}"
+                            Value="{Binding Value}" />
+                    </StackPanel>
+                </DataTemplate>
+
+                <DataTemplate x:DataType="parameters:ParameterIntModel" x:Key="ParameterIntModel">
+                    <StackPanel Background="{Binding IsInvalid, Converter={StaticResource InvalidPropertyConverter}}">
+                        <Label Content="{Binding Name}" />
+                        <controls:NumericInput
+                            FocusLostCommand="{Binding FocusLostCommand}"
+                            IsEnabled="{Binding Enabled}"
+                            Maximum="{Binding Max}"
+                            Minimum="{Binding Min}"
+                            Step="{Binding Step}"
+                            Value="{Binding Value}" />
+                    </StackPanel>
+                </DataTemplate>
+
+            </controls:PropertiesTemplateSelector>
+
+        </ListBox.ItemTemplate>
+    </ListBox>
+
 </UserControl>

@@ -363,26 +363,32 @@ internal static class AppRunnerSdl
         if (swapchainTexture != null)
         {
             sdlGpuRenderer.DefaultOutputTarget = new SdlGpuRenderTargetStruct(swapchainTexture, new Size((int)swapchainWidth, (int)swapchainHeight));
-            
-            sdlGpuRenderer.CurrentPass = RenderPass.Normal;
-            if (renderHost.Begin())
-            {
-                component.Resize();
-            }
-            
-            component.Draw();
 
-            if (renderHost.BeginGlowPass())
+            try
             {
-                sdlGpuRenderer.CurrentPass = RenderPass.Glow;
-                component.Draw();
-                sdlGpuRenderer.EndCurrentGpuRenderPass();
-                sdlGpuRenderer.SubmitCommandBuffer();
-                
                 sdlGpuRenderer.CurrentPass = RenderPass.Normal;
+                if (renderHost.Begin())
+                {
+                    component.Resize();
+                }
+
+                component.Draw();
+
+                if (renderHost.BeginGlowPass())
+                {
+                    sdlGpuRenderer.CurrentPass = RenderPass.Glow;
+                    component.Draw();
+                    sdlGpuRenderer.EndCurrentGpuRenderPass();
+                    sdlGpuRenderer.SubmitCommandBuffer();
+
+                    sdlGpuRenderer.CurrentPass = RenderPass.Normal;
+                }
+
+                renderHost.End();
             }
-            
-            renderHost.End();
+            catch (SkipFrameException)
+            {
+            }
         }
 
         sdlGpuRenderer.SubmitCommandBuffer();

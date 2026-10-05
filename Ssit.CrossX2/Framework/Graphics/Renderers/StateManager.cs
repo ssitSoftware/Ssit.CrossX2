@@ -22,10 +22,12 @@ public class StateManager : IStateManager
     {
         var blendMode = _state.BlendMode;
         var clipRect = _state.ClipRect;
+        var transform = _state.Transform;
+        var tintColor = _state.TintColor;
         
         _state = _savedStates.Pop();
         
-        if (blendMode != _state.BlendMode || clipRect != _state.ClipRect)
+        if (blendMode != _state.BlendMode || clipRect != _state.ClipRect || _state.Transform != transform || _state.TintColor != tintColor)
         {
             OnStateUpdated();
         }
@@ -53,7 +55,13 @@ public class StateManager : IStateManager
         _state.Transform = Matrix4x4.CreateTranslation(new Vector3(offset, 0)) * _state.Transform;
         OnStateUpdated();
     }
-    
+
+    public void Tint(RgbaColor color)
+    {
+        _state.TintColor *= color;
+        OnStateUpdated();
+    }
+
     public void SetBlendMode(BlendMode blendMode)
     {
         if(_state.BlendMode == blendMode) return;
@@ -109,7 +117,7 @@ public class StateManager : IStateManager
     }
 
     private RenderState _state = new();
-    private RenderStateProvider _stateProvider = new();
+    private readonly RenderStateProvider _stateProvider = new();
     private readonly IUpdateHwModeHandler _handler;
 
     public StateManager(IUpdateHwModeHandler handler)

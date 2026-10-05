@@ -1,4 +1,5 @@
 using Ssit.CrossX2.Framework.Graphics;
+using Ssit.CrossX2.Framework.UI.Handlers;
 
 namespace Ssit.CrossX2.Framework.UI.Transitions;
 
@@ -12,7 +13,7 @@ public abstract class Transition : ITransition
     
     private bool _applied;
     
-    void ITransition.Apply(IRenderer renderer, float scale, TransitionType type, float progress)
+    void ITransition.Apply(ViewHandler handler, IRenderer renderer, float scale, TransitionType type, float progress)
     {
         if ((ForTransitions & type) == 0)
             return;
@@ -21,9 +22,8 @@ public abstract class Transition : ITransition
         
         progress = MathF.Max(0, Math.Min(1, (progress - ProgressMin) / (ProgressMax - ProgressMin)));
         progress = MathF.Pow(progress, Power);
-        
-        OnApply(renderer, scale, progress);
 
+        OnApply(handler, renderer, scale, progress);
         _applied = true;
     }
 
@@ -36,5 +36,5 @@ public abstract class Transition : ITransition
         _applied = false;
     }
     
-    protected abstract void OnApply(IRenderer renderer, float scale, float progress);
+    protected abstract void OnApply(ViewHandler handler, IRenderer renderer, float scale, float progress);
 }

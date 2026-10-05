@@ -21,14 +21,7 @@ public class MapLayer: BindableModel
             return str.ToLowerInvariant() != "main";
         }
     }
-    
-    private string _name;
-    private float _depth;
-    private float _horizontalSpeed = 1;
-    private float _verticalSpeed = 1;
-    private RgbaColor _tintColor = RgbaColor.White;
-    private RgbaColor _fogColor = RgbaColor.Transparent;
-    private bool _enableLighting;
+
     private string _id;
 
     public virtual string Id
@@ -38,14 +31,14 @@ public class MapLayer: BindableModel
     }
 
     internal IGameTemplate GameTemplate { get; }
-    
+
     [Editor(typeof(LayerNameHandler))]
     public virtual string Name
     {
-        get => _name;
-        set => SetField(ref _name, value);
+        get;
+        set => SetField(ref field, value);
     }
-    
+
     [EditorLayerSize]
     public Size Size 
     { 
@@ -56,43 +49,43 @@ public class MapLayer: BindableModel
     [EditorFloat(-100, 100, 0.125f)]
     public float Depth
     {
-        get => _depth;
-        set => SetField(ref _depth, value);
+        get;
+        set => SetField(ref field, value);
     }
-    
+
     [EditorFloat(0, 2, 0.125f)]
     public float HorizontalSpeed
     {
-        get => _horizontalSpeed;
-        set => SetField(ref _horizontalSpeed, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = 1;
 
     [EditorFloat(0, 2, 0.125f)]
     public float VerticalSpeed
     {
-        get => _verticalSpeed;
-        set => SetField(ref _verticalSpeed, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = 1;
 
-    [System.ComponentModel.Editor]
+    [Editor]
     public RgbaColor TintColor
     {
-        get => _tintColor;
-        set => SetField(ref _tintColor, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = RgbaColor.White;
 
-    [System.ComponentModel.Editor]
+    [Editor]
     public RgbaColor FogColor
     {
-        get => _fogColor;
-        set => SetField(ref _fogColor, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = RgbaColor.Transparent;
 
-    [System.ComponentModel.Editor]
+    [Editor]
     public bool EnableLighting
     {
-        get => _enableLighting;
-        set => SetField(ref _enableLighting, value);
+        get;
+        set => SetField(ref field, value);
     }
 
     public Tile[,] Tiles { get; private set; } = new Tile[0, 0];

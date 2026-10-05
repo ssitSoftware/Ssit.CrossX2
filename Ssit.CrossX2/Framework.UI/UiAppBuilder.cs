@@ -17,32 +17,32 @@ namespace Ssit.CrossX2.Framework.UI;
 
 internal class UiAppBuilder(IIoCContainer container, IRenderHost renderHost) : IUiAppBuilder
 {
-    private InitializeServicesDelegate _initializeServicesDelegate;
-    private MapHandlersDelegate _mapHandlersDelegate;
-    private MapNavigationDelegate _mapNavigationDelegate;
-    private AppInitializationDelegate _appInitializationDelegate;
+    private List<InitializeServicesDelegate> _initializeServicesDelegates = new();
+    private List<MapHandlersDelegate> _mapHandlersDelegates = new();
+    private List<MapNavigationDelegate> _mapNavigationDelegates = new();
+    private List<AppInitializationDelegate> _appInitializationDelegates = new();
     
     private ColorWrapper _backgroundColor;
-    private Type[] _styleTypes;
+    private List<Type> _styleTypes = new();
 
     private Action<INavigation> _firstNavigation;
     private readonly List<Assembly> _autoScanAssembiles = new();
 
     public IUiAppBuilder WithServiceRegistrar(InitializeServicesDelegate initializeServicesDelegate)
     {
-        _initializeServicesDelegate = initializeServicesDelegate;
+        _initializeServicesDelegates.Add(initializeServicesDelegate);
         return this;
     }
 
     public IUiAppBuilder WithHandlersMapping(MapHandlersDelegate mapHandlers)
     {
-        _mapHandlersDelegate = mapHandlers;
+        _mapHandlersDelegates.Add(mapHandlers);
         return this;
     }
 
     public IUiAppBuilder WithNavigationMapping(MapNavigationDelegate mapNavigation)
     {
-        _mapNavigationDelegate = mapNavigation;
+        _mapNavigationDelegates.Add(mapNavigation);
         return this;
     }
 
@@ -54,7 +54,7 @@ internal class UiAppBuilder(IIoCContainer container, IRenderHost renderHost) : I
 
     public IUiAppBuilder WithStyles(params Type[] types)
     {
-        _styleTypes = types.ToArray();
+        _styleTypes.AddRange(types ?? []);
         return this;
     }
     
@@ -72,7 +72,7 @@ internal class UiAppBuilder(IIoCContainer container, IRenderHost renderHost) : I
 
     public IUiAppBuilder WithUiAppInitialization(AppInitializationDelegate appInitializationDelegate)
     {
-        _appInitializationDelegate = appInitializationDelegate;
+        _appInitializationDelegates.Add(appInitializationDelegate);
         return this;
     }
 
@@ -96,11 +96,22 @@ internal class UiAppBuilder(IIoCContainer container, IRenderHost renderHost) : I
             .WithSingleton<PageInputContext, PageInputContext>()
             .WithInstance(new UiParameters());
 
-        _initializeServicesDelegate?.Invoke(builder);
-        _mapHandlersDelegate?.Invoke(handlers);
+        foreach (var del in _initializeServicesDelegates)
+        {
+            del.Invoke(builder);
+        }
+
+        foreach (var del in _mapHandlersDelegates)
+        {
+            del.Invoke(handlers);
+        }
         
         _autoScanAssembiles?.ForEach(x => map.AutoScan(x));
-        _mapNavigationDelegate?.Invoke(map);
+
+        foreach (var del in _mapNavigationDelegates)
+        {
+            del.Invoke(map);
+        }
         
         var services = builder.Build();
         var navigation = services.Get<INavigation>();
@@ -115,10 +126,13 @@ internal class UiAppBuilder(IIoCContainer container, IRenderHost renderHost) : I
 
         if (_styleTypes != null)
         {
-            app.LoadStyles(_styleTypes);
+            app.LoadStyles(_styleTypes.ToArray());
         }
 
-        _appInitializationDelegate?.Invoke(app);
+        foreach (var del in _appInitializationDelegates)
+        {
+            del.Invoke(app);
+        }
         _firstNavigation?.Invoke(navigation);
 
         var updatables = services.Fetch<IUpdatable>(false).ToArray();
@@ -143,9 +157,11 @@ internal class UiAppBuilder(IIoCContainer container, IRenderHost renderHost) : I
             .AddMapping<LabelButtonEx, LabelButtonExHandler>()
             .AddMapping<LabelRadio, LabelRadioHandler<LabelRadio>>()
             .AddMapping<Button, ButtonHandler>()
+            .AddMapping<ButtonEx, ButtonExHandler>()
             .AddMapping<VerticalStack, VerticalStackHandler<VerticalStack>>()
             .AddMapping<HorizontalStack, HorizontalStackHandler<HorizontalStack>>()
             .AddMapping<ImageView, ImageViewHandler>()
+            .AddMapping<IconView, IconViewHandler>()
             .AddMapping<ScrollView, ScrollViewHandler<ScrollView>>()
             .AddMapping<VirtualButton, VirtualButtonHandler>()
             .AddMapping<IconCheckBox, IconCheckBoxHandler<IconCheckBox>>()

@@ -8,7 +8,7 @@ public struct VertexPct(Vector3 position, RgbaColor color, Vector2 texCoordinate
 {
     public const VertexComponents Components = VertexComponents.Position | VertexComponents.Color | VertexComponents.Texture;
 
-    public VertexPct(Vector2 position, RgbaColor color, Vector2 texCoordinates) : this(new Vector3(position, 0), color, texCoordinates)
+    public VertexPct(Vector2 position, RgbaColor color, Vector2 texCoordinates, float depth = 0) : this(new Vector3(position, depth), color, texCoordinates)
     {
     }
     

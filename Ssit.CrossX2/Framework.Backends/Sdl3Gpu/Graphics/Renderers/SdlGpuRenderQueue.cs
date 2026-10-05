@@ -61,7 +61,14 @@ internal unsafe class SdlGpuRenderQueue: IDisposable, IRenderQueueInternal
             _currentPrimitiveType = PrimitiveType.Lines;
             _currentTexture = null;
         }
-
+        
+        var tint = _renderer.RenderStateProvider.TintColor;
+        if (tint.A == 0)
+            return;
+        
+        p1.Color *= tint;
+        p2.Color *= tint;
+        
         _buffer[_currentPosition++] = p1;
         _buffer[_currentPosition++] = p2;
     }
@@ -80,6 +87,14 @@ internal unsafe class SdlGpuRenderQueue: IDisposable, IRenderQueueInternal
             _currentTexture = texture;
             _currentPrimitiveType = primitiveType;
         }
+        
+        var tint = _renderer.RenderStateProvider.TintColor;
+        if (tint.A == 0)
+            return;
+        
+        p1.Color *= tint;
+        p2.Color *= tint;
+        p3.Color *= tint;
         
         if (primitiveType == PrimitiveType.TrianglesWithTangents)
         {

@@ -33,6 +33,8 @@ public abstract class Page<TViewModel>: View, IPage where TViewModel: class
     private int _nextId = 1;
     
     protected IIoCContainer Services => _iocContainer;
+    
+    IIoCContainer IPage.Services => _iocContainer;
 
     protected IFocusable FocusedElement => _focusWalker.FocusedElement;
 

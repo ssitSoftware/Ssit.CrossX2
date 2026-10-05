@@ -97,7 +97,7 @@ public abstract class ViewHandler: IDisposable
                 var page = Parent?.GetParent<IPage>();
                 for (var idx = 0; idx < View.Transitions.Length; ++idx)
                 {
-                    View.Transitions[idx].Apply(renderer, CurrentScale, page?.TransitionType ?? 0, page?.TransitionProgress ?? 0);
+                    View.Transitions[idx].Apply(View.Handler, renderer, CurrentScale, page?.TransitionType ?? 0, page?.TransitionProgress ?? 0);
                 }
             }
             

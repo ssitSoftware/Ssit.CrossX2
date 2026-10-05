@@ -214,6 +214,10 @@ public class AabbGameInstance : IGameInstance, IMessenger
     protected RgbaColor GetBgColor()
     {
         var bgColor = _mapDisplayElement.BackgroundColor;
+        if (bgColor.A < 255)
+        {
+            bgColor = _gameTemplate.GameBackground;
+        }
         return bgColor;
     }
 

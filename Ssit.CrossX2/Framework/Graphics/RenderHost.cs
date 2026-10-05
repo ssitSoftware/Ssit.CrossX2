@@ -2,6 +2,7 @@ using System.Numerics;
 using Ssit.CrossX2.Framework.Core;
 using Ssit.CrossX2.Framework.Graphics.Effects;
 using Ssit.CrossX2.Framework.IoC;
+using Ssit.CrossX2.Framework.Services;
 
 namespace Ssit.CrossX2.Framework.Graphics;
 
@@ -22,12 +23,14 @@ internal class RenderHost : IRenderHost
     private readonly IRenderHostParameters _parameters;
     private readonly IRenderer _renderer;
     private readonly IIoCContainer _container;
+    private readonly IActionScheduler _actionScheduler;
 
-    public RenderHost(IRenderHostParameters parameters, IRenderer renderer, IIoCContainer container)
+    public RenderHost(IRenderHostParameters parameters, IRenderer renderer, IIoCContainer container, IActionScheduler actionScheduler)
     {
         _parameters = parameters;
         _renderer = renderer;
         _container = container;
+        _actionScheduler = actionScheduler;
 
         _crtSimEffect = _container.IoCConstruct<ICrtSimEffect>();
     }
@@ -38,7 +41,8 @@ internal class RenderHost : IRenderHost
 
         if (resize)
         {
-            Resize();
+            _actionScheduler.Schedule(() => Resize());
+            throw new SkipFrameException();
         }
         
         _renderer.StateManager.Reset();
@@ -291,4 +295,8 @@ internal class RenderHost : IRenderHost
     public Matrix3x2 TransformInv { get; private set; }
     public Size TargetSize { get; private set; }
     public int Scale { get; private set; }
+}
+
+internal class SkipFrameException : Exception
+{
 }

@@ -74,7 +74,7 @@ public abstract class ChildrenContainerHandler<TContainer>
         DrawChildren(renderer);
     }
     
-    private void DrawChildren(IRenderer renderer)
+    protected virtual void DrawChildren(IRenderer renderer)
     {
         for (var idx = 0; idx < AttachedView.Children.Count; idx++)
         {

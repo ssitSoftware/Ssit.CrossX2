@@ -7,12 +7,9 @@ public static class SimulationRenderer
 {
     private static readonly List<ICollider> Colliders = new();
     private static readonly List<Aabb> Aabbs = new();
-
-    public static float RenderScale = 1;
     
     private static void DrawRectangle(IGeometryRenderer renderer, RectangleF rect, RgbaColor color)
     {
-        var px = 1 / RenderScale;
         renderer.DrawRectangle(rect, color);
     }
 
