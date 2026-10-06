@@ -39,11 +39,8 @@ namespace Ssit.CrossX2.Editor.ViewModels
             get;
             set
             {
-                if (SetField(ref field, value))
-                {
-                    SaveCommand.NotifyCanExecuteChanged();
-                    UpdateTitle();
-                }
+                SetField(ref field, value);
+                UpdateTitle();
             }
         }
 
@@ -145,7 +142,7 @@ namespace Ssit.CrossX2.Editor.ViewModels
 
             NewCommand = new AsyncRelayCommand(New);
             OpenCommand = new AsyncRelayCommand(Open);
-            SaveCommand = new AsyncRelayCommand(Save, () => IsModified);
+            SaveCommand = new AsyncRelayCommand(Save);
             SaveAsCommand = new AsyncRelayCommand(SaveAs);
 
             UndoCommand = new RelayCommand(() => _instances.UndoRedoServices.Undo());
