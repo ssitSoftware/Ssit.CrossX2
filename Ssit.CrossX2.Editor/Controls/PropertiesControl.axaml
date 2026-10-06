@@ -12,12 +12,25 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:viewModels="clr-namespace:Ssit.CrossX2.Editor.ViewModels"
     xmlns:controls="clr-namespace:Ssit.CrossX2.Editor.Controls"
+    xmlns:converters="clr-namespace:Ssit.CrossX2.Editor.Converters"
     xmlns:parameters="clr-namespace:Ssit.CrossX2.Editor.Models.Parameters">
+
+    <UserControl.Resources>
+        <converters:ParameterHeaderPaddingConverter x:Key="ParameterHeaderPaddingConverter" />
+        <SolidColorBrush x:Key="SystemControlHighlightListAccentLowBrush" Color="Transparent" />
+        <SolidColorBrush x:Key="SystemControlHighlightListAccentMediumBrush" Color="Transparent" />
+        <SolidColorBrush x:Key="SystemControlHighlightListAccentHighBrush" Color="Transparent" />
+    </UserControl.Resources>
 
     <ListBox
         Background="{DynamicResource ControlBackground}"
         ItemsSource="{Binding Parameters}"
         SelectedItem="{Binding Selected}">
+        <ListBox.Styles>
+            <Style Selector="ListBoxItem">
+                <Setter Property="Padding" Value="{Binding Converter={StaticResource ParameterHeaderPaddingConverter}}" />
+            </Style>
+        </ListBox.Styles>
         <ListBox.ItemTemplate>
 
             <controls:PropertiesTemplateSelector>
@@ -35,7 +48,7 @@
                 </DataTemplate>
 
                 <DataTemplate x:DataType="parameters:ParameterColorModel" x:Key="ParameterColorModel">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
+                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="10,10,25,10">
                         <Label Content="{Binding Name}" VerticalAlignment="Center" />
                         <colorpicker:ColorButton
                             Color="{Binding Value, Converter={StaticResource RgbaColorConverter}, Mode=TwoWay}" />
@@ -43,14 +56,14 @@
                 </DataTemplate>
 
                 <DataTemplate x:DataType="parameters:ParameterBooleanModel" x:Key="ParameterBooleanModel">
-                    <CheckBox
-                        Content="{Binding Name}"
-                        IsChecked="{Binding Value}"
-                        IsEnabled="{Binding Enabled}" />
+                    <CheckBox Margin="10,10,25,10"
+                              Content="{Binding Name}"
+                              IsChecked="{Binding Value}"
+                              IsEnabled="{Binding Enabled}" />
                 </DataTemplate>
 
                 <DataTemplate x:DataType="parameters:ParameterLayerSizeModel" x:Key="ParameterLayerSizeModel">
-                    <StackPanel>
+                    <StackPanel Margin="10,10,25,10">
                         <Label Content="{Binding Name}" />
                         <Grid ColumnDefinitions="*, 5, Auto">
                             <TextBox
@@ -67,7 +80,7 @@
                 </DataTemplate>
 
                 <DataTemplate x:DataType="parameters:ParameterTargetModel" x:Key="ParameterTargetModel">
-                    <StackPanel>
+                    <StackPanel Margin="10,10,25,10">
                         <Label Content="{Binding Name}" />
                         <Grid ColumnDefinitions="*, 5, Auto">
                             <TextBox
@@ -84,7 +97,9 @@
                 </DataTemplate>
 
                 <DataTemplate x:DataType="parameters:ParameterStringModel" x:Key="ParameterStringModel">
-                    <StackPanel Background="{Binding IsInvalid, Converter={StaticResource InvalidPropertyConverter}}">
+                    <StackPanel
+                        Margin="10,10,25,10"
+                        Background="{Binding IsInvalid, Converter={StaticResource InvalidPropertyConverter}}">
                         <Label Content="{Binding Name}" />
                         <TextBox
                             IsEnabled="{Binding Enabled}"
@@ -94,7 +109,9 @@
                 </DataTemplate>
 
                 <DataTemplate x:DataType="parameters:ParameterFloatModel" x:Key="ParameterFloatModel">
-                    <StackPanel Background="{Binding IsInvalid, Converter={StaticResource InvalidPropertyConverter}}">
+                    <StackPanel
+                        Margin="10,10,25,10"
+                        Background="{Binding IsInvalid, Converter={StaticResource InvalidPropertyConverter}}">
                         <Label Content="{Binding Name}" />
 
                         <controls:NumericInput
@@ -108,7 +125,8 @@
                 </DataTemplate>
 
                 <DataTemplate x:DataType="parameters:ParameterIntModel" x:Key="ParameterIntModel">
-                    <StackPanel Background="{Binding IsInvalid, Converter={StaticResource InvalidPropertyConverter}}">
+                    <StackPanel Margin="10,10,25,10" 
+                                Background="{Binding IsInvalid, Converter={StaticResource InvalidPropertyConverter}}">
                         <Label Content="{Binding Name}" />
                         <controls:NumericInput
                             FocusLostCommand="{Binding FocusLostCommand}"

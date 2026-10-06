@@ -82,7 +82,7 @@ public class MapLayer: BindableModel
     } = RgbaColor.Transparent;
 
     [Editor]
-    public bool EnableLighting
+    public bool EnableGlobalLighting
     {
         get;
         set => SetField(ref field, value);
@@ -214,7 +214,7 @@ public class MapLayer: BindableModel
         FogColor = RgbaColor.FromRgba(reader.ReadUInt32(), false);
         TintColor = RgbaColor.FromRgba(reader.ReadUInt32(), false);
         
-        EnableLighting = reader.ReadBoolean();
+        EnableGlobalLighting = reader.ReadBoolean();
         
         Resize(width, height);
 
@@ -261,7 +261,7 @@ public class MapLayer: BindableModel
         writer.Write(FogColor.ToUInt32());
         writer.Write(TintColor.ToUInt32());
         
-        writer.Write(EnableLighting);
+        writer.Write(EnableGlobalLighting);
         
         var bufferSize = Width * Height * sizeof(uint);
         var bytes = new byte[bufferSize];

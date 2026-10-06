@@ -47,15 +47,14 @@ public class LayerDisplayElementBuilder
         var list = new List<(RectangleF bounds, TilesDisplaySegment[] segments)>();
         var objects = new List<MapDisplayObject>();
 
-        var segmentWidth = (int)MathF.Ceiling((float)_targetSize.Width * 2 / _tileSize);
-        var segmentHeight = (int)MathF.Ceiling((float)_targetSize.Height * 2 / _tileSize);
-
-        for (var oy = 0; oy < _layer.Height; oy += segmentHeight)
+        const int segmentSize = 512;
+        
+        for (var oy = 0; oy < _layer.Height; oy += segmentSize)
         {
-            var height = Math.Min(segmentHeight, _layer.Height - oy);
-            for (var ox = 0; ox < _layer.Width; ox += segmentWidth)
+            var height = Math.Min(segmentSize, _layer.Height - oy);
+            for (var ox = 0; ox < _layer.Width; ox += segmentSize)
             {
-                var width = Math.Min(segmentWidth, _layer.Width - ox);
+                var width = Math.Min(segmentSize, _layer.Width - ox);
                 var bounds = new Rectangle(ox, oy, width, height);
                 var segments = GenerateSegment(bounds);
                 list.Add((bounds, segments));
