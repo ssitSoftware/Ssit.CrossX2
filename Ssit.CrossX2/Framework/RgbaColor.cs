@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using Newtonsoft.Json;
 
 namespace Ssit.CrossX2.Framework;
 
@@ -13,6 +14,7 @@ namespace Ssit.CrossX2.Framework;
 [DebuggerDisplay("RgbaColor = ({R}, {G}, {B}, {A})")]
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
+[JsonConverter(typeof(RgbaColorJsonConverter))]
 public readonly partial struct RgbaColor(byte red, byte green, byte blue, byte alpha = 255)
     : IEquatable<RgbaColor>
 {

@@ -6,7 +6,7 @@ public class EditorFloatAttribute: EditorAttribute
     public float Max { get; }
     public float Step { get; }
 
-    public EditorFloatAttribute(float min, float max, float step = 1, Type handlerType = null): base(handlerType)
+    public EditorFloatAttribute(float min, float max, float step = 1, Type handlerType = null, string conditionPropertyName = null): base(handlerType, conditionPropertyName)
     {
         Min = min;
         Max = max;

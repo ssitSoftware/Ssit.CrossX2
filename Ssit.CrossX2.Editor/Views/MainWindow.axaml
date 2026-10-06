@@ -13,6 +13,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:viewModels="clr-namespace:Ssit.CrossX2.Editor.ViewModels"
+    WindowState="Maximized"
     xmlns:views="clr-namespace:Ssit.CrossX2.Editor.Views">
     <views:MainView x:Name="MainView" />
 </Window>

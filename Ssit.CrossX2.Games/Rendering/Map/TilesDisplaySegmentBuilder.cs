@@ -27,7 +27,8 @@ public class TilesDisplaySegmentBuilder
     private Tile[,] _tiles;
     
     private IIoCContainer _container;
-    
+    private float _depth;
+
     public TilesDisplaySegmentBuilder WithServices(IIoCContainer container)
     {
         _container = container;
@@ -44,6 +45,7 @@ public class TilesDisplaySegmentBuilder
     {
         _tiles = layer.Tiles;
         _tintColor = layer.TintColor;
+        _depth = layer.Depth;
         return this;
     }
 
@@ -168,15 +170,17 @@ public class TilesDisplaySegmentBuilder
             quad.Source.Width / textureSize.Width,
             quad.Source.Height / textureSize.Height);
 
+        var z = _depth;
+        
         AddTriangle(vertexList,
-            new VertexPct(target.TopLeft, color, texRect.TopLeft),
-            new VertexPct(target.BottomLeft, color, texRect.BottomLeft),
-            new VertexPct(target.BottomRight, color, texRect.BottomRight));
+            new VertexPct(new Vector3(target.TopLeft, z), color, texRect.TopLeft),
+            new VertexPct(new Vector3(target.BottomLeft, z), color, texRect.BottomLeft),
+            new VertexPct(new Vector3(target.BottomRight, z), color, texRect.BottomRight));
 
         AddTriangle(vertexList,
-            new VertexPct(target.TopLeft, color, texRect.TopLeft),
-            new VertexPct(target.BottomRight, color, texRect.BottomRight),
-            new VertexPct(target.TopRight, color, texRect.TopRight));
+            new VertexPct(new Vector3(target.TopLeft, z), color, texRect.TopLeft),
+            new VertexPct(new Vector3(target.BottomRight, z), color, texRect.BottomRight),
+            new VertexPct(new Vector3(target.TopRight, z), color, texRect.TopRight));
     }
 
     private static void AddTriangle(List<VertexPcttb> vertexList, VertexPct p1, VertexPct p2, VertexPct p3)

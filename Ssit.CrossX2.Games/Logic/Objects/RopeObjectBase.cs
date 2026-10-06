@@ -317,7 +317,7 @@ public abstract class RopeObjectBase : IBodyOwner, IGameObjectRenderer, IPendulu
         }
     }
 
-    public void Render(IRenderer renderer, RgbaColor color)
+    public void Render(IRenderer renderer, RgbaColor color, float depth)
     {
         if (_positions == null) return;
 
@@ -339,11 +339,11 @@ public abstract class RopeObjectBase : IBodyOwner, IGameObjectRenderer, IPendulu
                 dir = Vector2.Lerp(dir, dir2, 0.5f);
             }
             
-            RenderSegment(renderer, i,  _positions.Length, screenPos, dir);
+            RenderSegment(renderer, i,  _positions.Length, screenPos, dir, depth);
         }
     }
 
-    protected abstract void RenderSegment(IRenderer renderer, int segmentIndex, int segmentCount, Vector2 screenPosition, Vector2 direction);
+    protected abstract void RenderSegment(IRenderer renderer, int segmentIndex, int segmentCount, Vector2 screenPosition, Vector2 direction, float depth);
 
     void IDisposable.Dispose() => OnDispose();
 

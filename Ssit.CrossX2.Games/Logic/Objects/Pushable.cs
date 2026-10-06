@@ -14,7 +14,7 @@ public class Pushable(GameObjectsServices services, ObjectCreationParameters par
     protected virtual bool CanPull => false;
     bool IPushable.CanPull => CanPull;
     
-    void IGameObjectRenderer.Render(IRenderer renderer, RgbaColor color) => Render(renderer, color);
+    void IGameObjectRenderer.Render(IRenderer renderer, RgbaColor color, float depth) => Render(renderer, color, depth);
     RectangleF IGameObjectRenderer.Bounds => BoundsRect.Offset(Body.Position);
     int IGameObjectRenderer.ZOrder { get; } = parameters.ZOrder;
     
@@ -66,13 +66,14 @@ public class Pushable(GameObjectsServices services, ObjectCreationParameters par
         BoundsRect = BoundsRect.Inflate(1, 1);
     }
     
-    protected virtual void Render(IRenderer renderer, RgbaColor color)
+    protected virtual void Render(IRenderer renderer, RgbaColor color, float depth)
     {
         var pos = Body.Position * Services.GameTemplate.TileSize;
         
         renderer.SpriteRenderer.Draw(_spriteSheet.Resource, pos, 
             _sequence.Frames[0].Source, 
-            _sequence.Frames[0].Offset + Origin, 0, 1f, color);
+            _sequence.Frames[0].Offset + Origin, 0, 1f, color,
+            depth: depth);
     }
 
     public void Dispose()

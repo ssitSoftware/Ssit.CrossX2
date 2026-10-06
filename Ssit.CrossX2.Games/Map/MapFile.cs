@@ -53,6 +53,19 @@ public class MapFile: BindableModel
         }
     }
 
+    [Editor(nameof(IGameTemplate.EnableLighting))]
+    public RgbaColor AmbientLightColor
+    {
+        get;
+        set
+        {
+            if (SetField(ref field, value))
+            {
+                IsModified = true;
+            }
+        }
+    } = RgbaColor.White;
+
     public ObservableCollection<MapLayer> Layers { get; } = new();
     
     public bool IsModified
@@ -186,6 +199,7 @@ public class MapFile: BindableModel
         Date = new DateTime(date);
         
         BackgroundColor = RgbaColor.FromRgba(reader.ReadUInt32(), false);
+        AmbientLightColor = RgbaColor.FromRgba(reader.ReadUInt32(), false);
         Layers.Clear();
         
         var layersNo = reader.ReadByte();
@@ -206,6 +220,7 @@ public class MapFile: BindableModel
     {
         writer.Write(DateTime.UtcNow.Ticks);
         writer.Write(BackgroundColor.ToUInt32());
+        writer.Write(AmbientLightColor.ToUInt32());
         writer.Write((byte)Layers.Count);
         foreach (var layer in Layers)
         {

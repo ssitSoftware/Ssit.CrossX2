@@ -634,19 +634,29 @@ namespace Ssit.CrossX2.Editor.ViewModels
                             var p1 = MapToScreen(obj.Position);
                             var p2 = MapToScreen(otherObj.Position);
 
+                            _skPaint.Color = LinkColors[(li+obj.Id) % LinkColors.Length];
+
+                            if (obj.LinksShowCircularConnection != null && obj.LinksShowCircularConnection[li])
+                            {
+                                _skPaint.IsStroke = true;
+                                _skPaint.StrokeWidth = 1;
+
+                                skCanvas.DrawCircle(p1.ToSkia(), (p2 - p1).Length(), _skPaint);
+                                continue;
+                            }
+
                             var arrow1 = Vector2.TransformNormal(Vector2.Normalize(p1 - p2), transfomArrow1) * arrowSize;
                             var arrow2 = Vector2.TransformNormal(Vector2.Normalize(p1 - p2), transfomArrow2) * arrowSize;
 
                             _arrowPoints[0] = p2.ToSkia();
                             _arrowPoints[1] = (p2 + arrow1).ToSkia();
                             _arrowPoints[2] = (p2 + arrow2).ToSkia();
-                            
+
                             _skPaint.IsStroke = true;
                             _skPaint.StrokeWidth = 1;
-                            _skPaint.Color = LinkColors[(li+obj.Id) % LinkColors.Length];
-                            
+
                             skCanvas.DrawLine(p1.ToSkia(), p2.ToSkia(), _skPaint);
-                            
+
                             _skPaint.IsStroke = false;
                             skCanvas.DrawVertices(SKVertexMode.Triangles, _arrowPoints, null, _skPaint);
                         }

@@ -15,18 +15,25 @@ public class LayerDisplayElement: IDisposable
     public RgbaColor TintColor { get; }
     public Size SourceSize { get; }
     public bool IsMain { get; }
-    
-    internal LayerDisplayElement(List<(RectangleF bounds, TilesDisplaySegment[] segments)> tiles, 
-        List<MapDisplayObject> displayObjects,
-        Vector2 speed, RgbaColor tintColor, RgbaColor fogColor, Size sourceSize, bool mainLayer)
+    public float Depth { get; }
+    public bool UseGlobalLights { get; }
+    public bool UseAmbientLight { get; }
+
+    internal LayerDisplayElement(List<(RectangleF bounds, TilesDisplaySegment[] segments)> tiles,
+        List<MapDisplayObject> displayObjects, float depth,
+        Vector2 speed, RgbaColor tintColor, RgbaColor fogColor, Size sourceSize, bool mainLayer,
+        bool useAmbientLight)
     {
         _tiles = tiles;
         _displayObjects = displayObjects;
+        Depth = depth;
         Speed = speed;
         FogColor = fogColor;
         TintColor = tintColor;
         SourceSize = sourceSize;
         IsMain = mainLayer;
+        UseAmbientLight = useAmbientLight;
+        UseGlobalLights = Math.Abs(speed.X - 1) < float.Epsilon && Math.Abs(speed.Y - 1) < float.Epsilon;
     }
 
     public void Dispose()

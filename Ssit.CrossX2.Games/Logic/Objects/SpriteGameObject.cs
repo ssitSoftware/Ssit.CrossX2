@@ -22,7 +22,7 @@ public abstract class SpriteGameObject: StateGameObject, IGameObjectRenderer, Sp
     
     public RectangleF Bounds => BoundsRect.Offset(Body.Position);
 
-    void IGameObjectRenderer.Render(IRenderer renderer, RgbaColor color) => OnRender(renderer, color);
+    void IGameObjectRenderer.Render(IRenderer renderer, RgbaColor color, float depth) => OnRender(renderer, color, depth);
 
     void IBodyOwner.OnFixedUpdate(out bool cancelUpdate)
     {
@@ -63,10 +63,10 @@ public abstract class SpriteGameObject: StateGameObject, IGameObjectRenderer, Sp
     {
     }
 
-    protected virtual void OnRender(IRenderer renderer, RgbaColor color)
+    protected virtual void OnRender(IRenderer renderer, RgbaColor color, float depth)
     {
         var pos = Body.Position * Services.GameTemplate.TileSize;
-        renderer.SpriteRenderer.Draw(Sprite, pos, transform: Transform, color: color);
+        renderer.SpriteRenderer.Draw(Sprite, pos, transform: Transform, color: color, depth: depth);
     }
 
     protected virtual void OnFixedUpdate(ref bool cancelUpdate)

@@ -34,15 +34,7 @@ namespace Ssit.CrossX2.Editor.ViewModels
         public MenuItemModel[] Menu { get; }
         public IEditorInstances Instances => _instances;
 
-        public bool IsModified
-        {
-            get;
-            set
-            {
-                SetField(ref field, value);
-                UpdateTitle();
-            }
-        }
+        public bool IsModified => MapFile.IsModified;
 
         public ICommand NewCommand { get; }
         public ICommand OpenCommand { get; }
@@ -65,14 +57,15 @@ namespace Ssit.CrossX2.Editor.ViewModels
                 if (SetField(ref _mapFile, value))
                 {
                     _instances.SetMap(_mapFile);
+
+                    EditorViewModel.SelectedLayer = null;
                     
                     EditorViewModel.SelectedLayer =
-                        MapFile.Layers.FirstOrDefault( o=> o.Id.ToLowerInvariant() == _editorData.SelectedLayer) ??
-                        MapFile.Layers.FirstOrDefault( o=> o.Id.ToLowerInvariant() == "main") ??
+                        MapFile.Layers.FirstOrDefault( o=> o.Id.Equals(_editorData.SelectedLayer, StringComparison.OrdinalIgnoreCase)) ??
+                        MapFile.Layers.FirstOrDefault( o=> o.Id.Equals(LayerDescription.MainLayerId, StringComparison.OrdinalIgnoreCase)) ??
                         MapFile.Layers.First();
                     
                     EditorViewModel.Redraw();
-                    IsModified = _mapFile.IsModified;
 
                     if (oldMap is not null)
                     {
@@ -174,7 +167,6 @@ namespace Ssit.CrossX2.Editor.ViewModels
                         _instances.UndoRedoServices.PushState();
                         obj.Flipped = !obj.Flipped;
                         _mapFile.OnModified();
-                        IsModified = true;
                     }
                 }
 
@@ -244,11 +236,8 @@ namespace Ssit.CrossX2.Editor.ViewModels
             }
         }
 
-        private void MapOnPropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            IsModified = MapFile?.IsModified ?? false;
-        }
-        
+        private void MapOnPropertyChanged(object sender, PropertyChangedEventArgs e) => UpdateTitle();
+
         private void UpdateTitle()
         {
             string append = MapFile.IsModified ? "*" : "";
@@ -344,8 +333,6 @@ namespace Ssit.CrossX2.Editor.ViewModels
             _filePath = null;
             
             MapFile = mapFile;
-            IsModified = false;
-            
             UpdateTitle();
         }
 
@@ -397,7 +384,7 @@ namespace Ssit.CrossX2.Editor.ViewModels
                 {
                     _filePath = path;
                     MapFile = mapFile;
-                    IsModified = UpdateLayers();
+                    UpdateLayers();
 
                     _editorData.RecentMapPath = path;
                     _editorData.RequestSave();
@@ -460,6 +447,7 @@ namespace Ssit.CrossX2.Editor.ViewModels
                     mapFile.Layers.Add(layer);
                 }
 
+                mapFile.OnModified();
                 return true;
             }
 

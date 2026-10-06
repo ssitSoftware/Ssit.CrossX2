@@ -31,7 +31,7 @@ public abstract class SpriteGameObject2 : IGameObjectRenderer, IBodyOwner
         set => Transform = value ? ImageTransform.FlipHorizontal : ImageTransform.None;
     }
     
-    void IGameObjectRenderer.Render(IRenderer renderer, RgbaColor color) => OnRender(renderer, color);
+    void IGameObjectRenderer.Render(IRenderer renderer, RgbaColor color, float depth) => OnRender(renderer, color, depth);
 
     void IBodyOwner.OnFixedUpdate(out bool cancelUpdate)
     {
@@ -111,7 +111,7 @@ public abstract class SpriteGameObject2 : IGameObjectRenderer, IBodyOwner
     {
     }
 
-    protected virtual void OnRender(IRenderer renderer, RgbaColor color)
+    protected virtual void OnRender(IRenderer renderer, RgbaColor color, float depth)
     {
         if (Sprite is null)
             return;
@@ -123,7 +123,7 @@ public abstract class SpriteGameObject2 : IGameObjectRenderer, IBodyOwner
         }
 
         position *= Services.GameTemplate.TileSize;
-        renderer.SpriteRenderer.Draw(Sprite, position, transform: Transform, color: color);
+        renderer.SpriteRenderer.Draw(Sprite, position, transform: Transform, color: color, depth: depth);
     }
 
     protected virtual void OnFixedUpdate(ref bool cancelUpdate)

@@ -1,4 +1,5 @@
 using Ssit.CrossX2.Framework.Content;
+using Ssit.CrossX2.Framework.Games.Logic;
 using Ssit.CrossX2.Framework.Games.Map;
 using Ssit.CrossX2.Framework.Games.Template;
 using Ssit.CrossX2.Framework.IoC;
@@ -12,11 +13,18 @@ public class MapDisplayElementBuilder
     private IIoCContainer _container;
     private IContentManager _contentManager;
     private IGameTemplate _gameTemplate;
+    private ILightsProvider _lightsProvider;
     
     public MapDisplayElementBuilder WithServices(IIoCContainer container, IContentManager contentManager)
     {
         _container = container;
         _contentManager = contentManager;
+        return this;
+    }
+    
+    public MapDisplayElementBuilder WithLightsProvider( ILightsProvider lightsProvider )
+    {
+        _lightsProvider = lightsProvider;
         return this;
     }
     
@@ -47,6 +55,6 @@ public class MapDisplayElementBuilder
             layers.Add(builder.Build());
         }
         
-        return new MapDisplayElement(layers, _file.BackgroundColor.AsPremultiplied());
+        return new MapDisplayElement(layers, _file.BackgroundColor.AsPremultiplied(), _lightsProvider);
     }
 }

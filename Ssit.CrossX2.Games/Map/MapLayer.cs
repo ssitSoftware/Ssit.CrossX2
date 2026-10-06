@@ -81,12 +81,12 @@ public class MapLayer: BindableModel
         set => SetField(ref field, value);
     } = RgbaColor.Transparent;
 
-    [Editor]
-    public bool EnableGlobalLighting
+    [Editor(nameof(IGameTemplate.EnableLighting))]
+    public bool UseAmbientLightColor
     {
         get;
         set => SetField(ref field, value);
-    }
+    } = true;
 
     public Tile[,] Tiles { get; private set; } = new Tile[0, 0];
 
@@ -213,8 +213,7 @@ public class MapLayer: BindableModel
 
         FogColor = RgbaColor.FromRgba(reader.ReadUInt32(), false);
         TintColor = RgbaColor.FromRgba(reader.ReadUInt32(), false);
-        
-        EnableGlobalLighting = reader.ReadBoolean();
+        UseAmbientLightColor = reader.ReadBoolean();
         
         Resize(width, height);
 
@@ -261,7 +260,7 @@ public class MapLayer: BindableModel
         writer.Write(FogColor.ToUInt32());
         writer.Write(TintColor.ToUInt32());
         
-        writer.Write(EnableGlobalLighting);
+        writer.Write(UseAmbientLightColor);
         
         var bufferSize = Width * Height * sizeof(uint);
         var bytes = new byte[bufferSize];

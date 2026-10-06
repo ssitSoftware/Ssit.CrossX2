@@ -6,7 +6,7 @@ public class EditorIntAttribute: EditorAttribute
     public int Max { get; }
     public int Step { get; }
 
-    public EditorIntAttribute(int min, int max, int step = 1, Type validatorType = null): base(validatorType)
+    public EditorIntAttribute(int min, int max, int step = 1, Type validatorType = null, string conditionPropertyName = null): base(validatorType, conditionPropertyName)
     {
         Min = min;
         Max = max;

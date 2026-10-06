@@ -5,6 +5,7 @@ using Ssit.CrossX2.Framework.Games.Logic.Objects;
 using Ssit.CrossX2.Framework.Games.Map;
 using Ssit.CrossX2.Framework.Games.Physics;
 using Ssit.CrossX2.Framework.Games.Platformer.Builders;
+using Ssit.CrossX2.Framework.Games.Rendering;
 using Ssit.CrossX2.Framework.Games.Rendering.Map;
 using Ssit.CrossX2.Framework.Games.Template;
 using Ssit.CrossX2.Framework.Graphics;
@@ -55,7 +56,6 @@ public class AabbGameInstance : IGameInstance, IMessenger
     
     private bool _isDisposed;
 
-    private int _bgColorIndex = 0;
     private Queue<object> _messages = new();
 
     int IGameInstance.RenderPasses => 1;
@@ -63,6 +63,8 @@ public class AabbGameInstance : IGameInstance, IMessenger
     private readonly Stopwatch _internalStopwatch = new();
     private TimeSpan _lastTimeElapsed = TimeSpan.Zero;
     private float _lastDeltaTime = 0;
+
+    private readonly MapLightsContainer _lightsContainer;
     
     void IGameInstance.Render(IRenderer renderer, RectangleF target, int renderPass, float scale)
     {
@@ -91,16 +93,20 @@ public class AabbGameInstance : IGameInstance, IMessenger
         
         _scheduler = scheduler;
         _gameTemplate = gameTemplate;
-        _bgColorIndex = parameters.BackgroundColorIndex;
         _backgroundRenderer = parameters.BackgroundRenderer;
         
         using var stream = contentManager.FilesProvider.Open(parameters.MapPath);
         var map = MapFile.FromStream(stream, gameTemplate);
 
         var tilesets = map.Tilesets.Select(contentManager.Get<ITexture>).ToArray();
+
+        _lightsContainer = _gameTemplate.EnableLighting ? new MapLightsContainer() : null;
+        
+        _lightsContainer?.SetAmbientLight(map.AmbientLightColor, null);
         
         var builder = new MapDisplayElementBuilder()
             .WithServices(container, contentManager)
+            .WithLightsProvider(_lightsContainer)
             .WithTemplate(gameTemplate)
             .WithMap(map);
         
@@ -148,8 +154,6 @@ public class AabbGameInstance : IGameInstance, IMessenger
             storage.WriteData(cacheFilePath, cache);
         }
     }
-    
-    
 
     void IGameInstance.Update(float deltaTime)
     {
@@ -188,13 +192,31 @@ public class AabbGameInstance : IGameInstance, IMessenger
         if (_isDisposed)
             return;
 
+        if (_lightsContainer is not null)
+        {
+            _lightsContainer.Reset();
+
+            foreach (var body in Simulation.Bodies)
+            {
+                if (body.Owner is ILightProvider provider)
+                {
+                    provider.FillLights(_lightsContainer);
+                }
+            }
+
+            _lightsContainer.Apply(_camera.LookAt * _gameTemplate.TileSize);
+        }
+
         var bgColor = GetBgColor();
         
         renderer.StateManager.SaveState();
-
+        
         if (renderer.CurrentPass == RenderPass.Glow || _backgroundRenderer == null)
         {
+            _lightsContainer?.ApplyLights(renderer, _mapDisplayElement.Layers[0].UseAmbientLight, false);
+            
             renderer.GeometryRenderer.FillRectangle(target, renderer.CurrentPass == RenderPass.Glow ? RgbaColor.Black : bgColor);
+            renderer.LightingManager.EnableLighting(false, false);
         }
 
         renderer.StateManager.Translate(target.TopLeft);
@@ -204,9 +226,9 @@ public class AabbGameInstance : IGameInstance, IMessenger
         
         var size = target.Size.ToVector() / scale;
         
-        MapRenderer.Render(renderer, _mapDisplayElement, Simulation, _camera.LookAt,
-            new Size((int)MathF.Ceiling(size.X), (int)MathF.Ceiling(size.Y)),
-            _gameTemplate.TileSize);
+        MapRenderer.Render(renderer, _mapDisplayElement, Simulation, _camera.LookAt, 
+            new Size((int)MathF.Ceiling(size.X), (int)MathF.Ceiling(size.Y)), 
+            _gameTemplate);
 
         renderer.StateManager.RestoreState();
     }

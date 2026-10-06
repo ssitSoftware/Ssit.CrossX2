@@ -1,3 +1,5 @@
+using Ssit.CrossX2.Framework.Games.Logic;
+
 namespace Ssit.CrossX2.Framework.Games.Rendering.Map;
 
 public class MapDisplayElement: IDisposable
@@ -6,11 +8,14 @@ public class MapDisplayElement: IDisposable
     private readonly List<LayerDisplayElement> _layers;
     
     public RgbaColor BackgroundColor { get; }
-    
-    internal MapDisplayElement(List<LayerDisplayElement> layers, RgbaColor backgroundColor)
+    public ILightsProvider LightsProvider { get; }
+    public RgbaColor AmbientLightColor { get; set; }
+
+    internal MapDisplayElement(List<LayerDisplayElement> layers, RgbaColor backgroundColor, ILightsProvider lightsProvider)
     {
         _layers = layers;
         BackgroundColor = backgroundColor;
+        LightsProvider = lightsProvider;
     }
 
     public void Update(float dt)

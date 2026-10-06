@@ -10,6 +10,7 @@ using Ssit.CrossX2.Editor.Tools;
 using Ssit.CrossX2.Framework;
 using Ssit.CrossX2.Framework.Games.Editor;
 using Ssit.CrossX2.Framework.Games.Map;
+using Ssit.CrossX2.Framework.Games.Template;
 using Ssit.CrossX2.Framework.Utils;
 
 namespace Ssit.CrossX2.Editor.ViewModels;
@@ -159,10 +160,23 @@ public class PropertiesViewModel: BindableModel
         var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.Public);
         foreach (var property in properties)
         {
-            if (property.GetCustomAttribute<EditorAttribute>() is not null)
+            var attr = property.GetCustomAttribute<EditorAttribute>();
+
+            if (attr is null) continue;
+
+            if (attr.ConditionPropertyName is not null)
             {
-                GenerateProperty(property, source);
+                var prop = typeof(IGameTemplate).GetProperty(attr.ConditionPropertyName);
+                if (prop != null)
+                {
+                    if (false.Equals(prop.GetValue(_instances.Template)))
+                    {
+                        continue;
+                    }
+                }
             }
+                
+            GenerateProperty(property, source);
         }
     }
 

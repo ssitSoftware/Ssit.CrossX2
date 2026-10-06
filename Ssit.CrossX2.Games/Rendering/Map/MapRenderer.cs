@@ -13,6 +13,7 @@ public static class MapRenderer
         public readonly MapDisplayObject DisplayObject;
         public readonly IGameObjectRenderer ObjectRenderer;
         public int ZOrder => DisplayObject?.Zorder ?? ObjectRenderer?.ZOrder ?? 0;
+        
         public ObjectRenderInfo(MapDisplayObject displayObject)
         {
             DisplayObject = displayObject;
@@ -65,11 +66,12 @@ public static class MapRenderer
     private delegate void RenderObjects(IRenderer renderer, LayerDisplayElement layer, object world, RectangleF bounds, RgbaColor color, bool front);
     
     public static void Render(IRenderer renderer, MapDisplayElement map, ISimulation world, Vector2 cameraLookAt,
-        Size targetSize, int tileSize) =>
-        Render(renderer, map, RenderGameObjectsSim, world, cameraLookAt, targetSize, tileSize);
+        Size targetSize, IGameTemplate template) =>
+        Render(renderer, map, RenderGameObjectsSim, world, cameraLookAt, targetSize, template);
 
-    private static void Render(IRenderer renderer, MapDisplayElement map, RenderObjects renderObjects, object world, Vector2 cameraLookAt, Size targetSize, int tileSize)
+    private static void Render(IRenderer renderer, MapDisplayElement map, RenderObjects renderObjects, object world, Vector2 cameraLookAt, Size targetSize, IGameTemplate template)
     {
+        int tileSize = template.TileSize;
         var mainLayer = map.Layers.First(o => o.IsMain);
         
         foreach (var layer in map.Layers)
@@ -78,7 +80,12 @@ public static class MapRenderer
             
             renderer.StateManager.SaveState();
             renderer.StateManager.Translate(offset);
-            
+
+            if (renderer.CurrentPass == RenderPass.Normal)
+            {
+                map.LightsProvider.ApplyLights(renderer, layer.UseAmbientLight, layer.UseGlobalLights);
+            }
+
             if (layer.IsMain)
             {
                 renderObjects(renderer, layer, world, visibleBounds, layer.TintColor, false);
@@ -114,6 +121,7 @@ public static class MapRenderer
                 }
             }
 
+            renderer.LightingManager.EnableLighting(false, false);
             renderer.StateManager.RestoreState();
             
             if (layer.FogColor.A > 0)
@@ -143,12 +151,12 @@ public static class MapRenderer
         // TODO: Filter invisible elements
         if (obj.Texture is not null)
         {
-            renderer.SpriteRenderer.Draw(obj.Texture, obj.Position, null, obj.Origin, color: tintColor,  imageTransform: obj.IsFlipped ? ImageTransform.FlipHorizontal : ImageTransform.None);
+            renderer.SpriteRenderer.Draw(obj.Texture, obj.Position, null, obj.Origin, color: tintColor, imageTransform: obj.IsFlipped ? ImageTransform.FlipHorizontal : ImageTransform.None, depth: obj.Depth);
         }
 
         if (obj.SpriteInstance is not null)
         {
-            renderer.SpriteRenderer.Draw(obj.SpriteInstance, obj.Position, color: tintColor, transform: obj.IsFlipped ? ImageTransform.FlipHorizontal : ImageTransform.None);
+            renderer.SpriteRenderer.Draw(obj.SpriteInstance, obj.Position, color: tintColor, transform: obj.IsFlipped ? ImageTransform.FlipHorizontal : ImageTransform.None, depth: obj.Depth);
         }
     }
     
@@ -190,7 +198,7 @@ public static class MapRenderer
                 DrawObject(renderer, bounds, gameObj.DisplayObject, layer.TintColor);
             }
 
-            gameObj.ObjectRenderer?.Render(renderer, color);
+            gameObj.ObjectRenderer?.Render(renderer, color, layer.Depth);
         }
         
         GameObjects.Clear();

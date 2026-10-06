@@ -6,5 +6,5 @@ public interface IGameObjectRenderer
 {
     int ZOrder { get; }
     RectangleF Bounds { get; }
-    void Render(IRenderer renderer, RgbaColor color);
+    void Render(IRenderer renderer, RgbaColor color, float depth);
 }
