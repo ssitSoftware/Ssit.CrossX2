@@ -143,19 +143,25 @@ internal class ContentManager: IContentManager
         var ext = Path.GetExtension(path).TrimEnd('!');
 
         var glowPath =  name + ".glow" + ext;
+        var lightPath = name + ".light" + ext;
         
+        var lightAndGlowPath = name + ".light_and_glow" + ext;
+
         var hasDiffuseImplicit = _filesProvider.FileExists(name + ext);
         var hasDiffuseExplicit = _filesProvider.FileExists(name + ".diffuse" + ext);
         var hasNormals = _filesProvider.FileExists(name + ".normal" + ext);
-        var hasGlow = _filesProvider.FileExists(name + ".glow" + ext);
+        var hasGlow = _filesProvider.FileExists(glowPath);
+        var hasLight = _filesProvider.FileExists(lightPath);
+        var hasGlowAndLight = _filesProvider.FileExists(lightAndGlowPath);
         
         return _iocContainer.IoCConstruct<ITexture>(new LoadTextureParameters
         {
-            DiffuseMapStream =  hasDiffuseImplicit ? _filesProvider.Open(name + ext) : hasDiffuseExplicit ? 
+            DiffuseMapStream =  hasDiffuseImplicit ? _filesProvider.Open(name + ext) : hasDiffuseExplicit ?
                 _filesProvider.Open(name + ".diffuse" + ext) : null,
-            
             NormalMapStream = hasNormals ? _filesProvider.Open(name + ".normal" + ext) : null,
-            GlowMapStream = hasGlow ? _filesProvider.Open(glowPath) : null
+            GlowMapStream = hasGlow ? _filesProvider.Open(glowPath) : null,
+            LightMapStream = hasLight ? _filesProvider.Open(lightPath) : hasGlowAndLight ? _filesProvider.Open(lightAndGlowPath) : null,
+            GlowFromLightMap = hasGlowAndLight
         });
     }
 }

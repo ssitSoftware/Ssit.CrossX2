@@ -24,4 +24,6 @@ internal class ActionScheduler: IInternalActionScheduler
             action();
         }
     }
+    
+    public bool IsMainThread => Thread.CurrentThread.ManagedThreadId == _mainThreadId;
 }

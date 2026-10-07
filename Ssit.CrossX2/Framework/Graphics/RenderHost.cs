@@ -42,7 +42,6 @@ internal class RenderHost : IRenderHost
         if (resize)
         {
             _actionScheduler.Schedule(() => Resize());
-            throw new SkipFrameException();
         }
         
         _renderer.StateManager.Reset();

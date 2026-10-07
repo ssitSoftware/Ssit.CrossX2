@@ -5,6 +5,7 @@ using Ssit.CrossX2.Framework.Graphics.Internal;
 using Ssit.CrossX2.Framework.Graphics.Lighting;
 using Ssit.CrossX2.Framework.Graphics.Renderers;
 using Ssit.CrossX2.Framework.IoC;
+using Ssit.CrossX2.Framework.Services;
 using static SDL.SDL3;
 
 namespace Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Graphics;
@@ -12,6 +13,7 @@ namespace Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Graphics;
 internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHandler, LightingManager.IUpdateLightsHandler, IIoCPostRegisterHandler
 {
     private readonly IIoCContainer _container;
+    private readonly IActionScheduler _actionScheduler;
     public SDL_GPUDevice* Device { get; }
     public SDL_Window* Window { get; }
 
@@ -75,9 +77,10 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
     
     public SdlGpuBackendType BackendType { get; }
 
-    public SdlGpuRenderer(SdlHandles handles, IIoCContainer container)
+    public SdlGpuRenderer(SdlHandles handles, IIoCContainer container, IActionScheduler actionScheduler)
     {
         _container = container;
+        _actionScheduler = actionScheduler;
         Device = handles.GpuDevice;
         Window = handles.Window;
 
@@ -179,12 +182,18 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
 
     public void SubmitCommandBuffer()
     {
+        if (!_actionScheduler.IsMainThread)
+        {
+            _actionScheduler.ExecuteOnMainThread(SubmitCommandBuffer);
+            return;
+        }
+        
         if (CommandBuffer is null)
             return;
         
         EndCurrentGpuRenderPass();
+        
         SDL_SubmitGPUCommandBuffer(CommandBuffer);
-
         CommandBuffer = null;
     }
 }

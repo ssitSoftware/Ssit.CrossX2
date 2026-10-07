@@ -10,7 +10,7 @@ internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
 {
     protected readonly SdlGpuRenderer GpuRenderer;
     
-    private readonly SDL_GPUDevice* _device;
+    protected readonly SDL_GPUDevice* _device;
     private readonly SDL_GPUGraphicsPipeline*[] _pipelines = new SDL_GPUGraphicsPipeline*[SdlGpuBlendStateFactory.AllModes.Length];
     public SDL_GPUSampler* LinearSampler { get; }
     public SDL_GPUSampler* PointSampler { get; }

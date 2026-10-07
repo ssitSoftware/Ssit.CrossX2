@@ -130,16 +130,16 @@ public class LoopsMusicPlayer : IMusicPlayer, IUpdatable, IDisposable
 
         Task.Run(() =>
         {
-            var songIndex = _currentPlaylist.CurrentSong;
-            var songBlock = _currentPlaylist.CurrentPosition;
+            var songIndex = _currentPlaylist?.CurrentSong ?? 0;
+            var songBlock = _currentPlaylist?.CurrentPosition ?? 0;
 
             if (resetProgress)
             {
                 songIndex = 0;
                 songBlock = 0;
 
-                _currentPlaylist.CurrentSong = 0;
-                _currentPlaylist.CurrentPosition = 0;
+                _currentPlaylist?.CurrentSong = 0;
+                _currentPlaylist?.CurrentPosition = 0;
             }
             
             var musicProvider = new MultiSongDataProvider(_filesProvider, songs, songIndex, songBlock);

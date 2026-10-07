@@ -14,8 +14,10 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
     private SDL_GPUTexture* _diffuse = null;
     private SDL_GPUTexture* _glow = null;
     private SDL_GPUTexture* _normal = null;
+    private SDL_GPUTexture* _light = null;
 
-    private bool _glowFromDiffuse;
+    private readonly bool _glowFromDiffuse;
+    private readonly bool _glowFromLight;
     
     public SdlGpuTexture(SdlHandles handles, LoadTextureParameters parameters)
     {
@@ -25,6 +27,7 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
         Size? size = null;
 
         _glowFromDiffuse = parameters.GlowFromDiffuse;
+        _glowFromLight = parameters.GlowFromLightMap;
         
         if (parameters.DiffuseMapStream is not null)
         {
@@ -50,9 +53,18 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
         {
             var (tex, ts) = LoadTextureFromStream(parameters.NormalMapStream);
             size ??= ts;
-            
+
             _normal = tex.Pointer;
             maps |= TextureMaps.Normal;
+        }
+
+        if (parameters.LightMapStream is not null)
+        {
+            var (tex, ts) = LoadTextureFromStream(parameters.LightMapStream, true);
+            size ??= ts;
+
+            _light = tex.Pointer;
+            maps |= TextureMaps.Light;
         }
 
         if (_glowFromDiffuse && _diffuse != null)
@@ -210,7 +222,13 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
             SDL_ReleaseGPUTexture(_device, _normal);
             _normal = null;
         }
-        
+
+        if (_light != null)
+        {
+            SDL_ReleaseGPUTexture(_device, _light);
+            _light = null;
+        }
+
         _disposed = true;
     }
 
@@ -224,9 +242,11 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
             case TextureMaps.Diffuse:
                 return _diffuse;
             case TextureMaps.Glow:
-                return _glow != null ? _glow : _glowFromDiffuse ? _diffuse : null;
+                return _glow != null ? _glow : _glowFromDiffuse ? _diffuse : _glowFromLight ? _light : null;
             case TextureMaps.Normal:
                 return _normal;
+            case TextureMaps.Light:
+                return _light;
             default:
                 return null;
         }

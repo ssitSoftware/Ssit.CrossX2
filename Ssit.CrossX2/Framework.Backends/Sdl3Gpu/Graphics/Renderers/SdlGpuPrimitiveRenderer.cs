@@ -8,7 +8,7 @@ namespace Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Graphics.Renderers;
 
 internal unsafe class SdlGpuPrimitiveRenderer(SdlGpuRenderer renderer, ISdlGpuPipelineManager pipelineManager): IPrimitiveRenderer
 {
-    private readonly SDL_GPUTexture*[] _sdlGpuTextures =  new SDL_GPUTexture*[3];
+    private readonly SDL_GPUTexture*[] _sdlGpuTextures =  new SDL_GPUTexture*[4];
 
     internal void RenderVertices(PrimitiveType type, VertexComponents components, SDL_GPUBuffer* sdlBuffer, int start, int count, ITexture texture = null)
     {
@@ -17,12 +17,14 @@ internal unsafe class SdlGpuPrimitiveRenderer(SdlGpuRenderer renderer, ISdlGpuPi
             _sdlGpuTextures[0] = sdlTexture.GetMap(TextureMaps.Diffuse);
             _sdlGpuTextures[1] = sdlTexture.GetMap(TextureMaps.Glow);
             _sdlGpuTextures[2] = sdlTexture.GetMap(TextureMaps.Normal);
+            _sdlGpuTextures[3] = sdlTexture.GetMap(TextureMaps.Light);
         }
         else
         {
             _sdlGpuTextures[0] = null;
             _sdlGpuTextures[1] = null;
             _sdlGpuTextures[2] = null;
+            _sdlGpuTextures[3] = null;
         }
 
         if (type == PrimitiveType.Lines && texture != null)

@@ -166,6 +166,8 @@ internal static class AppRunnerSdl
 
         services.TryGet<IInternalTextInputService>(out var internalTextInputService);
 
+        Size previousWindowSize = Size.Zero;
+        
         while (appWindowManager.ShouldContinue)
         {
             SDL_Event @event;
@@ -324,6 +326,15 @@ internal static class AppRunnerSdl
             eventSource.OnUpdated();
             gameControllers.PostUpdate();
             
+            int ww, wh;
+            SDL_GetWindowSizeInPixels(window, &ww, &wh);
+
+            if (previousWindowSize.Width != ww || previousWindowSize.Height != wh)
+            {
+                previousWindowSize = new Size(ww, wh);
+                continue;
+            }
+            
             Render(component,  renderHost, sdlRenderer);
 
             eventSource.OnRenderFinished();
@@ -386,13 +397,14 @@ internal static class AppRunnerSdl
 
                 renderHost.End();
             }
-            catch (SkipFrameException)
+            catch
             {
+                sdlGpuRenderer.Clear(RgbaColor.Black);
             }
         }
 
+        sdlGpuRenderer.EndCurrentGpuRenderPass();
         sdlGpuRenderer.SubmitCommandBuffer();
-
         //DebugScreenshot.MaybeCapture(sdlGpuRenderer.Device, window, swapchainTexture, swapchainWidth, swapchainHeight);
     }
 }

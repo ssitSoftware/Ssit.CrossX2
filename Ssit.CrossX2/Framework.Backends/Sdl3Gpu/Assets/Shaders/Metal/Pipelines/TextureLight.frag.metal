@@ -26,6 +26,8 @@ struct LightingUniforms
 fragment float4 fragmentMain(VertexOut in [[stage_in]],
                               texture2d<float> tex [[texture(0)]],
                               sampler samp [[sampler(0)]],
+                              texture2d<float> lightTex [[texture(1)]],
+                              sampler lightSamp [[sampler(1)]],
                               constant LightingUniforms &lights [[buffer(0)]])
 {
     float4 texColor = tex.sample(samp, in.uv) * in.color;
@@ -133,5 +135,8 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
         lighting += lightColor * intensity;
     }
 
-    return float4(texColor.rgb * lighting, texColor.a);
+    float3 lightMapColor = lightTex.sample(lightSamp, in.uv).rgb;
+    float3 finalColor = max(texColor.rgb * lighting, lightMapColor);
+
+    return float4(finalColor, texColor.a);
 }

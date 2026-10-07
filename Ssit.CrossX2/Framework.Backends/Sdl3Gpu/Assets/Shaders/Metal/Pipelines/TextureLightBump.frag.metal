@@ -30,6 +30,8 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
                               sampler samp [[sampler(0)]],
                               texture2d<float> normalTex [[texture(1)]],
                               sampler normalSamp [[sampler(1)]],
+                              texture2d<float> lightTex [[texture(2)]],
+                              sampler lightSamp [[sampler(2)]],
                               constant LightingUniforms &lights [[buffer(0)]])
 {
     float4 texColor = tex.sample(samp, in.uv) * in.color;
@@ -143,5 +145,12 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
         lighting += lightColor * intensity;
     }
 
-    return float4(texColor.rgb * lighting, texColor.a);
+    float3 lightMapColor = lightTex.sample(lightSamp, in.uv).rgb;
+
+    float lightness = dot(lighting, float3(0.299, 0.587, 0.114));
+    float lightMapLightness = dot(lightMapColor, float3(0.299, 0.587, 0.114));
+
+    float3 finalColor = lightMapLightness > lightness ? lightMapColor : texColor.rgb * lighting;
+
+    return float4(finalColor, texColor.a);
 }
