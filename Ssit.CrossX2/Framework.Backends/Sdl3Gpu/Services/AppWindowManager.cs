@@ -43,7 +43,6 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
                         _firstTimeWindowed = false;
                     }
                     SDL_SetWindowFullscreen(window, true);
-                    SDL_SyncWindow(window);
                 }
             }
         );

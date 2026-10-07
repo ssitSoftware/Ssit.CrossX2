@@ -7,6 +7,7 @@ public interface ILightsContainer: ILightsProvider
     void SetAmbientLight(RgbaColor globalAmbient, RgbaColor? alternativeAmbient);
     void AddPointLight(PointLight pointLight);
     void AddSpotLight(SpotLight spotLight);
+    void SetLighting(RgbaColor white, float intensity);
 }
 
 public interface ILightProvider

@@ -17,6 +17,9 @@ struct LightingUniforms
     float4 spotDirectionAngle[8];      // xy = normalized 2D direction (screen plane), z = cos(outerAngle), w = cos(innerAngle)
     float4 spotColorIntensity[8];      // rgb = color, a = intensity
     float4 lightCount;                 // x = point light count, y = position quantization resolution in pixels, z = spot light count, w unused
+    float4 dirDirection[4];            // xyz = normalized 3D light-travel direction, w unused
+    float4 dirColorIntensity[4];       // rgb = color, a = intensity
+    float4 directionalCount;           // x = directional light count, yzw unused
 };
 
 fragment float4 fragmentMain(VertexOut in [[stage_in]],
@@ -97,6 +100,32 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
 
         intensity *= attenuation;
 		lighting += lightColor * intensity;
+    }
+
+    int dirCount = int(lights.directionalCount.x);
+
+    // No normal map is available here, so every surface is treated as flat
+    // and facing the observer directly (N = +Z).
+    const float3 directionalNormal = float3(0.0, 0.0, 1.0);
+
+    for (int i = 0; i < 4; i++)
+    {
+        if (i >= dirCount)
+        {
+            break;
+        }
+
+        float3 dirDirection3D = normalize(lights.dirDirection[i].xyz);
+        float3 lightColor = lights.dirColorIntensity[i].rgb;
+        float intensity = lights.dirColorIntensity[i].a;
+
+        // Directional lights have no position, so the incoming direction is constant
+        // across the screen; L points from the fragment back toward the light source.
+        float3 lightDir = -dirDirection3D;
+        float diffuse = max(dot(directionalNormal, lightDir), 0.0);
+
+        intensity *= diffuse;
+        lighting += lightColor * intensity;
     }
 
     return float4(in.color.rgb * lighting, in.color.a);

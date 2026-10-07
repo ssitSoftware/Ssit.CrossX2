@@ -14,12 +14,21 @@ public class MapLightsContainer : ILightsContainer, IComparer<PointLight>, IComp
     private readonly List<SpotLight> _spotLights = new();
     private Vector2 _lookAt;
 
+    private RgbaColor _lightingColor = RgbaColor.White;
+    private float _lightIntensity = 0;
+
+    private DirectionalLight[] _lightingLight = [new DirectionalLight(Vector3.One, RgbaColor.White, 0f)];
+    
     public void ApplyLights(IRenderer renderer, bool useGlobalAmbient, bool useGlobalLights)
     {
         if (renderer.CurrentPass == RenderPass.Glow)
             return;
         
         renderer.LightingManager.EnableLighting(true, false);
+        
+        _lightingLight[0] = new DirectionalLight(new Vector3(0, 0, -1), _lightingColor, _lightIntensity);
+        
+        renderer.LightingManager.SetDirectionalLights(_lightingLight);
         renderer.LightingManager.SetAmbientLight(useGlobalAmbient ? _globalAmbient : _alternativeAmbient);
 
         if (!useGlobalLights)
@@ -65,7 +74,13 @@ public class MapLightsContainer : ILightsContainer, IComparer<PointLight>, IComp
 
     public void AddPointLight(PointLight light) => _pointLights.Add(light);
     public void AddSpotLight(SpotLight light) => _spotLights.Add(light);
-    
+
+    public void SetLighting(RgbaColor color, float intensity)
+    {
+        _lightingColor = color;
+        _lightIntensity = intensity;
+    }
+
     public int Compare(PointLight x, PointLight y)
     {
         var p0 = new Vector2(x.Position.X, x.Position.Y);

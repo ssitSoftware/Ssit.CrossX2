@@ -16,13 +16,15 @@ public class PointLightObject: IBodyOwner, ILightProvider, IGameObjectRenderer
 
         [Editor] public RgbaColor Color { get; set; } = RgbaColor.White;
         [EditorFloat(0.1f, 4f, 0.1f)] public float Intensity { get; set; } = 1;
+        [EditorFloat(0.0f, 1f, 0.1f)] public float AfterGlow { get; set; } = 0.5f;
     }
 
-    private const int GlowCircleSegments = 24;
+    private const int GlowCircleSegments = 12;
 
     public IBody Body { get; }
     public int ZOrder { get; }
     private readonly float _tileSize;
+    private readonly float _afterGlow;
     private readonly Vector2[] _glowCircle = new Vector2[GlowCircleSegments + 1];
     private PointLight? _pointLight;
 
@@ -35,6 +37,8 @@ public class PointLightObject: IBodyOwner, ILightProvider, IGameObjectRenderer
         Body.Mass = 100000;
         ZOrder = parameters.ZOrder;
         _tileSize = services.GameTemplate.TileSize;
+
+        _afterGlow = parameters.Parameters.AfterGlow;
 
         parameters.LinkMap.RequestLink<ITarget>(parameters.Parameters.Target, t =>
         {
@@ -86,25 +90,32 @@ public class PointLightObject: IBodyOwner, ILightProvider, IGameObjectRenderer
 
     public virtual void Render(IRenderer renderer, RgbaColor color, float depth)
     {
-        if (renderer.CurrentPass != RenderPass.Glow || _pointLight is not { } light)
+        if (renderer.CurrentPass != RenderPass.Normal || _pointLight is not { } light)
         {
             return;
         }
 
+        renderer.StateManager.SaveState();
+        renderer.StateManager.SetBlendMode(BlendMode.Additive);
+        
         var center = UpdateGlowCircle(light);
 
-        var glowColor = light.Color * (light.Intensity / 16f);
+        var glowColor = light.Color * (light.Intensity * _afterGlow / 4f);
+        var glowColor2 = light.Color * (light.Intensity * _afterGlow / 4f);
         var edgeColor = RgbaColor.Transparent;
 
         var centerVertex = new VertexPct(center, glowColor, Vector2.Zero, depth);
+        var centerVertex2 = new VertexPct(center, glowColor2, Vector2.Zero, depth);
 
         for (var i = 0; i < _glowCircle.Length - 1; i++)
         {
             renderer.RenderQueue.PushTriangle(
-                centerVertex,
+                i % 2 == 0 ? centerVertex : centerVertex2,
                 new VertexPct(_glowCircle[i], edgeColor, Vector2.Zero, depth),
                 new VertexPct(_glowCircle[i + 1], edgeColor, Vector2.Zero, depth));
         }
+        
+        renderer.StateManager.RestoreState();
     }
 
     private Vector2 UpdateGlowCircle(PointLight light)
@@ -114,7 +125,6 @@ public class PointLightObject: IBodyOwner, ILightProvider, IGameObjectRenderer
         for (var i = 0; i < _glowCircle.Length; i++)
         {
             var angle = i / (float)GlowCircleSegments * (2f * MathF.PI);
-
             _glowCircle[i] = center + new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * light.Radius;
         }
 

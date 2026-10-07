@@ -13,20 +13,22 @@ public class SpotLightObject: IBodyOwner, ILightProvider, IGameObjectRenderer
     public class Parameters
     {
         [EditorLink(typeof(ITarget))] public int Target { get; set; }
-
         [EditorFloat(5, 180)] public float Angle1 { get; set; } = 15;
         [EditorFloat(5, 180)] public float Angle2 { get; set; } = 45;
         [Editor] public RgbaColor Color { get; set; } = RgbaColor.White;
         [EditorFloat(0.1f, 4f, 0.1f)] public float Intensity { get; set; } = 1;
+        [EditorFloat(0.1f, 1f, 0.1f)] public float AfterGlow { get; set; } = 0.5f;
     }
     
-    private const int GlowFanSegments = 16;
+    private const int GlowFanSegments = 4;
+    private const int GlowFanRings = 2;
 
     public IBody Body { get; }
     public int ZOrder { get; }
     private readonly float _tileSize;
-    private readonly Vector2[] _glowArc = new Vector2[GlowFanSegments + 1];
+    private readonly Vector2[,] _glowFan = new Vector2[GlowFanRings + 1, GlowFanSegments + 1];
     private SpotLight? _spotLight;
+    private float _afterGlow;
 
     public SpotLightObject(GameObjectsServices services, ObjectCreationParameters<Parameters> parameters)
     {
@@ -37,6 +39,7 @@ public class SpotLightObject: IBodyOwner, ILightProvider, IGameObjectRenderer
         Body.Mass = 100000;
         ZOrder = parameters.ZOrder;
         _tileSize = services.GameTemplate.TileSize;
+        _afterGlow = parameters.Parameters.AfterGlow;
 
         parameters.LinkMap.RequestLink<ITarget>(parameters.Parameters.Target, t =>
         {
@@ -71,7 +74,6 @@ public class SpotLightObject: IBodyOwner, ILightProvider, IGameObjectRenderer
 
     protected virtual void OnFixedUpdate(float dt)
     {
-        
     }
 
     public RectangleF Bounds
@@ -90,8 +92,9 @@ public class SpotLightObject: IBodyOwner, ILightProvider, IGameObjectRenderer
             var maxX = apex.X;
             var maxY = apex.Y;
 
-            foreach (var point in _glowArc)
+            for (var i = 0; i <= GlowFanSegments; i++)
             {
+                var point = _glowFan[GlowFanRings, i];
                 minX = MathF.Min(minX, point.X);
                 minY = MathF.Min(minY, point.Y);
                 maxX = MathF.Max(maxX, point.X);
@@ -106,25 +109,39 @@ public class SpotLightObject: IBodyOwner, ILightProvider, IGameObjectRenderer
 
     public virtual void Render(IRenderer renderer, RgbaColor color, float depth)
     {
-        if (renderer.CurrentPass != RenderPass.Glow || _spotLight is not { } light)
+        if (renderer.CurrentPass != RenderPass.Normal || _spotLight is not { } light)
         {
             return;
         }
 
-        var apex = UpdateGlowArc(light);
+        UpdateGlowArc(light);
 
-        var glowColor = light.Color * (light.Intensity / 16f);
-        var edgeColor = RgbaColor.Transparent;
+        renderer.StateManager.SaveState();
+        renderer.StateManager.SetBlendMode(BlendMode.Additive);
+        
+        var glowColor = light.Color * (light.Intensity * _afterGlow / 8f);
 
-        var apexVertex = new VertexPct(apex, glowColor, Vector2.Zero, depth);
-
-        for (var i = 0; i < _glowArc.Length - 1; i++)
+        for (var r = 0; r < GlowFanRings; r++)
         {
-            renderer.RenderQueue.PushTriangle(
-                apexVertex,
-                new VertexPct(_glowArc[i], edgeColor, Vector2.Zero, depth),
-                new VertexPct(_glowArc[i + 1], edgeColor, Vector2.Zero, depth));
+            var innerT = (float)r / GlowFanRings;
+            var outerT = (float)(r + 1) / GlowFanRings;
+
+            var innerColor = glowColor * ((1 - innerT) * (1 - innerT));
+            var outerColor = glowColor * ((1 - outerT) * (1 - outerT));
+
+            for (var i = 0; i < GlowFanSegments; i++)
+            {
+                var innerA = new VertexPct(_glowFan[r, i], innerColor, Vector2.Zero, depth);
+                var innerB = new VertexPct(_glowFan[r, i + 1], innerColor, Vector2.Zero, depth);
+                var outerA = new VertexPct(_glowFan[r + 1, i], outerColor, Vector2.Zero, depth);
+                var outerB = new VertexPct(_glowFan[r + 1, i + 1], outerColor, Vector2.Zero, depth);
+
+                renderer.RenderQueue.PushTriangle(innerA, outerA, outerB);
+                renderer.RenderQueue.PushTriangle(innerA, outerB, innerB);
+            }
         }
+        
+        renderer.StateManager.RestoreState();
     }
 
     private Vector2 UpdateGlowArc(SpotLight light)
@@ -133,13 +150,19 @@ public class SpotLightObject: IBodyOwner, ILightProvider, IGameObjectRenderer
 
         var halfAngle = light.OuterAngle * MathF.PI / 180f;
         var baseAngle = MathF.Atan2(light.Direction.Y, light.Direction.X);
+        var maxRadius = light.Radius * 0.75f;
 
-        for (var i = 0; i < _glowArc.Length; i++)
+        for (var r = 0; r <= GlowFanRings; r++)
         {
-            var t = (float)i / GlowFanSegments;
-            var angle = baseAngle - halfAngle + t * (2f * halfAngle);
+            var radius = maxRadius * r / GlowFanRings;
 
-            _glowArc[i] = apex + new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * light.Radius * 0.75f;
+            for (var i = 0; i <= GlowFanSegments; i++)
+            {
+                var t = (float)i / GlowFanSegments;
+                var angle = baseAngle - halfAngle + t * (2f * halfAngle);
+
+                _glowFan[r, i] = apex + new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * radius;
+            }
         }
 
         return apex;

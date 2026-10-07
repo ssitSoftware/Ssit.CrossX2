@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
@@ -62,6 +63,7 @@ namespace Ssit.CrossX2.Editor
                 {
                     DataContext = _services.Create<MainViewModel>()
                 };
+                desktop.MainWindow.BringIntoView();
             }
             else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
             {

@@ -123,9 +123,7 @@ internal class Navigation: INavigation
         }
     }
 
-    public void NavigateTo<TViewModel>(object parameter = null, bool skipTransition = false) where TViewModel : class => NavigateTo<TViewModel>(parameter, skipTransition, true);
-
-    private void NavigateTo<TViewModel>(object parameter, bool skipTransition, bool playSound) where TViewModel : class
+    public void NavigateTo<TViewModel>(object parameter, bool skipTransition, bool playSound) where TViewModel : class
     {
         if (_navigationStack.Count > 0)
         {

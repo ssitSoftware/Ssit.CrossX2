@@ -120,14 +120,16 @@ public static class MapRenderer
                     DrawObject(renderer, visibleBounds, obj, layer.TintColor);
                 }
             }
-
-            renderer.LightingManager.EnableLighting(false, false);
-            renderer.StateManager.RestoreState();
             
+            renderer.StateManager.RestoreState();
+
             if (layer.FogColor.A > 0)
             {
                 renderer.GeometryRenderer.FillRectangle(new RectangleF(Vector2.Zero, targetSize), renderer.CurrentPass == RenderPass.Glow ? RgbaColor.Black * layer.FogColor.Af: layer.FogColor);
             }
+            
+            renderer.LightingManager.EnableLighting(false, false);
+            
         }
     }
 
