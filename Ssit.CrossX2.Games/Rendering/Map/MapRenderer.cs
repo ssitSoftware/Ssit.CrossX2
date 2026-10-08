@@ -128,8 +128,8 @@ public static class MapRenderer
                 renderer.GeometryRenderer.FillRectangle(new RectangleF(Vector2.Zero, targetSize), renderer.CurrentPass == RenderPass.Glow ? RgbaColor.Black * layer.FogColor.Af: layer.FogColor);
             }
             
-            renderer.LightingManager.EnableLighting(false, false);
-            
+            renderer.LightingManager.EnableLighting(false);
+
         }
     }
 
@@ -141,7 +141,7 @@ public static class MapRenderer
             {
                 foreach (var segment in tiles.segments)
                 {
-                    renderer.RenderQueue.PushVertices(PrimitiveType.TrianglesWithTangents, segment.VertexBuffer, segment.Start, segment.Count, segment.Texture.Resource);
+                    renderer.RenderQueue.PushVertices(PrimitiveType.Triangles, segment.VertexBuffer, segment.Start, segment.Count, segment.Texture.Resource);
                 }
             }
         }

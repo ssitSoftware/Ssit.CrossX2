@@ -39,9 +39,9 @@ internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
         }
 
         var vertexBufferDescriptions = stackalloc SDL_GPUVertexBufferDescription[1];
-        vertexBufferDescriptions[0] = GpuVertexLayout.CreateVertexBufferDescription(VertexPcttb.Components);
+        vertexBufferDescriptions[0] = GpuVertexLayout.CreateVertexBufferDescription(VertexPct.Components);
 
-        var vertexAttributesManaged = GpuVertexLayout.CreateVertexAttributes(VertexPcttb.Components);
+        var vertexAttributesManaged = GpuVertexLayout.CreateVertexAttributes(VertexPct.Components);
 
         var swapchainFormat = SDL_GetGPUSwapchainTextureFormat(_device, window);
 

@@ -23,7 +23,7 @@ public class MapLightsContainer : ILightsContainer, IComparer<PointLight>, IComp
         if (renderer.CurrentPass == RenderPass.Glow)
             return;
         
-        renderer.LightingManager.EnableLighting(true, false);
+        renderer.LightingManager.EnableLighting(true);
         
         _lightingLight[0] = new DirectionalLight(new Vector3(0, 0, -1), _lightingColor, _lightIntensity);
         

@@ -216,7 +216,7 @@ public class AabbGameInstance : IGameInstance, IMessenger
             _lightsContainer?.ApplyLights(renderer, _mapDisplayElement.Layers[0].UseAmbientLight, false);
             
             renderer.GeometryRenderer.FillRectangle(target, renderer.CurrentPass == RenderPass.Glow ? RgbaColor.Black : bgColor);
-            renderer.LightingManager.EnableLighting(false, false);
+            renderer.LightingManager.EnableLighting(false);
         }
 
         renderer.StateManager.Translate(target.TopLeft);

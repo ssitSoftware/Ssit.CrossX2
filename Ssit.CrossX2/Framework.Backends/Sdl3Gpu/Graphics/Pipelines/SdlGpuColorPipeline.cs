@@ -31,9 +31,9 @@ internal unsafe class SdlGpuColorPipeline : ISdlGpuPipeline
             throw new InvalidOperationException($"Shader creation failed: {SDL_GetError()}");
 
         var vertexBufferDescriptions = stackalloc SDL_GPUVertexBufferDescription[1];
-        vertexBufferDescriptions[0] = GpuVertexLayout.CreateVertexBufferDescription(VertexPcttb.Components);
+        vertexBufferDescriptions[0] = GpuVertexLayout.CreateVertexBufferDescription(VertexPct.Components);
 
-        var vertexAttributesManaged = GpuVertexLayout.CreateVertexAttributes(VertexPcttb.Components);
+        var vertexAttributesManaged = GpuVertexLayout.CreateVertexAttributes(VertexPct.Components);
 
         var swapchainFormat = SDL_GetGPUSwapchainTextureFormat(handles.GpuDevice, handles.Window);
 

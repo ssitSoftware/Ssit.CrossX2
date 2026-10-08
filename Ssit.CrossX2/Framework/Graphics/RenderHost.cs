@@ -57,7 +57,7 @@ internal class RenderHost : IRenderHost
         
         _renderer.StateManager.Reset();
         _renderer.SetRenderTarget(_glowRenderTarget);
-        _renderer.LightingManager.EnableLighting(false, false);
+        _renderer.LightingManager.EnableLighting(false);
         _renderer.StateManager.SetBlendMode(BlendMode.AlphaBlend);
         _renderer.Clear(RgbaColor.Black);
 
@@ -214,7 +214,7 @@ internal class RenderHost : IRenderHost
     public void End()
     {
         _renderer.StateManager.Reset();
-        _renderer.LightingManager.EnableLighting(false, false);
+        _renderer.LightingManager.EnableLighting(false);
 
         var sourceTexture = _renderTarget;
         

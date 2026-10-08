@@ -10,7 +10,6 @@ internal class SdlGpuPipelineManager(IIoCContainer ioCContainer, IRenderer rende
     private const byte Lighting = 1;
     private const byte Texture = 2;
     private const byte Lines = 4;
-    private const byte BumpMapping = 8;
 
     private readonly Dictionary<byte, ISdlGpuPipeline> _pipelines = new();
 
@@ -23,7 +22,6 @@ internal class SdlGpuPipelineManager(IIoCContainer ioCContainer, IRenderer rende
         if (texturedRendering) type |= Texture;
         if (manager.LightingEnabled) type |= Lighting;
         if (primitiveType == PrimitiveType.Lines) type |= Lines;
-        if (primitiveType == PrimitiveType.TrianglesWithTangents && manager.BumpMappingEnabled) type |= BumpMapping;
 
         if (_pipelines.TryGetValue(type, out var pipeline)) return pipeline;
 
@@ -54,9 +52,6 @@ internal class SdlGpuPipelineManager(IIoCContainer ioCContainer, IRenderer rende
 
             case Texture | Lighting:
                 return ioCContainer.IoCConstruct<SdlGpuTextureLightingPipeline>();
-
-            case Texture | Lighting | BumpMapping:
-                return ioCContainer.IoCConstruct<SdlGpuTextureBumpLightingPipeline>();
         }
 
         return null;

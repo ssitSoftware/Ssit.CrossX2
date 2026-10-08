@@ -19,12 +19,6 @@ internal static unsafe class GpuVertexLayout
         if (components.HasFlag(VertexComponents.Texture))
             stride += sizeof(Vector2);
 
-        if (components.HasFlag(VertexComponents.Tangent))
-            stride += sizeof(Vector2);
-
-        if (components.HasFlag(VertexComponents.BiNormal))
-            stride += sizeof(Vector2);
-
         return stride;
     }
 
@@ -45,8 +39,6 @@ internal static unsafe class GpuVertexLayout
         if (components.HasFlag(VertexComponents.Position)) count++;
         if (components.HasFlag(VertexComponents.Color)) count++;
         if (components.HasFlag(VertexComponents.Texture)) count++;
-        if (components.HasFlag(VertexComponents.Tangent)) count++;
-        if (components.HasFlag(VertexComponents.BiNormal)) count++;
 
         var attributes = new SDL_GPUVertexAttribute[count];
 
@@ -80,32 +72,6 @@ internal static unsafe class GpuVertexLayout
         }
 
         if (components.HasFlag(VertexComponents.Texture))
-        {
-            attributes[location] = new SDL_GPUVertexAttribute
-            {
-                location = location,
-                buffer_slot = bufferSlot,
-                format = SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-                offset = offset,
-            };
-            location++;
-            offset += (uint)sizeof(Vector2);
-        }
-
-        if (components.HasFlag(VertexComponents.Tangent))
-        {
-            attributes[location] = new SDL_GPUVertexAttribute
-            {
-                location = location,
-                buffer_slot = bufferSlot,
-                format = SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-                offset = offset,
-            };
-            location++;
-            offset += (uint)sizeof(Vector2);
-        }
-
-        if (components.HasFlag(VertexComponents.BiNormal))
         {
             attributes[location] = new SDL_GPUVertexAttribute
             {

@@ -41,8 +41,6 @@
       <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Pipelines\Texture.vert.metal" />
       <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Pipelines\TextureLight.frag.metal" />
       <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Pipelines\TextureLight.vert.metal" />
-      <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Pipelines\TextureLightBump.frag.metal" />
-      <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Pipelines\TextureLightBump.vert.metal" />
     </ItemGroup>
 
     <ItemGroup>

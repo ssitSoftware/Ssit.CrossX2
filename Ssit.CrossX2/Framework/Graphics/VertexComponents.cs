@@ -5,7 +5,5 @@ public enum VertexComponents
 {
     Position = 1,
     Color = 2,
-    Texture = 4,
-    Tangent = 8,
-    BiNormal = 16
+    Texture = 4
 }

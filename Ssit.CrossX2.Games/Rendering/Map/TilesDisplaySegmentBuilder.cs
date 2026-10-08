@@ -2,7 +2,6 @@ using System.Numerics;
 using Ssit.CrossX2.Framework.Content;
 using Ssit.CrossX2.Framework.Games.Map;
 using Ssit.CrossX2.Framework.Graphics;
-using Ssit.CrossX2.Framework.Graphics.Utils;
 using Ssit.CrossX2.Framework.IoC;
 
 namespace Ssit.CrossX2.Framework.Games.Rendering.Map;
@@ -123,13 +122,13 @@ public class TilesDisplaySegmentBuilder
             
             var vertexBuffer = _container.IoCConstruct<IVertexBuffer>(new CreateVertexBufferParameters
             {
-                Components = VertexPcttb.Components,
+                Components = VertexPct.Components,
                 Count = vertexCount
             });
-            
+
             using var vertexBufferRes = new ReferenceCountedResource<IVertexBuffer>(vertexBuffer);
 
-            var vertexList = new List<VertexPcttb>(vertexCount);
+            var vertexList = new List<VertexPct>(vertexCount);
             
             foreach (var (key, quads) in _verticesMap)
             {
@@ -159,7 +158,7 @@ public class TilesDisplaySegmentBuilder
         }
     }
 
-    private void FillTriangles(Quad quad, List<VertexPcttb> vertexList, Size textureSize)
+    private void FillTriangles(Quad quad, List<VertexPct> vertexList, Size textureSize)
     {
         var color = _tintColor;
         var target = quad.Target;
@@ -171,31 +170,14 @@ public class TilesDisplaySegmentBuilder
             quad.Source.Height / textureSize.Height);
 
         var z = _depth;
-        
-        AddTriangle(vertexList,
-            new VertexPct(new Vector3(target.TopLeft, z), color, texRect.TopLeft),
-            new VertexPct(new Vector3(target.BottomLeft, z), color, texRect.BottomLeft),
-            new VertexPct(new Vector3(target.BottomRight, z), color, texRect.BottomRight));
 
-        AddTriangle(vertexList,
-            new VertexPct(new Vector3(target.TopLeft, z), color, texRect.TopLeft),
-            new VertexPct(new Vector3(target.BottomRight, z), color, texRect.BottomRight),
-            new VertexPct(new Vector3(target.TopRight, z), color, texRect.TopRight));
-    }
+        vertexList.Add(new VertexPct(new Vector3(target.TopLeft, z), color, texRect.TopLeft));
+        vertexList.Add(new VertexPct(new Vector3(target.BottomLeft, z), color, texRect.BottomLeft));
+        vertexList.Add(new VertexPct(new Vector3(target.BottomRight, z), color, texRect.BottomRight));
 
-    private static void AddTriangle(List<VertexPcttb> vertexList, VertexPct p1, VertexPct p2, VertexPct p3)
-    {
-        var (tangent, bitangent) = GeometryUtils.CalculateTangentAndBiTangent(
-            new Vector2(p1.Position.X, p1.Position.Y),
-            new Vector2(p2.Position.X, p2.Position.Y),
-            new Vector2(p3.Position.X, p3.Position.Y),
-            p1.TexCoordinates,
-            p2.TexCoordinates,
-            p3.TexCoordinates);
-
-        vertexList.Add(new VertexPcttb(p1, tangent, bitangent));
-        vertexList.Add(new VertexPcttb(p2, tangent, bitangent));
-        vertexList.Add(new VertexPcttb(p3, tangent, bitangent));
+        vertexList.Add(new VertexPct(new Vector3(target.TopLeft, z), color, texRect.TopLeft));
+        vertexList.Add(new VertexPct(new Vector3(target.BottomRight, z), color, texRect.BottomRight));
+        vertexList.Add(new VertexPct(new Vector3(target.TopRight, z), color, texRect.TopRight));
     }
 
     private Tile GetTile(Tile[,] tiles, int xx, int yy, out int width, out int height)

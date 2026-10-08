@@ -7,8 +7,7 @@ internal unsafe interface ISdlGpuPipeline : IDisposable
 {
     public const int DiffuseTexture = 0;
     public const int GlowTexture = 1;
-    public const int NormalTexture = 2;
-    public const int LightTexture = 3;
+    public const int LightTexture = 2;
 
     void Bind(SDL_GPUCommandBuffer* commandBuffer, SDL_GPURenderPass* renderPass, SDL_GPUTexture*[] textures, Matrix4x4 transform);
 }

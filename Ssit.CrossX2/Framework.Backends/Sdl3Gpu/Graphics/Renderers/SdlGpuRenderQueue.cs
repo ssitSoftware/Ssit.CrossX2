@@ -1,7 +1,6 @@
 using System.Numerics;
 using SDL;
 using Ssit.CrossX2.Framework.Graphics;
-using Ssit.CrossX2.Framework.Graphics.Utils;
 using static SDL.SDL3;
 
 namespace Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Graphics.Renderers;
@@ -18,11 +17,11 @@ internal unsafe class SdlGpuRenderQueue: IDisposable, IRenderQueueInternal
     
     private const int BufferVerticesCount = ushort.MaxValue;
 
-    private readonly int _strideBytes = sizeof(VertexPcttb);
+    private readonly int _strideBytes = sizeof(VertexPct);
 
     private SDL_GPUBuffer* _gpuBuffer;
-    
-    private readonly VertexPcttb[] _buffer = new VertexPcttb[BufferVerticesCount];
+
+    private readonly VertexPct[] _buffer = new VertexPct[BufferVerticesCount];
     private readonly List<Command> _commands = new();
     
     private int _currentPosition;
@@ -77,45 +76,24 @@ internal unsafe class SdlGpuRenderQueue: IDisposable, IRenderQueueInternal
     {
         CheckBufferOverflow(3);
 
-        var primitiveType = texture != null && texture.Maps.HasFlag(TextureMaps.Normal)
-            ? PrimitiveType.TrianglesWithTangents
-            : PrimitiveType.Triangles;
-
-        if (_currentTexture != texture || _currentPrimitiveType != primitiveType)
+        if (_currentTexture != texture || _currentPrimitiveType != PrimitiveType.Triangles)
         {
             StoreCommand();
             _currentTexture = texture;
-            _currentPrimitiveType = primitiveType;
+            _currentPrimitiveType = PrimitiveType.Triangles;
         }
-        
+
         var tint = _renderer.RenderStateProvider.TintColor;
         if (tint.A == 0)
             return;
-        
+
         p1.Color *= tint;
         p2.Color *= tint;
         p3.Color *= tint;
-        
-        if (primitiveType == PrimitiveType.TrianglesWithTangents)
-        {
-            var (tangent, bitangent) = GeometryUtils.CalculateTangentAndBiTangent(
-                new Vector2(p1.Position.X, p1.Position.Y),
-                new Vector2(p2.Position.X, p2.Position.Y),
-                new Vector2(p3.Position.X, p3.Position.Y),
-                p1.TexCoordinates,
-                p2.TexCoordinates,
-                p3.TexCoordinates);
-            
-            _buffer[_currentPosition++] = new VertexPcttb(p1, tangent, bitangent);
-            _buffer[_currentPosition++] = new VertexPcttb(p2, tangent, bitangent);
-            _buffer[_currentPosition++] = new VertexPcttb(p3, tangent, bitangent);
-        }
-        else
-        {
-            _buffer[_currentPosition++] = p1;
-            _buffer[_currentPosition++] = p2;
-            _buffer[_currentPosition++] = p3;
-        }
+
+        _buffer[_currentPosition++] = p1;
+        _buffer[_currentPosition++] = p2;
+        _buffer[_currentPosition++] = p3;
     }
 
     public void PushVertices(PrimitiveType type, IVertexBuffer vertices, int start, int count, ITexture texture = null)
@@ -184,7 +162,7 @@ internal unsafe class SdlGpuRenderQueue: IDisposable, IRenderQueueInternal
             throw new InvalidOperationException($"SDL_CreateGPUTransferBuffer failed: {SDL_GetError()}");
 
         void* mapped = (void*)SDL_MapGPUTransferBuffer(device, transferBuffer, false);
-        new ReadOnlySpan<VertexPcttb>(_buffer, 0, _currentPosition).CopyTo(new Span<VertexPcttb>(mapped, _currentPosition));
+        new ReadOnlySpan<VertexPct>(_buffer, 0, _currentPosition).CopyTo(new Span<VertexPct>(mapped, _currentPosition));
         SDL_UnmapGPUTransferBuffer(device, transferBuffer);
 
         SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(commandBuffer);
@@ -207,7 +185,7 @@ internal unsafe class SdlGpuRenderQueue: IDisposable, IRenderQueueInternal
 
         foreach (var command in _commands)
         {
-            _primitiveRenderer.RenderVertices(command.Type, VertexPcttb.Components, _gpuBuffer, command.Start, command.Count, command.Texture);
+            _primitiveRenderer.RenderVertices(command.Type, VertexPct.Components, _gpuBuffer, command.Start, command.Count, command.Texture);
         }
     }
 
