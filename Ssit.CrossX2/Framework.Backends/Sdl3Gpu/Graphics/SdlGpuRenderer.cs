@@ -52,6 +52,9 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
     {
         get
         {
+            if(!_actionScheduler.IsMainThread)
+                throw new InvalidOperationException("Only use Sdl3GpuRenderer in main thread!");
+            
             if (field is null)
             {
                 field = SDL_AcquireGPUCommandBuffer(Device);

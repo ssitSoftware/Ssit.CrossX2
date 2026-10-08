@@ -16,6 +16,7 @@ struct LightingUniforms
     float4 spotPositionRadius[8];      // xyz = position, w = radius
     float4 spotDirectionAngle[8];      // xy = normalized 2D direction (screen plane), z = cos(outerAngle), w = cos(innerAngle)
     float4 spotColorIntensity[8];      // rgb = color, a = intensity
+    float4 spotBulbRadius[8];          // x = bulb radius (world units), yzw unused
     float4 lightCount;                 // x = point light count, y = position quantization resolution in pixels, z = spot light count, w unused
     float4 dirDirection[4];            // xyz = normalized 3D light-travel direction, w unused
     float4 dirColorIntensity[4];       // rgb = color, a = intensity
@@ -79,6 +80,7 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
         float cosInner = lights.spotDirectionAngle[i].w;
         float3 lightColor = lights.spotColorIntensity[i].rgb;
         float intensity = lights.spotColorIntensity[i].a;
+        float bulbRadius = lights.spotBulbRadius[i].x;
 
         // The 3D position/distance only feeds the diffuse and distance falloff below;
         // the cone itself is a 2D test in the screen plane.
@@ -97,6 +99,8 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
         attenuation *= attenuation;
         attenuation *= spotFactor;
         attenuation *= diffuse;
+        // Inside the physical bulb the fixture occludes its own light.
+        attenuation *= step(bulbRadius, dist2D);
 
         intensity *= attenuation;
 		lighting += lightColor * intensity;

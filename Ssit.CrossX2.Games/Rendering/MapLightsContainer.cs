@@ -1,5 +1,4 @@
 using System.Numerics;
-using Ssit.CrossX2.Framework.Games.Logic;
 using Ssit.CrossX2.Framework.Graphics;
 using Ssit.CrossX2.Framework.Graphics.Lighting;
 
@@ -17,7 +16,7 @@ public class MapLightsContainer : ILightsContainer, IComparer<PointLight>, IComp
     private RgbaColor _lightingColor = RgbaColor.White;
     private float _lightIntensity = 0;
 
-    private DirectionalLight[] _lightingLight = [new DirectionalLight(Vector3.One, RgbaColor.White, 0f)];
+    private readonly DirectionalLight[] _lightingLight = [new(Vector3.One, RgbaColor.White, 0f)];
     
     public void ApplyLights(IRenderer renderer, bool useGlobalAmbient, bool useGlobalLights)
     {

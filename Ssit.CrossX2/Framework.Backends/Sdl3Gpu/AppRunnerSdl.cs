@@ -334,8 +334,16 @@ internal static class AppRunnerSdl
                 previousWindowSize = new Size(ww, wh);
                 continue;
             }
-            
-            Render(component,  renderHost, sdlRenderer);
+
+            try
+            {
+                Render(component, renderHost, sdlRenderer);
+            }
+            catch
+            {
+                renderHost.Resize(previousWindowSize);
+                component.Resize();
+            }
 
             eventSource.OnRenderFinished();
         }
@@ -397,9 +405,14 @@ internal static class AppRunnerSdl
 
                 renderHost.End();
             }
-            catch
+            catch (Exception ex)
             {
                 sdlGpuRenderer.Clear(RgbaColor.Black);
+                sdlGpuRenderer.EndCurrentGpuRenderPass();
+                sdlGpuRenderer.SubmitCommandBuffer();
+                
+                Console.WriteLine("ERROR: " + ex.Message);
+                throw;
             }
         }
 

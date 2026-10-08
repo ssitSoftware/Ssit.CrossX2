@@ -33,6 +33,7 @@ internal static unsafe class SdlGpuLightingUniforms
         Span<Vector4> spotPositionRadius = stackalloc Vector4[ILightingManager.MaxSpotLights];
         Span<Vector4> spotDirectionAngle = stackalloc Vector4[ILightingManager.MaxSpotLights];
         Span<Vector4> spotColorIntensity = stackalloc Vector4[ILightingManager.MaxSpotLights];
+        Span<Vector4> spotBulbRadius = stackalloc Vector4[ILightingManager.MaxSpotLights];
 
         for (int i = 0; i < spotCount; i++)
         {
@@ -41,6 +42,7 @@ internal static unsafe class SdlGpuLightingUniforms
             spotDirectionAngle[i] = new Vector4(spot.Direction.X, spot.Direction.Y,
                 MathF.Cos(spot.OuterAngle * MathF.PI / 180f), MathF.Cos(spot.InnerAngle * MathF.PI / 180f));
             spotColorIntensity[i] = new Vector4(spot.Color.Rf, spot.Color.Gf, spot.Color.Bf, spot.Intensity);
+            spotBulbRadius[i] = new Vector4(spot.BulbRadius, 0f, 0f, 0f);
         }
 
         var directionalLights = lightingManager.DirectionalLights;
@@ -99,6 +101,14 @@ internal static unsafe class SdlGpuLightingUniforms
             SpotColorIntensity5 = spotColorIntensity[5],
             SpotColorIntensity6 = spotColorIntensity[6],
             SpotColorIntensity7 = spotColorIntensity[7],
+            SpotBulbRadius0 = spotBulbRadius[0],
+            SpotBulbRadius1 = spotBulbRadius[1],
+            SpotBulbRadius2 = spotBulbRadius[2],
+            SpotBulbRadius3 = spotBulbRadius[3],
+            SpotBulbRadius4 = spotBulbRadius[4],
+            SpotBulbRadius5 = spotBulbRadius[5],
+            SpotBulbRadius6 = spotBulbRadius[6],
+            SpotBulbRadius7 = spotBulbRadius[7],
             LightCount = new Vector4(pointCount, lightingManager.Resolution, spotCount, 0f),
             DirDirection0 = dirDirection[0],
             DirDirection1 = dirDirection[1],
@@ -158,6 +168,14 @@ internal static unsafe class SdlGpuLightingUniforms
         public Vector4 SpotColorIntensity5;
         public Vector4 SpotColorIntensity6;
         public Vector4 SpotColorIntensity7;
+        public Vector4 SpotBulbRadius0; // x = bulb radius (world units), yzw unused
+        public Vector4 SpotBulbRadius1;
+        public Vector4 SpotBulbRadius2;
+        public Vector4 SpotBulbRadius3;
+        public Vector4 SpotBulbRadius4;
+        public Vector4 SpotBulbRadius5;
+        public Vector4 SpotBulbRadius6;
+        public Vector4 SpotBulbRadius7;
         public Vector4 LightCount; // x = point light count, y = position quantization resolution in pixels, z = spot light count, w unused
         public Vector4 DirDirection0; // xyz = normalized 3D light-travel direction, w unused
         public Vector4 DirDirection1;
