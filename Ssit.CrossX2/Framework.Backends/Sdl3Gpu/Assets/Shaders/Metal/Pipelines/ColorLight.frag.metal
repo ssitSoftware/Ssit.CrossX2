@@ -18,9 +18,8 @@ struct LightingUniforms
     float4 spotColorIntensity[8];      // rgb = color, a = intensity
     float4 spotBulbRadius[8];          // x = bulb radius (world units), yzw unused
     float4 lightCount;                 // x = point light count, y = position quantization resolution in pixels, z = spot light count, w unused
-    float4 dirDirection[4];            // xyz = normalized 3D light-travel direction, w unused
-    float4 dirColorIntensity[4];       // rgb = color, a = intensity
-    float4 directionalCount;           // x = directional light count, yzw unused
+    float4 globalColorIntensity[4];    // rgb = color, a = intensity
+    float4 globalCount;                // x = global light count, yzw unused
 };
 
 fragment float4 fragmentMain(VertexOut in [[stage_in]],
@@ -106,29 +105,20 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
 		lighting += lightColor * intensity;
     }
 
-    int dirCount = int(lights.directionalCount.x);
+    int globalLightCount = int(lights.globalCount.x);
 
-    // No normal map is available here, so every surface is treated as flat
-    // and facing the observer directly (N = +Z).
-    const float3 directionalNormal = float3(0.0, 0.0, 1.0);
-
+    // Global lights have no position or direction; they contribute uniformly,
+    // like ambient light, but each carries its own intensity.
     for (int i = 0; i < 4; i++)
     {
-        if (i >= dirCount)
+        if (i >= globalLightCount)
         {
             break;
         }
 
-        float3 dirDirection3D = normalize(lights.dirDirection[i].xyz);
-        float3 lightColor = lights.dirColorIntensity[i].rgb;
-        float intensity = lights.dirColorIntensity[i].a;
+        float3 lightColor = lights.globalColorIntensity[i].rgb;
+        float intensity = lights.globalColorIntensity[i].a;
 
-        // Directional lights have no position, so the incoming direction is constant
-        // across the screen; L points from the fragment back toward the light source.
-        float3 lightDir = -dirDirection3D;
-        float diffuse = max(dot(directionalNormal, lightDir), 0.0);
-
-        intensity *= diffuse;
         lighting += lightColor * intensity;
     }
 

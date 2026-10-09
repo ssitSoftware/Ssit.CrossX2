@@ -7,6 +7,8 @@ namespace Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Graphics;
 
 internal unsafe class SdlGpuRenderTarget : IRenderTarget, ISdlGpuTexture
 {
+    public static int Count { get; private set; }
+
     private readonly SdlGpuRenderer _renderer;
     private readonly IActionScheduler _actionScheduler;
     private readonly SDL_GPUDevice* _device;
@@ -51,6 +53,8 @@ internal unsafe class SdlGpuRenderTarget : IRenderTarget, ISdlGpuTexture
 
         if (Handle == null)
             throw new InvalidOperationException($"SDL_CreateGPUTexture failed: {SDL_GetError()}");
+
+        Count++;
     }
 
     public void Dispose()
@@ -61,7 +65,8 @@ internal unsafe class SdlGpuRenderTarget : IRenderTarget, ISdlGpuTexture
         var handle = Handle;
         Handle = null;
         _disposed = true;
-        
+        Count--;
+
         _actionScheduler.Schedule(() =>
         {
             SDL_ReleaseGPUTexture(_device, handle);

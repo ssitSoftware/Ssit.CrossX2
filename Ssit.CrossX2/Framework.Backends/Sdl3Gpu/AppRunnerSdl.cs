@@ -349,15 +349,38 @@ internal static class AppRunnerSdl
         }
         
         component.Dispose();
-        hostParameters.PostRenderer?.Dispose();
-        services.Dispose();
-        
         actionScheduler.Process();
         
+        hostParameters.PostRenderer?.Dispose();
+        actionScheduler.Process();
+        
+        services.Dispose();
+        actionScheduler.Process();
+
+        WriteMemoryLeakReport();
+
         SDL_ReleaseWindowFromGPUDevice(device, window);
         SDL_DestroyGPUDevice(device);
         SDL_DestroyWindow(window);
         SDL_Quit();
+    }
+
+    private static void WriteMemoryLeakReport()
+    {
+        if (SdlGpuTexture.Count > 0)
+        {
+            Console.WriteLine($"Leaked textures: {SdlGpuTexture.Count}");
+        }
+
+        if (SdlGpuRenderTarget.Count > 0)
+        {
+            Console.WriteLine($"Leaked render targets: {SdlGpuRenderTarget.Count}");
+        }
+
+        if (SdlSoundEffectImpl.Count > 0)
+        {
+            Console.WriteLine($"Leaked sound effects: {SdlSoundEffectImpl.Count}");
+        }
     }
 
     private static unsafe void Render(IAppComponent component, RenderHost renderHost, SdlGpuRenderer sdlGpuRenderer)
@@ -418,6 +441,7 @@ internal static class AppRunnerSdl
 
         sdlGpuRenderer.EndCurrentGpuRenderPass();
         sdlGpuRenderer.SubmitCommandBuffer();
+        
         //DebugScreenshot.MaybeCapture(sdlGpuRenderer.Device, window, swapchainTexture, swapchainWidth, swapchainHeight);
     }
 }

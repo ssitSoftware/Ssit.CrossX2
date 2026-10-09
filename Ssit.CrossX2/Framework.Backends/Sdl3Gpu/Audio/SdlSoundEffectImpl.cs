@@ -8,6 +8,8 @@ namespace Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Audio;
 
 internal unsafe class SdlSoundEffectImpl: ISoundEffect
 {
+    public static int Count { get; private set; }
+
     private readonly IIoCContainer _iocContainer;
     private readonly SdlSoundManagerImpl _soundManager;
     private readonly SdlHandle<MIX_Audio> _audioHandle;
@@ -38,6 +40,8 @@ internal unsafe class SdlSoundEffectImpl: ISoundEffect
             var chunk = MIX_LoadRawAudio(soundManager.MixerHandle.Pointer, bytesPtr, (UIntPtr)bufferLen, &spec);
             _audioHandle = new SdlHandle<MIX_Audio>(chunk);
         }
+
+        Count++;
     }
 
     public void Dispose()
@@ -54,6 +58,7 @@ internal unsafe class SdlSoundEffectImpl: ISoundEffect
         {
             MIX_DestroyAudio(_audioHandle.Pointer);
             _audioHandle.OnDisposed();
+            Count--;
         }
     }
 

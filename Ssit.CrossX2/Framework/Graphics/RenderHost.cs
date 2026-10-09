@@ -284,10 +284,14 @@ internal class RenderHost : IRenderHost
         _glowEffect = null;
         
         _renderTarget?.Dispose();
+        _glowRenderIntermediateTarget?.Dispose();
+        _glowRenderTarget?.Dispose();
         _endRenderTarget?.Dispose();
 
         _renderTarget = null;
         _endRenderTarget = null;
+        _glowRenderIntermediateTarget = null;
+        _glowRenderTarget = null;
     }
 
     public Matrix3x2 Transform { get; private set; }

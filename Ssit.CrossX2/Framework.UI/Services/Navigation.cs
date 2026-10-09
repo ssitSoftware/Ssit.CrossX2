@@ -4,7 +4,7 @@ using Ssit.CrossX2.Framework.UI.Transitions;
 
 namespace Ssit.CrossX2.Framework.UI.Services;
 
-internal class Navigation: INavigation
+internal class Navigation: INavigation, IDisposable
 {
     private class StackData
     {
@@ -293,6 +293,20 @@ internal class Navigation: INavigation
                 disposable?.Dispose();
             }
             _objectsToDisposeOnTransitionFinished.Clear();
+        }
+    }
+
+    public void Dispose()
+    {
+        PreviousPage?.Dispose();
+        CurrentPage?.Dispose();
+        
+        foreach (var vm in _navigationStack)
+        {
+            if(vm.ViewModel is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
         }
     }
 }

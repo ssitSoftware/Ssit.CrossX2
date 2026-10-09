@@ -12,11 +12,11 @@ internal class LightingManager(LightingManager.IUpdateLightsHandler handler) : I
     public float Resolution { get; private set; } = 0.1f;
     public bool LightingEnabled { get; private set; }
     
-    public int DirectionalLightsCount { get; private set; }
+    public int GlobalLightsCount { get; private set; }
 
     public PointLight[] PointLights { get; } = new PointLight[ILightingManager.MaxPointLights];
     public SpotLight[] SpotLights { get; } = new SpotLight[ILightingManager.MaxSpotLights];
-    public DirectionalLight[] DirectionalLights { get; } = new DirectionalLight[ILightingManager.MaxDirectionalLights];
+    public GlobalLight[] GlobalLights { get; } = new GlobalLight[ILightingManager.MaxGlobalLights];
 
     public interface IUpdateLightsHandler
     {
@@ -104,37 +104,37 @@ internal class LightingManager(LightingManager.IUpdateLightsHandler handler) : I
         handler.Flush();
     }
 
-    public void SetDirectionalLights(ReadOnlySpan<DirectionalLight> lights)
+    public void SetGlobalLights(ReadOnlySpan<GlobalLight> lights)
     {
         handler.Flush();
-        
-        if (lights.Length > ILightingManager.MaxDirectionalLights)
+
+        if (lights.Length > ILightingManager.MaxGlobalLights)
         {
-            throw new InvalidOperationException("Max directional lights reached");
+            throw new InvalidOperationException("Max global lights reached");
         }
 
-        DirectionalLightsCount = lights.Length;
+        GlobalLightsCount = lights.Length;
         for (var idx = 0; idx < lights.Length; ++idx)
         {
-            DirectionalLights[idx] = lights[idx];
+            GlobalLights[idx] = lights[idx];
         }
-        
+
     }
 
-    public void SetDirectionalLights(IReadOnlyList<DirectionalLight> lights)
+    public void SetGlobalLights(IReadOnlyList<GlobalLight> lights)
     {
         handler.Flush();
-        
-        if (lights.Count > ILightingManager.MaxDirectionalLights)
+
+        if (lights.Count > ILightingManager.MaxGlobalLights)
         {
-            throw new InvalidOperationException("Max directional lights reached");
+            throw new InvalidOperationException("Max global lights reached");
         }
 
-        DirectionalLightsCount = lights.Count;
+        GlobalLightsCount = lights.Count;
         for (var idx = 0; idx < lights.Count; ++idx)
         {
-            DirectionalLights[idx] = lights[idx];
+            GlobalLights[idx] = lights[idx];
         }
-        
+
     }
 }

@@ -8,6 +8,8 @@ namespace Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Graphics;
 
 internal unsafe class SdlGpuTexture: ISdlGpuTexture
 {
+    public static int Count { get; private set; }
+    
     private readonly SDL_GPUDevice* _device;
     private bool _disposed;
     
@@ -64,6 +66,8 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
         
         Size = size.GetValueOrDefault();
         Maps = maps;
+
+        Count++;
     }
 
     private (SdlHandle<SDL_GPUTexture>, Size) LoadTextureFromStream(Stream stream, bool premultiply = false)
@@ -214,6 +218,7 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
         }
 
         _disposed = true;
+        Count--;
     }
 
     public TextureMaps Maps { get; }

@@ -11,23 +11,17 @@ public class MapLightsContainer : ILightsContainer, IComparer<PointLight>, IComp
 
     private readonly List<PointLight> _pointLights = new();
     private readonly List<SpotLight> _spotLights = new();
+    private readonly List<GlobalLight> _globalLights = new();
     private Vector2 _lookAt;
 
-    private RgbaColor _lightingColor = RgbaColor.White;
-    private float _lightIntensity = 0;
-
-    private readonly DirectionalLight[] _lightingLight = [new(Vector3.One, RgbaColor.White, 0f)];
-    
     public void ApplyLights(IRenderer renderer, bool useGlobalAmbient, bool useGlobalLights)
     {
         if (renderer.CurrentPass == RenderPass.Glow)
             return;
-        
+
         renderer.LightingManager.EnableLighting(true);
-        
-        _lightingLight[0] = new DirectionalLight(new Vector3(0, 0, -1), _lightingColor, _lightIntensity);
-        
-        renderer.LightingManager.SetDirectionalLights(_lightingLight);
+
+        renderer.LightingManager.SetGlobalLights(_globalLights);
         renderer.LightingManager.SetAmbientLight(useGlobalAmbient ? _globalAmbient : _alternativeAmbient);
 
         if (!useGlobalLights)
@@ -46,6 +40,7 @@ public class MapLightsContainer : ILightsContainer, IComparer<PointLight>, IComp
     {
         _pointLights.Clear();
         _spotLights.Clear();
+        _globalLights.Clear();
     }
 
     public void Apply(Vector2 lookAt)
@@ -74,10 +69,14 @@ public class MapLightsContainer : ILightsContainer, IComparer<PointLight>, IComp
     public void AddPointLight(PointLight light) => _pointLights.Add(light);
     public void AddSpotLight(SpotLight light) => _spotLights.Add(light);
 
-    public void SetLighting(RgbaColor color, float intensity)
+    public void AddGlobalLight(GlobalLight light)
     {
-        _lightingColor = color;
-        _lightIntensity = intensity;
+        if (_globalLights.Count >= ILightingManager.MaxGlobalLights)
+        {
+            return;
+        }
+
+        _globalLights.Add(light);
     }
 
     public int Compare(PointLight x, PointLight y)

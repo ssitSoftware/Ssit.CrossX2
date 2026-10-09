@@ -82,6 +82,7 @@ public abstract class SpriteGameObject2 : IGameObjectRenderer, IBodyOwner
     internal void CallSequenceFinished(string sequenceName) => OnSequenceFinished(sequenceName);
 
     internal void AddUpdatableInternal(IUpdatable updatable) => _updatables.Add(updatable);
+    protected void AddUpdatable(IUpdatable updatable) => _updatables.Add(updatable);
 
     protected SpriteGameObject2(GameObjectsServices services, ObjectCreationParameters parameters)
     {

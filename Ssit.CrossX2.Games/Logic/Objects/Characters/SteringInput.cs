@@ -1,8 +1,9 @@
+using Ssit.CrossX2.Framework.Core;
 using Ssit.CrossX2.Framework.Input;
 
 namespace Ssit.CrossX2.Framework.Games.Logic.Objects.Characters;
 
-public class SteeringInput : ISteeringInputController
+public class SteeringInput : ISteeringInputController, IUpdatable
 {
     private readonly Dictionary<string, ButtonState> _buttonStates = new();
     private readonly Dictionary<string, float> _values = new();
@@ -11,15 +12,41 @@ public class SteeringInput : ISteeringInputController
     private readonly List<string> _buttonIds = new();
     private readonly List<string> _valueIds = new();
     private readonly IInputMapping _mapping;
+    private readonly bool _autoMapping;
 
-    public SteeringInput(IInputMapping mapping = null)
+    public SteeringInput(IInputMapping mapping = null, bool autoMapping = false)
     {
         _mapping = mapping;
+        _autoMapping = autoMapping;
     }
 
-    public ButtonState Button(string id) => _buttonStates.GetValueOrDefault(id, ButtonState.Empty);
-    public float Value(string id) => _values.GetValueOrDefault(id, 0.0f);
-    
+    public ButtonState Button(string id)
+    {
+        if (_autoMapping && !_mappings.ContainsKey(id))
+        {
+            MapButton(id, id);
+        }
+
+        if (!_buttonStates.ContainsKey(id))
+        {
+            _buttonStates[id] = ButtonState.Empty;
+        }
+
+        return _buttonStates.GetValueOrDefault(id, ButtonState.Empty);
+    }
+
+    public float Value(string id)
+    {
+        if (_autoMapping && !_mappings.ContainsKey(id))
+        {
+            MapValue(id, id);
+        }
+
+        _values.TryAdd(id, 0.0f);
+
+        return _values.GetValueOrDefault(id, 0.0f);
+    }
+
     public void MapButton(string id, string inputId)
     {
         _mappings[id] = inputId;
@@ -32,32 +59,46 @@ public class SteeringInput : ISteeringInputController
         _valueIds.Add(id);
     }
 
+    private void AnalyzeButton(string id)
+    {
+        if (_mappings.TryGetValue(id, out var idState))
+        {
+            var state = _mapping.GetButton(idState);
+            var prevState = Button(id);
+                    
+            _buttonStates[id] = new ButtonState(state.IsDown, prevState.IsDown != state.IsDown);
+        }
+    }
+
+    private void AnalyzeValue(string id)
+    {
+        if (_mappings.TryGetValue(id, out var valueId))
+        {
+            _values[id] = _mapping.GetAxis(id);
+        }
+    }
+    
+    void IUpdatable.FixedUpdate(float dt)
+    {
+        FixedUpdate();
+    }
+    
     public void FixedUpdate()
     {
         if (_mapping is null)
             return;
-        
+
         foreach (var id in _buttonIds)
         {
-            if (_mappings.TryGetValue(id, out var idState))
-            {
-                var state = _mapping.GetButton(idState);
-                var prevState = Button(id);
-                    
-                _buttonStates[id] = new ButtonState(state.IsDown, prevState.IsDown != state.IsDown);
-            }
+            AnalyzeButton(id);
         }
 
         foreach (var id in _valueIds)
         {
-            if (_mappings.TryGetValue(id, out var valueId))
-            {
-                _values[id] = _mapping.GetAxis(id);
-            }
+            AnalyzeValue(id);
         }
     }
 
     public void SetValue(string id, float value) => _values[id] = value;
     public void SetButtonState(string id, ButtonState buttonState) => _buttonStates[id] = buttonState;
-    public void FinishInitialization() => FixedUpdate();
 }

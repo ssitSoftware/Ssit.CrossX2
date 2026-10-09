@@ -68,13 +68,13 @@ public abstract class SpotLightObject: SpriteGameObject2, ILightProvider, IGameO
 
     protected void RenderGlow(IRenderer renderer, RgbaColor color, float depth)
     {
-        if (renderer.CurrentPass != RenderPass.Normal)
+        if (renderer.CurrentPass != RenderPass.Glow)
         {
             return;
         }
 
         renderer.StateManager.SaveState();
-        renderer.StateManager.SetBlendMode(BlendMode.Additive);
+        renderer.StateManager.SetBlendMode(BlendMode.AlphaBlend);
         
         var glowColor = _spotLight.Color * (_spotLight.Intensity * _afterGlow / 8f);
 

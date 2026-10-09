@@ -9,7 +9,7 @@ using Ssit.CrossX2.Framework.Services;
 
 namespace Ssit.CrossX2.Framework.Content.Internal;
 
-internal class ContentManager: IContentManager
+internal class ContentManager: IContentManager, IDisposable
 {
     private readonly IIoCContainer _iocContainer;
     private readonly IFilesProvider _filesProvider;
@@ -161,5 +161,25 @@ internal class ContentManager: IContentManager
             LightMapStream = hasLight ? _filesProvider.Open(lightPath) : hasGlowAndLight ? _filesProvider.Open(lightAndGlowPath) : null,
             GlowFromLightMap = hasGlowAndLight
         });
+    }
+
+    public void Dispose()
+    {
+        if (_resources.Count == 0)
+            return;
+
+#if DEBUG
+        Console.WriteLine($"Left resources: ");
+        foreach (var name in _resources.Keys)
+        {
+            Console.WriteLine($"  -> {name}");
+        }
+#endif
+
+        foreach (var disposable in _resources.Values.Select(o=>o.Object))
+        {
+            disposable.Dispose();
+        }
+        _resources.Clear();
     }
 }
