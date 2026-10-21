@@ -22,6 +22,11 @@ public class FilesStorage(string appName) : IFileStorage
         return File.ReadAllBytes(Path.Combine(StorageDirectory(appName), path));
     }
 
+    public DateTime GetLastModificationTime(string path)
+    {
+        return File.GetLastWriteTime(Path.Combine(StorageDirectory(appName), path));
+    }
+
     private static string StorageDirectory(string appName)
     {
         var dir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);

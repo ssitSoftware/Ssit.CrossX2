@@ -7,4 +7,5 @@ public static class SteeringControlNames
     
     public const string Jump = nameof(Jump);
     public const string Attack = nameof(Attack);
+    public const string AltAttack = nameof(AltAttack);
 }

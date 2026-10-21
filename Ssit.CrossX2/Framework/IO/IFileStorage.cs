@@ -7,4 +7,6 @@ public interface IFileStorage
 
     void WriteData(string path, byte[] data);
     byte[] ReadData(string path);
+    
+    DateTime GetLastModificationTime(string path);
 }

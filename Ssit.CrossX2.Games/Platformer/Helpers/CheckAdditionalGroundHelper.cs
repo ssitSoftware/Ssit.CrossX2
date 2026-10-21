@@ -32,13 +32,17 @@ public class CheckAdditionalGroundHelper(params int[] excludeMaterials)
             if (colliders.Count == 0)
                 return false;
 
+            var count = colliders.Count;
+            
             foreach (var collider in colliders)
             {
-                if (_excludesMaterials.Contains(collider.Material.Index))
+                if (_excludesMaterials.Contains(collider.Material.Index) || collider.Aabb.Top < aabb.Top)
                 {
-                    return false;
+                    count--;
                 }
             }
+
+            return count > 0;
         }
 
         return true;

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reflection;
 using Ssit.CrossX2.Framework.Content;
 using Ssit.CrossX2.Framework.Core;
 using Ssit.CrossX2.Framework.Games.Logic.Objects;
@@ -136,8 +137,16 @@ public class AabbGameInstance : IGameInstance, IMessenger
         var cacheFilePath = parameters.MapPath.Replace('\\', '_').Replace('/', '_').Replace(':', '_');
         try
         {
-            var storedCache = storage.ReadData(cacheFilePath);
-            worldBuilder.WithCache(storedCache);
+            var fileTime = storage.GetLastModificationTime(cacheFilePath);
+
+            var path =  Assembly.GetExecutingAssembly().Location;
+            var assemblyTime = File.GetLastWriteTime(path);
+
+            if (assemblyTime < fileTime)
+            {
+                var storedCache = storage.ReadData(cacheFilePath);
+                worldBuilder.WithCache(storedCache);
+            }
         }
         catch
         {
