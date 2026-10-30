@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Numerics;
 using Avalonia.Input;
 using SkiaSharp;
@@ -75,6 +76,17 @@ namespace Ssit.CrossX2.Editor.ViewModels
         public TilesetSelectorViewModel(IEditorInstances instances)
         {
             _instances = instances;
+            if (instances.Editor is INotifyPropertyChanged npc)
+            {
+                npc.PropertyChanged += (obj, args) =>
+                {
+                    if (args.PropertyName == nameof(IEditor.ShowCollisions))
+                    {
+                        RedrawNeeded?.Invoke();
+                    }
+                };
+            }
+            
             Zoom = new ZoomViewModel(UpdateSize);
             ShowGrid = true;
             SelectedTileset = _instances.TilesetsContainer.TileSets[0];
@@ -110,6 +122,20 @@ namespace Ssit.CrossX2.Editor.ViewModels
             var imgHeight = Zoom.Value * img.Height;
         
             skCanvas.DrawImage(img, new SKRect(0, 0, imgWidth, imgHeight));
+
+            if (_instances.Editor?.ShowCollisions == true)
+            {
+                var mask = SelectedTileset.GetMask(grContext);
+                if (mask is not null)
+                {
+                    var tint = new SKColor(0x61, 0xDE, 0x2A, 0x40);
+
+                    using var filter = SKColorFilter.CreateBlendMode(tint, SKBlendMode.SrcIn);
+                    using var maskPaint = new SKPaint { ColorFilter = filter };
+
+                    skCanvas.DrawImage(mask, new SKRect(0, 0, imgWidth, imgHeight), maskPaint);
+                }
+            }
 
             var ts = template.TileSize * Zoom.Value;
             var insertTilesTool = tools.GetTool<InsertTilesTool>();

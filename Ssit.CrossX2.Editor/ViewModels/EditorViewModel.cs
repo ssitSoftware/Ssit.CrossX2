@@ -563,10 +563,23 @@ namespace Ssit.CrossX2.Editor.ViewModels
 
                         var tile = layer.Tiles[x, y];
                         if (tile.IsEmpty) continue;
-                        
-                        if (_instances.TilesetsContainer.TileSets[tile.TileSet].GetCollissionPolygon(tile.X, tile.Y, ts, posX, posY, out var polygon))
+
+                        var tileset = _instances.TilesetsContainer.TileSets[tile.TileSet];
+
+                        if (tileset.HasMeta)
                         {
-                            skCanvas.DrawPoints(SKPointMode.Polygon, polygon, _skPaint);
+                            if (tileset.GetCollissionPolygon(tile.X, tile.Y, ts, posX, posY, out var polygon))
+                            {
+                                skCanvas.DrawPoints(SKPointMode.Polygon, polygon, _skPaint);
+                            }
+                        }
+                        else if (tileset.HasMask)
+                        {
+                            var materialIndex = Math.Clamp(tile.Material, 0, template.Materials.Length - 1);
+                            var tint = template.Materials[materialIndex].PreviewColor.WithOpacity(0.5f).ToSkia();
+
+                            tileset.DrawMask(skCanvas, grContext, tile.X, tile.Y, origTs,
+                                SKRect.Create(posX, posY, ts, ts), tint);
                         }
                     }
                 }

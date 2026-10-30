@@ -4,7 +4,7 @@ using Ssit.CrossX2.Framework.Input;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
-public class AttackBehavior(string control, string attackStateName, string attackSoundName =  null) : SteeringBehavior<ISteeringCharacter>
+public class AttackBehavior(string control, string attackStateName) : SteeringBehavior<ISteeringCharacter>
 {
     public class AttackingData
     {
@@ -27,7 +27,6 @@ public class AttackBehavior(string control, string attackStateName, string attac
             with { X = obj.FaceLeft ? 
                 -obj.PhysicsValues.AttackVelocity : obj.PhysicsValues.AttackVelocity };
         
-        obj.SoundContainer?.Play(attackSoundName ?? attackStateName);
         obj.SetSteeringState(attackStateName);
         return true;
     }

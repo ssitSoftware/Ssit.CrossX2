@@ -22,4 +22,5 @@ public interface IEditor
     void GetMapObjects(IList<MapObjectInfo> buffer, Vector2 screenPosition);
     int SelectedObject { get; set; }
     bool ShowMaterials { set; }
+    bool ShowCollisions { get; }
 }

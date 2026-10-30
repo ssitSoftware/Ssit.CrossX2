@@ -24,7 +24,7 @@ public class EditorBitmapsProvider : IEditorBitmapsProvider
             using var bmp = new SKBitmap(128, 128, SKColorType.Rgba8888, SKAlphaType.Unpremul);
             using var canvas = new SKCanvas(bmp);
             
-            canvas.Clear(material.PreviewColor.ToSkia().WithAlpha(64));
+            canvas.Clear(material.PreviewColor.ToSkia().WithAlpha(32));
 
             var lines = material.ShortName.Split('|');
 

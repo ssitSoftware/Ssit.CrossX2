@@ -6,6 +6,7 @@ using SkiaSharp;
 using Ssit.CrossX2.Editor.Helpers;
 using Ssit.CrossX2.Editor.Input;
 using Ssit.CrossX2.Editor.Service;
+using Ssit.CrossX2.Framework;
 using Ssit.CrossX2.Framework.Games.Map;
 
 namespace Ssit.CrossX2.Editor.Tools
@@ -64,7 +65,7 @@ namespace Ssit.CrossX2.Editor.Tools
             {
                 for (var y = 0; y < selection.Height; ++y)
                 {
-                    var materialName = tileset.Meta.GetMaterial(x + selection.Left, y + selection.Top);
+                    var materialName = tileset.Meta?.GetMaterial(x + selection.Left, y + selection.Top);
                     int material = 0;
                     
                     for (var idx = 0; idx < Instances.Template.Materials.Length; ++idx)

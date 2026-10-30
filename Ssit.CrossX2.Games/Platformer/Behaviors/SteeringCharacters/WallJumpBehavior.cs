@@ -14,6 +14,8 @@ public class WallJumpBehavior(float jumpHorizontalVelocity) : SteeringBehavior<I
 
         obj.FaceLeft = !obj.FaceLeft;
         obj.Body.Velocity = new Vector2(obj.FaceLeft ? -jumpHorizontalVelocity : jumpHorizontalVelocity, 0);
+        obj.SteeringParameters.LastHorizontalVelocity = obj.Body.Velocity.X;
+        
         obj.SoundContainer?.Play("WallJump");
         obj.SetSteeringState("Raise");
         return true;

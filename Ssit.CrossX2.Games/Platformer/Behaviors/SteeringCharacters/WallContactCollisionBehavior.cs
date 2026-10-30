@@ -10,7 +10,9 @@ public class WallContactCollisionBehavior(WallContactCollisionBehavior.DefaultMo
     public enum DefaultMode
     {
         SwitchDirection,
-        GoIdle
+        GoIdle,
+        PushToSlide,
+        CheckWallSlideButton
     }
     
     private readonly HashSet<string> _wallSlideFromStates = new(wallSlideFromStates);
@@ -43,8 +45,28 @@ public class WallContactCollisionBehavior(WallContactCollisionBehavior.DefaultMo
                 var stateName = obj.CurrentSteeringState.Name;
                 if (!obj.SteeringParameters.IsOnGround && _wallSlideFromStates.Contains(stateName))
                 {
-                    obj.SetSteeringState("WallSlide");
-                    return true;
+                    if (mode == DefaultMode.CheckWallSlideButton)
+                    {
+                        if (obj.SteeringInput.Button(SteeringControlNames.WallSlide).IsDown)
+                        {
+                            obj.SetSteeringState("WallSlide");
+                            return true;
+                        }
+                    }
+                    else if (mode == DefaultMode.PushToSlide)
+                    {
+                        var move = obj.SteeringInput.Value(SteeringControlNames.HorizontalMove);
+                        if (MathF.Abs(move) >= 0.75f && MathF.Sign(move) == MathF.Sign(-impact.X))
+                        {
+                            obj.SetSteeringState("WallSlide");
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        obj.SetSteeringState("WallSlide");
+                        return true;
+                    }
                 }
             }
 

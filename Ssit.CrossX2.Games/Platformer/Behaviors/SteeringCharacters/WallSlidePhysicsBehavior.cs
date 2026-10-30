@@ -1,3 +1,4 @@
+using System.Numerics;
 using Ssit.CrossX2.Framework.Games.Logic.Objects.Characters;
 using Ssit.CrossX2.Framework.Games.Logic.Stering;
 
@@ -5,12 +6,28 @@ namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
 public class WallSlidePhysicsBehavior : SteeringBehavior<ISteeringCharacter>
 {
+    private class Parameters
+    {
+        public float CurrentMaxSpeed = 0;
+    }
+
+    protected override void OnEnter(ISteeringCharacter character)
+    {
+        base.OnEnter(character);
+
+        var parameters = character.GetParameters<Parameters>(true);
+        parameters.CurrentMaxSpeed = 0;
+        character.Body.Velocity = Vector2.Zero;
+    }
+
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
-        obj.Body.Velocity = obj.Body.Velocity with { X = 0 };
+        var parameters = obj.GetParameters<Parameters>(true);
+        
+        parameters.CurrentMaxSpeed += dt * obj.PhysicsValues.WallSlideSpeed / obj.PhysicsValues.WallSlideTimeToFullSpeed;
+        parameters.CurrentMaxSpeed = MathF.Min(obj.PhysicsValues.WallSlideSpeed, parameters.CurrentMaxSpeed);
 
-        if (obj.Body.Velocity.Y > obj.PhysicsValues.WallSlideSpeed)
-            obj.Body.Velocity = obj.Body.Velocity with { Y = obj.PhysicsValues.WallSlideSpeed };
+        obj.Body.Velocity = new Vector2(0, parameters.CurrentMaxSpeed);
 
         return false;
     }

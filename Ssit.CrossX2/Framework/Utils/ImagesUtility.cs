@@ -51,6 +51,30 @@ public static class ImagesUtility
         return data;
     }
 
+    /// <summary>
+    /// Loads an image from a stream and converts it into a white-on-transparent mask,
+    /// preserving the original alpha channel so it can be tinted at draw time.
+    /// </summary>
+    /// <param name="stream">The stream containing the image data.</param>
+    /// <returns>A bitmap where every non-transparent pixel is white with the source alpha.</returns>
+    public static SKBitmap LoadMask(Stream stream)
+    {
+        using var source = SKBitmap.Decode(stream);
+        var pixels = source.Pixels;
+
+        var mask = new SKBitmap(source.Width, source.Height, SKColorType.Rgba8888, SKAlphaType.Unpremul);
+        var maskPixels = new SKColor[pixels.Length];
+
+        for (var idx = 0; idx < pixels.Length; ++idx)
+        {
+            var alpha = pixels[idx].Alpha;
+            maskPixels[idx] = alpha > 0 ? new SKColor(255, 255, 255, alpha) : SKColor.Empty;
+        }
+
+        mask.Pixels = maskPixels;
+        return mask;
+    }
+
     public static byte[,] LoadIndexedImage(Stream stream, IReadOnlyList<RgbaColor> palette)
     {
         var dict = new Dictionary<SKColor, byte>();

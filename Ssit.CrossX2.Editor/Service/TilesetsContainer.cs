@@ -4,6 +4,7 @@ using SkiaSharp;
 using Ssit.CrossX2.Editor.Helpers;
 using Ssit.CrossX2.Framework.Games;
 using Ssit.CrossX2.Framework.Games.Template;
+using Ssit.CrossX2.Framework.Utils;
 
 namespace Ssit.CrossX2.Editor.Service
 {
@@ -31,11 +32,25 @@ namespace Ssit.CrossX2.Editor.Service
 
                 var cutPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(path)!,
                     System.IO.Path.GetFileNameWithoutExtension(path));
-                
-                using var metaStream = _gameTemplate.AssetsProvider.Open(cutPath + ".tiles");
-                var meta = TilesetMeta.FromStream(metaStream);
-                
-                list.Add(new Tileset(image, meta, path));
+
+                TilesetMeta meta = null;
+                var tilesPath = cutPath + ".tiles";
+                if (_gameTemplate.AssetsProvider.FileExists(tilesPath))
+                {
+                    using var metaStream = _gameTemplate.AssetsProvider.Open(tilesPath);
+                    meta = TilesetMeta.FromStream(metaStream);
+                }
+
+                SKImage mask = null;
+                var maskPath = cutPath + ".mask.png";
+                if (_gameTemplate.AssetsProvider.FileExists(maskPath))
+                {
+                    using var maskStream = _gameTemplate.AssetsProvider.Open(maskPath);
+                    using var maskBitmap = ImagesUtility.LoadMask(maskStream);
+                    mask = SKImage.FromBitmap(maskBitmap);
+                }
+
+                list.Add(new Tileset(image, meta, mask, path));
             }
 
             TileSets = list.ToArray();

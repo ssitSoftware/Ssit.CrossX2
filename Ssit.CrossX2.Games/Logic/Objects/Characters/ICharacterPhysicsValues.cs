@@ -12,6 +12,7 @@ public interface ICharacterPhysicsValues
     float FrictionModifierOnLandingFactor => 0.5f;
     float JumpHoldAccelFactor => 2.0f;
     float JumpHoldAccelInc => 0.11f;
+    float WallSlideTimeToFullSpeed => 1f;
     float WallSlideSpeed => 5.5f;
     float WallSlideTimeout => 0.44f;
     float WallClimbSpeed => 8.8f;

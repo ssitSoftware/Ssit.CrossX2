@@ -15,7 +15,7 @@ public class JumpBehavior(CheckAdditionalGroundHelper additionalGroundHelper) : 
         if (!additionalGroundHelper.IsOnGroundExtra(obj))
             return false;
 
-        obj.SoundContainer?.Play("Jump");
+        obj.SoundContainer?.Play("Jump", obj.SteeringParameters.GroundMaterial);
         obj.SetSteeringState("Raise");
         return true;
     }

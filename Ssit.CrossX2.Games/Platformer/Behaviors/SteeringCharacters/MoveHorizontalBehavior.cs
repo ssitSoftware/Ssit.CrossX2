@@ -4,7 +4,7 @@ using Ssit.CrossX2.Framework.Games.Physics;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
-public class MoveHorizontalBehavior() : SteeringBehavior<ISteeringCharacter>
+public class MoveHorizontalBehavior : SteeringBehavior<ISteeringCharacter>
 {
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
