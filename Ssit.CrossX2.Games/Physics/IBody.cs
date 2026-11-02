@@ -15,6 +15,7 @@ public interface IBody: IDisposable
     float Mass { get; set; }
     bool IsActive { get; }
     bool IsKinematic { get; set; }
+    float GravityFactor { get; set; }
     Vector2 Position { get; set; }
     Vector2 Velocity { get; set; }
     Vector2 KinematicVelocity { get; set; }

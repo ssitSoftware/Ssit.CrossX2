@@ -84,6 +84,13 @@ public abstract class SpriteGameObject2 : IGameObjectRenderer, IBodyOwner
     internal void AddUpdatableInternal(IUpdatable updatable) => _updatables.Add(updatable);
     protected void AddUpdatable(IUpdatable updatable) => _updatables.Add(updatable);
 
+    protected SpriteGameObject2(GameObjectsServices services)
+    {
+        Services = services;
+        Body = services.Simulation.CreateBody(this);
+        Body.Touch();
+    }
+    
     protected SpriteGameObject2(GameObjectsServices services, ObjectCreationParameters parameters)
     {
         ZOrder = parameters.ZOrder;

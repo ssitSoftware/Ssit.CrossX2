@@ -139,7 +139,7 @@ public class AabbGameInstance : IGameInstance, IMessenger
         {
             var fileTime = storage.GetLastModificationTime(cacheFilePath);
 
-            var path =  Assembly.GetExecutingAssembly().Location;
+            var path =  Assembly.GetEntryAssembly()!.Location;
             var assemblyTime = File.GetLastWriteTime(path);
 
             if (assemblyTime < fileTime)

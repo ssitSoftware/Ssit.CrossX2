@@ -8,7 +8,8 @@ internal class Body : IBody
     private const double InactivityTimeout = 1;
 
     public float Mass { get; set; }
-
+    public float GravityFactor { get; set; } = 1;
+    
     public bool IsActive { get; private set; }
     public bool IsKinematic { get; set; }
 
@@ -419,7 +420,7 @@ internal class Body : IBody
 
         var lastPosition = Position;
         
-        _force += Simulation.SimulationParameters.GravityAcceleration * Mass;
+        _force += Simulation.SimulationParameters.GravityAcceleration * Mass * GravityFactor;
         Velocity += _force / Mass * dt;
 
         var move = Velocity * dt;
