@@ -16,7 +16,7 @@ internal static class MovementCollisionCalculator
         var movementAabb = objCollider.Aabb.Union(objCollider.Aabb.GetOffset(move));
         movementAabb.Inflate(MovementEpsilon);
 
-        var colliderGroup = objCollider.Material.ColliderGroup;
+        var collidesWith = objCollider.Material.CollidesWith;
 
         horizontalMovementCollider = null;
         verticalMovementCollider = null;
@@ -33,7 +33,7 @@ internal static class MovementCollisionCalculator
             if (body == collider.AttachedBody) continue;
             
             if ((collider.Type & colliderType) == 0) continue;
-            if ((colliderGroup & collider.Material.ColliderGroup) == 0) continue;
+            if ((collidesWith & IMaterial.Bit(collider.Material.ColliderGroup)) == 0) continue;
             
             if (!objCollider.GetMovementCollision(collider, ref move, out var collisionNormal)) continue;
 

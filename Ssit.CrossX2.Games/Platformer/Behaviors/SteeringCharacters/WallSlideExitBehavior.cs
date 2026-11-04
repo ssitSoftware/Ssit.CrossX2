@@ -19,7 +19,7 @@ public class WallSlideExitBehavior : SteeringBehavior<ISteeringCharacter>
             ? new Aabb(aabb.Left - 0.1f, aabb.Top + 0.1f, aabb.Left, aabb.Bottom - 0.1f)
             : new Aabb(aabb.Right, aabb.Top + 0.1f, aabb.Right + 0.1f, aabb.Bottom - 0.1f);
 
-        if (!obj.Body.Simulation.CheckCollision(wallProbe, obj.Body, obj.Body.Colliders[0].Material.ColliderGroup))
+        if (!obj.Body.Simulation.CheckCollision(wallProbe, obj.Body, obj.Body.Colliders[0].Material.CollidesWith))
         {
             obj.SetSteeringState("Fall");
             return true;

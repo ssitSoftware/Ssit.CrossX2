@@ -21,7 +21,7 @@ public class AirJumpBehavior : SteeringBehavior<ISteeringCharacter>
         if (obj.SteeringInput.Button(SteeringControlNames.Jump) != ButtonState.JustPressed)
             return false;
 
-        var group = obj.Body.Colliders[0].Material.ColliderGroup;
+        var collidesWith = obj.Body.Colliders[0].Material.CollidesWith;
         
         var charAabb = obj.Body.Colliders[0].Aabb;
         var feetProbe = new Aabb(
@@ -30,7 +30,7 @@ public class AirJumpBehavior : SteeringBehavior<ISteeringCharacter>
             charAabb.Right - 0.1f,
             charAabb.Bottom + 0.1f);
 
-        var colliders = obj.Body.Simulation.GetColliders(feetProbe, obj.Body, group, colliderType: ColliderType.Trigger);
+        var colliders = obj.Body.Simulation.GetColliders(feetProbe, obj.Body, collidesWith, colliderType: ColliderType.Trigger);
         foreach (var collider in colliders)
         {
             if (collider?.AttachedBody?.Owner is not IAirJumpPad jp)

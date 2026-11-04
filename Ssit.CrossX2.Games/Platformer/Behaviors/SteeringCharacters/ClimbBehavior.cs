@@ -92,14 +92,14 @@ public class ClimbBehavior(int climbMaterialIndex) : SteeringBehavior<ISteeringC
 
     private Aabb? FindClimbAabb(ISteeringCharacter obj)
     {
-        var group = obj.Body.Colliders[0].Material.ColliderGroup;
+        var collidesWith = obj.Body.Colliders[0].Material.CollidesWith;
 
         var aabb = obj.Body.Colliders[0].Aabb;
         var probe = obj.FaceLeft
             ? new Aabb(aabb.Left - 0.2f, aabb.Top, aabb.Left + 0.01f, aabb.Bottom)
             : new Aabb(aabb.Right - 0.01f, aabb.Top, aabb.Right + 0.2f, aabb.Bottom);
 
-        var colliders = obj.Body.Simulation.GetColliders(probe, obj.Body, group);
+        var colliders = obj.Body.Simulation.GetColliders(probe, obj.Body, collidesWith);
 
         Aabb? climbAabb = null;
         foreach (var collider in colliders)

@@ -9,10 +9,10 @@ public class CollectCollectiblesBehavior<TObject> : SteeringBehavior<ISteeringCh
 {
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
-        var group = obj.Body.Colliders[0].Material.ColliderGroup;
-        
+        var collidesWith = obj.Body.Colliders[0].Material.CollidesWith;
+
         var charAabb = obj.Body.Colliders[0].Aabb;
-        var colliders = obj.Body.Simulation.GetColliders(charAabb, obj.Body, group, colliderType: ColliderType.Trigger);
+        var colliders = obj.Body.Simulation.GetColliders(charAabb, obj.Body, collidesWith, colliderType: ColliderType.Trigger);
 
         foreach (var collider in colliders)
         {

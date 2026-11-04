@@ -20,11 +20,11 @@ public interface ISimulation: IDisposable
     IBody CreateBody(IBodyOwner owner);
     void RemoveBody(IBody body);
     void InitializeStaticColliders(Aabb bounds, IEnumerable<ICollider> colliders);
-    bool CheckCollision(Aabb aabb, IBody testingBody, int colliderGroup = IMaterial.AllColliders, float epsilon = 0, IList<ICollider> colliders = null, ColliderType colliderType = ColliderType.Static | ColliderType.Dynamic, bool debugRegister = false);
+    bool CheckCollision(Aabb aabb, IBody testingBody, ulong collidesWith = IMaterial.AllColliders, float epsilon = 0, IList<ICollider> colliders = null, ColliderType colliderType = ColliderType.Static | ColliderType.Dynamic, bool debugRegister = false);
     void GetColliders(Aabb bounds, IList<ICollider> colliders);
     IReadOnlyList<ICollider> GetColliders(Aabb bounds);
 
-    IReadOnlyList<ICollider> GetColliders(Aabb aabb, IBody testingBody, int colliderGroup, float epsilon = 0,
+    IReadOnlyList<ICollider> GetColliders(Aabb aabb, IBody testingBody, ulong collidesWith, float epsilon = 0,
         ColliderType colliderType = ColliderType.Static | ColliderType.Dynamic, bool debugRegister = false);
     
     IReadOnlyList<Aabb> Debug_GetCollisionChecks();

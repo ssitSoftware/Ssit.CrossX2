@@ -436,7 +436,7 @@ internal class Body : IBody
 
         foreach (var collider in Colliders)
         {
-            if (Simulation.CheckCollision(collider.Aabb, this, collider.Material.ColliderGroup, MovementCollisionCalculator.MovementEpsilon, _staticCollisions))
+            if (Simulation.CheckCollision(collider.Aabb, this, collider.Material.CollidesWith, MovementCollisionCalculator.MovementEpsilon, _staticCollisions))
             {
                 for (var idx = 0; idx < _staticCollisions.Count; ++idx)
                 {
@@ -449,7 +449,7 @@ internal class Body : IBody
 
         foreach (var collider in Colliders)
         {
-            if (Simulation.CheckCollision(collider.Aabb, this, collider.Material.ColliderGroup, MovementCollisionCalculator.MovementEpsilon, _staticCollisions))
+            if (Simulation.CheckCollision(collider.Aabb, this, collider.Material.CollidesWith, MovementCollisionCalculator.MovementEpsilon, _staticCollisions))
             {
                 for (var idx = 0; idx < _staticCollisions.Count; ++idx)
                 {

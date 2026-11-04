@@ -110,20 +110,20 @@ internal class Simulation : ISimulation
         _bodies.Sort((o1, o2) => o1.UpdateOrder - o2.UpdateOrder);
     }
     
-    public void GetColliders(IList<ICollider> list, Aabb aabb, IBody testingBody, int colliderGroup, float epsilon = 0, ColliderType colliderType = ColliderType.Static | ColliderType.Dynamic, bool debugRegister = false)
+    public void GetColliders(IList<ICollider> list, Aabb aabb, IBody testingBody, ulong collidesWith, float epsilon = 0, ColliderType colliderType = ColliderType.Static | ColliderType.Dynamic, bool debugRegister = false)
     {
         list.Clear();
-        CheckCollision(aabb, testingBody, colliderGroup, epsilon, list, colliderType, debugRegister);
+        CheckCollision(aabb, testingBody, collidesWith, epsilon, list, colliderType, debugRegister);
     }
-    
-    public IReadOnlyList<ICollider> GetColliders(Aabb aabb, IBody testingBody, int colliderGroup, float epsilon = 0, ColliderType colliderType = ColliderType.Static | ColliderType.Dynamic, bool debugRegister = false)
+
+    public IReadOnlyList<ICollider> GetColliders(Aabb aabb, IBody testingBody, ulong collidesWith, float epsilon = 0, ColliderType colliderType = ColliderType.Static | ColliderType.Dynamic, bool debugRegister = false)
     {
         _tempCollidersList.Clear();
-        CheckCollision(aabb, testingBody, colliderGroup, epsilon, _tempCollidersList, colliderType, debugRegister);
+        CheckCollision(aabb, testingBody, collidesWith, epsilon, _tempCollidersList, colliderType, debugRegister);
         return _tempCollidersList;
     }
 
-    public bool CheckCollision(Aabb aabb, IBody testingBody, int colliderGroup, float epsilon = 0, IList<ICollider> colliders = null, ColliderType colliderType = ColliderType.Static | ColliderType.Dynamic, bool registerDebug = false)
+    public bool CheckCollision(Aabb aabb, IBody testingBody, ulong collidesWith, float epsilon = 0, IList<ICollider> colliders = null, ColliderType colliderType = ColliderType.Static | ColliderType.Dynamic, bool registerDebug = false)
     {
         _collidersToTest.Clear();
         _collidersRootNode.GetElements(aabb, _collidersToTest);
@@ -135,7 +135,7 @@ internal class Simulation : ISimulation
             if (!collider.IsActive) continue;
             if (collider.AttachedBody == testingBody) continue;
             if ((colliderType & collider.Type) == 0) continue;
-            if( (collider.Material.ColliderGroup & colliderGroup) == 0) continue;
+            if ((collidesWith & IMaterial.Bit(collider.Material.ColliderGroup)) == 0) continue;
 
             var colliderAabb = collider.Aabb;
             if (!colliderAabb.Intersects(aabb, epsilon)) continue;
