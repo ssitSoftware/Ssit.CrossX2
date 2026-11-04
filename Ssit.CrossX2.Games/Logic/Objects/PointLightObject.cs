@@ -45,7 +45,7 @@ public class PointLightObject: IBodyOwner, ILightProvider, IGameObjectRenderer
             var range = t.Position - Body.Position;
 
             _pointLight = new PointLight(
-                new Vector3(Body.Position, 0) * services.GameTemplate.TileSize,
+                new Vector3(Body.Position, -10) * services.GameTemplate.TileSize,
                 range.Length() * services.GameTemplate.TileSize,
                 parameters.Parameters.Color,
                 parameters.Parameters.Intensity);
