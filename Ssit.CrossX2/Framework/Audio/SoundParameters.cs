@@ -27,4 +27,34 @@ public struct SoundParameters
     /// The default value is 1.
     /// </summary>
     public float Pitch { get; set; } = 1;
+
+    /// <summary>
+    /// Gets or sets the stereo panning for the sound.
+    /// The pan is a float value where 0 represents the center,
+    /// -1 represents fully left and 1 represents fully right.
+    /// The default value is 0.
+    /// </summary>
+    public float Pan { get; set; } = 0;
+
+    public SoundParameters Apply(ISoundEmitter emitter, ISoundListener listener)
+    {
+        var pan = Pan;
+        var volume = 1f;
+
+        if (emitter != null &&  listener != null)
+        {
+            var offset = emitter.Position - listener.Position;
+            volume *= MathF.Pow(MathF.Max(0, MathF.Min(1, 1 - offset.Length() / listener.MaxDistance)), 2);
+            
+            pan = MathF.Max(-1, MathF.Min(1, offset.X / listener.PanDistance));
+            pan *= 0.75f;
+        }
+        
+        return new SoundParameters
+        {
+            Volume = volume * Volume,
+            Pan = pan,
+            Pitch = Pitch
+        };
+    }
 }

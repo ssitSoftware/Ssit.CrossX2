@@ -11,34 +11,31 @@ internal unsafe class SdlSoundManagerImpl: ISoundManager, IUpdatable
     public event Action SoundVolumeUpdated;
     public event Action MusicVolumeUpdated;
     public event Action Disposing;
-    public ISoundListener SoundListener { get; set; }
 
     public readonly SdlHandle<MIX_Mixer> MixerHandle;
     private readonly List<SdlSoundEffectInstanceImpl> _attachedInstances = new();
-    
-    private float _soundVolume = 1;
-    private float _musicVolume = 1;
+
 
     public float SoundVolume
     {
-        get => _soundVolume;
+        get;
 
         set
         {
-            _soundVolume = value;
+            field = value;
             SoundVolumeUpdated?.Invoke();
         }
-    }
+    } = 1;
 
     public float MusicVolume
     {
-        get => _musicVolume;
+        get;
         set
         {
-            _musicVolume = value;
+            field = value;
             MusicVolumeUpdated?.Invoke();
         }
-    }
+    } = 1;
 
     public SdlSoundManagerImpl()
     {

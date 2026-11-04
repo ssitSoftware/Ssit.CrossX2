@@ -8,8 +8,38 @@ namespace Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Audio;
 internal unsafe class SdlSoundEffectInstanceImpl : ISoundEffectInstance
 {
     public event Action<ISoundEffectInstance> Finished;
-    public ISoundEmitter Emitter { get; set; }
-    public SoundParameters Parameters { get; set; }
+
+    public ISoundListener Listener
+    {
+        get;
+        set
+        {
+            field = value;
+            InternalParameters = Parameters.Apply(Emitter, field);
+        }
+    }
+    
+    public ISoundEmitter Emitter
+    {
+        get;
+        set
+        {
+            field = value;
+            InternalParameters = Parameters.Apply(field, Listener);
+        }
+    }
+
+    public SoundParameters Parameters 
+    { 
+        get;
+        set
+        {
+            field = value;
+            InternalParameters = field.Apply(Emitter, Listener);
+        }
+    }
+    
+    private SoundParameters InternalParameters { get; set; }
     
     private bool _isLooped;
     private bool _isPaused;
@@ -41,7 +71,7 @@ internal unsafe class SdlSoundEffectInstanceImpl : ISoundEffectInstance
         _sm.AttachInstance(this);
         _chunk = chunk;
         _trackPool = trackPool;
-        
+
         _properties = SDL_CreateProperties();
         _duration = MIX_GetAudioDuration(_chunk.Pointer);
         
@@ -52,7 +82,7 @@ internal unsafe class SdlSoundEffectInstanceImpl : ISoundEffectInstance
     {
         if (_playbackTrack != null && _playbackTrack.Pointer != null)
         {
-            MIX_SetTrackGain(_playbackTrack.Pointer, Parameters.Volume * _sm.SoundVolume);
+            MIX_SetTrackGain(_playbackTrack.Pointer, InternalParameters.Volume * _sm.SoundVolume);
         }
     }
 
@@ -107,7 +137,17 @@ internal unsafe class SdlSoundEffectInstanceImpl : ISoundEffectInstance
                 }
             }
             
-            MIX_SetTrackGain(_playbackTrack.Pointer, Parameters.Volume * _sm.SoundVolume);
+            MIX_SetTrackGain(_playbackTrack.Pointer, InternalParameters.Volume * _sm.SoundVolume);
+            MIX_SetTrackFrequencyRatio(_playbackTrack.Pointer, InternalParameters.Pitch);
+
+            var pan = InternalParameters.Pan;
+            var gains = new MIX_StereoGains
+            {
+                left = 1f - MathF.Max(0f, pan),
+                right = 1f + MathF.Min(0f, pan)
+            };
+            MIX_SetTrackStereo(_playbackTrack.Pointer, &gains);
+
             MIX_SetTrackPlaybackPosition(_playbackTrack.Pointer, _startPosition);
             MIX_SetTrackAudio(_playbackTrack.Pointer, _chunk.Pointer);
             

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Reflection;
+using Ssit.CrossX2.Framework.Audio;
 using Ssit.CrossX2.Framework.Content;
 using Ssit.CrossX2.Framework.Core;
 using Ssit.CrossX2.Framework.Games.Logic.Objects;
@@ -129,7 +130,7 @@ public class AabbGameInstance : IGameInstance, IMessenger
                 parameters.RegisterServices(b);
                 b
                     .WithInstance<IGameInstance>(this)
-                    .WithSingleton<ICamera, Camera>()
+                    .WithSingleton<ICamera, Camera>().As<ISoundListener>()
                     .WithSingleton<GameObjectsServices, GameObjectsServices>();
             })
             .WithGameTemplate(gameTemplate);

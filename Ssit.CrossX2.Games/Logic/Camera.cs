@@ -1,10 +1,11 @@
 using System.Numerics;
+using Ssit.CrossX2.Framework.Audio;
 using Ssit.CrossX2.Framework.Games.Template;
 using Ssit.CrossX2.Framework.Input;
 
 namespace Ssit.CrossX2.Framework.Games.Logic;
 
-internal class Camera(IGameTemplate template, IInputMappings inputMappings): ICamera
+internal class Camera(IGameTemplate template, IInputMappings inputMappings): ICamera, ISoundListener
 {
     private Vector2 _lookAt;
 
@@ -28,6 +29,11 @@ internal class Camera(IGameTemplate template, IInputMappings inputMappings): ICa
     private List<Vector2> _lastTargetPositions = new();
     private Vector2 _cameraMove;
     
+    public Vector2 Position => LookAt;
+    public float MaxDistance => VisibleArea * 2;
+    public float PanDistance { get; } = (float)template.TargetSize.Width / template.TileSize / 2;
+    public float VisibleArea { get; set; } = MathF.Max(template.TargetSize.Width, template.TargetSize.Height) / template.TileSize;
+
     private int? _cameraWindowWidth;
     private int? _cameraWindowHeight;
     

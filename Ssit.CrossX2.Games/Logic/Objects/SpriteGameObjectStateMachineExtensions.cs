@@ -15,7 +15,7 @@ public static class SpriteGameObjectStateMachineExtensions
     }
 
     public static SpriteGameObjectStateMachine<TObject, TStateObject> WithBehaviorState<TObject, TStateObject>(
-        this SpriteGameObjectStateMachine<TObject, TStateObject> sm, string name, SteeringBehavior<TStateObject>[] behaviors)
+        this SpriteGameObjectStateMachine<TObject, TStateObject> sm, string name, params SteeringBehavior<TStateObject>[] behaviors)
         where TObject : SpriteGameObject2, TStateObject =>
         sm.WithBehaviorState(name, name, behaviors);
 }

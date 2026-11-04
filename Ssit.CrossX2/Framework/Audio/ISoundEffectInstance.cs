@@ -17,6 +17,8 @@ public interface ISoundEffectInstance: IDisposable
     /// </summary>
     ISoundEmitter Emitter { get; set; }
     
+    ISoundListener Listener { get; set; }
+    
     /// <summary>
     /// Gets or sets the sound parameters associated with the sound effect instance.
     /// </summary>

@@ -1,3 +1,5 @@
+using System.Numerics;
+using Ssit.CrossX2.Framework.Audio;
 using Ssit.CrossX2.Framework.Content;
 using Ssit.CrossX2.Framework.Core;
 using Ssit.CrossX2.Framework.Games.Physics;
@@ -8,7 +10,7 @@ using Ssit.CrossX2.Framework.Graphics.Sprites;
 
 namespace Ssit.CrossX2.Framework.Games.Logic.Objects;
 
-public abstract class SpriteGameObject2 : IGameObjectRenderer, IBodyOwner
+public abstract class SpriteGameObject2 : IGameObjectRenderer, IBodyOwner, ISoundEmitter
 {
     public GameObjectsServices Services { get; }
     public IBody Body { get; }
@@ -170,4 +172,6 @@ public abstract class SpriteGameObject2 : IGameObjectRenderer, IBodyOwner
         _spriteObject?.Dispose();
         _spriteObject = null;
     }
+
+    Vector2 ISoundEmitter.Position => Body.Colliders[0].Aabb.Center;
 }

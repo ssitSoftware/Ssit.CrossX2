@@ -3,7 +3,7 @@ using Ssit.CrossX2.Framework.Services;
 
 namespace Ssit.CrossX2.Framework.Audio;
 
-internal class CommonSoundContainer(IContentManager contentManager, IActionScheduler scheduler) : ICommonSoundContainer, IDisposable
+internal class CommonSoundContainer(IContentManager contentManager, IActionScheduler scheduler, ISoundListener listener = null) : ICommonSoundContainer, IDisposable
 {
     private readonly Dictionary<string, (ResourceHandle<ISoundEffect>, float, List<ISoundEffectInstance>)> _sounds = new();
 
@@ -14,7 +14,7 @@ internal class CommonSoundContainer(IContentManager contentManager, IActionSched
         return this;
     }
 
-    public void Play(string name, float volume = 1, ISoundEmitter emitter = null)
+    public void Play(string name, float volume = 1, float pitch = 1, ISoundEmitter emitter = null)
     {
         scheduler.ExecuteOnMainThread(() =>
         {
@@ -39,10 +39,15 @@ internal class CommonSoundContainer(IContentManager contentManager, IActionSched
                 sound.Item3.Add(instance);
             }
 
+            instance.Emitter = emitter;
+            instance.Listener = listener;
+
             instance.Parameters = new SoundParameters
             {
-                Volume = volume * sound.Item2
+                Volume = volume * sound.Item2,
+                Pitch = sound.Item2 * pitch
             };
+            
             instance.Play();
         });
     }

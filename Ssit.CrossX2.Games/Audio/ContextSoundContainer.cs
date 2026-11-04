@@ -4,7 +4,7 @@ using Ssit.CrossX2.Framework.Games.Physics;
 
 namespace Ssit.CrossX2.Framework.Games.Audio;
 
-public class ContextSoundContainer(IContentManager contentManager, ContextSoundContainer.Parameters parameters)
+public class ContextSoundContainer(IContentManager contentManager,  ContextSoundContainer.Parameters parameters, ISoundListener listener = null)
     : IDisposable
 {
     public class Parameters
@@ -12,28 +12,29 @@ public class ContextSoundContainer(IContentManager contentManager, ContextSoundC
         public ISoundEmitter Emitter;
     }
 
-    private readonly Dictionary<(string, int), (ISoundEffectInstance, float)> _instances = new();
+    private readonly Dictionary<(string, int), (ISoundEffectInstance, float, float)> _instances = new();
     private readonly List<ResourceHandle<ISoundEffect>> _sounds = new();
 
-    public ContextSoundContainer RegisterSound(string name, string path, float volume = 1)
+    public ContextSoundContainer RegisterSound(string name, string path, float volume = 1, float pitch = 1)
     {
-        return RegisterSound(name, -1, path, volume);
+        return RegisterSound(name, -1, path, volume, pitch);
     }
-    
-    public ContextSoundContainer RegisterSound(string name, int material, string path, float volume = 1)
+
+    public ContextSoundContainer RegisterSound(string name, int material, string path, float volume = 1, float pitch = 1)
     {
         var sound = contentManager.Get<ISoundEffect>(path);
         var instance = sound.Resource.CreateInstance();
-        
+
         instance.Parameters = new SoundParameters
         {
             Volume = 1,
             Pitch = 1
         };
         instance.Emitter = parameters.Emitter;
-        
+        instance.Listener = listener;
+
         _sounds.Add(sound);
-        _instances.Add((name, material), (instance, volume));
+        _instances.Add((name, material), (instance, volume, pitch));
         return this;
     }
 
@@ -59,7 +60,7 @@ public class ContextSoundContainer(IContentManager contentManager, ContextSoundC
         instance.Item1.Stop();
     }
 
-    public void Play(string name, IMaterial material = null, float volume = 1, bool dontStop = false)
+    public void Play(string name, IMaterial material = null, float volume = 1, float pitch = 1, bool dontStop = false)
     {
         var materialIndex = material?.Index ?? -1;
         if (!_instances.TryGetValue((name, materialIndex), out var instance))
@@ -74,13 +75,14 @@ public class ContextSoundContainer(IContentManager contentManager, ContextSoundC
         {
             if (dontStop)
                 return;
-            
+
             instance.Item1.Stop();
         }
 
         instance.Item1.Parameters = new SoundParameters
         {
-            Volume = instance.Item2 * volume
+            Volume = instance.Item2 * volume,
+            Pitch = instance.Item3 * pitch
         };
 
         instance.Item1.Play();
