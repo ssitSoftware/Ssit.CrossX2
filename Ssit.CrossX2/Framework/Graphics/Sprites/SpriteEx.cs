@@ -125,7 +125,7 @@ public class SpriteEx: IDisposable
         Description = description;
     }
 
-    public SpriteInstance CreateSpriteInstance()
+    public SpriteInstance CreateSpriteInstance(IContentCache cache = null)
     {
         var events = Description.Events?.Select( o => new SpriteInstance.Event(o.Sequence, o.Frame, o.Name, o.Parameters)).ToArray();
 
@@ -134,7 +134,7 @@ public class SpriteEx: IDisposable
             return new SpriteInstance(_spriteSheet, Sprite, Description.Origin, events, _contentManager);
         }
         
-        return new SpriteInstance(Sprite, Description.Origin, events, _contentManager);
+        return new SpriteInstance(Sprite, Description.Origin, events, _contentManager, cache);
     }
 
     void IDisposable.Dispose()

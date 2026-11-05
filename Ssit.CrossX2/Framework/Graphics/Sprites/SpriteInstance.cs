@@ -71,10 +71,12 @@ public class SpriteInstance : IDisposable
         _spriteCollider = TryLoadMask(_sprite.Resource.SheetName, contentManager);
     }
     
-    public SpriteInstance(Sprite sprite, Vector2 origin, IReadOnlyList<Event> events, IContentManager contentManager)
+    public SpriteInstance(Sprite sprite, Vector2 origin, IReadOnlyList<Event> events, IContentManager contentManager, IContentCache cache)
     {
         _sprite = new ResourceHandleUnmanaged<Sprite>(sprite, "");
-        _spriteSheet = contentManager.Get<ITexture>(_sprite.Resource.SheetName);
+        _spriteSheet = cache != null ? 
+            new ResourceHandleUnmanaged<ITexture>(cache.Get<ITexture>(_sprite.Resource.SheetName), _sprite.Resource.SheetName, false) :
+            contentManager.Get<ITexture>(_sprite.Resource.SheetName);
 
         _origin = origin;
         _events = PrepareEvents(events);

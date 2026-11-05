@@ -1,3 +1,4 @@
+using Ssit.CrossX2.Framework.Content;
 using Ssit.CrossX2.Framework.Core;
 using Ssit.CrossX2.Framework.Graphics;
 using Ssit.CrossX2.Framework.IoC;

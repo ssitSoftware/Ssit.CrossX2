@@ -107,10 +107,18 @@ public abstract class SpriteGameObject2 : IGameObjectRenderer, IBodyOwner, ISoun
         Transform = parameters.Flipped ? ImageTransform.FlipHorizontal : ImageTransform.None;
     }
     
-    protected void InitializeSprite(string spritePath)
+    protected void InitializeSprite(string spritePath, bool useCache = true)
     {
-        _spriteObject = Services.ContentManager.Get<SpriteEx>(spritePath);
-        Sprite = _spriteObject.Resource.CreateSpriteInstance();
+        if (useCache)
+        {
+            _spriteObject = new ResourceHandleUnmanaged<SpriteEx>(Services.ContentCache.Get<SpriteEx>(spritePath), spritePath, false);
+            Sprite = _spriteObject.Resource.CreateSpriteInstance(Services.ContentCache);
+        }
+        else
+        {
+            _spriteObject = Services.ContentManager.Get<SpriteEx>(spritePath);
+            Sprite = _spriteObject.Resource.CreateSpriteInstance();
+        }
     }
     
     protected virtual void OnSpriteEvent(ISpriteEvent @event)

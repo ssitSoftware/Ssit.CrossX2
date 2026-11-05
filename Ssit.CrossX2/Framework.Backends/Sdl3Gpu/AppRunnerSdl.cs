@@ -62,6 +62,7 @@ internal static class AppRunnerSdl
             .WithImplementation<IRenderTarget, SdlGpuRenderTarget>()
             .WithImplementation<IVertexBuffer, SdlGpuVertexBuffer>()
             .WithImplementation<ISoundEffect, SdlSoundEffectImpl>()
+            .WithImplementation<IContentCache, ContentCache>()
             .WithSingleton<IRenderHost, RenderHost>().As<RenderHost>()
             .WithImplementation<ISingleMusicPlayer, SdlSingleMusicPlayer>();
 

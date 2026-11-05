@@ -12,13 +12,13 @@ public class GameObjectsServices(
     IContentManager contentManager,
     IIoCContainer container,
     IGameTemplate gameTemplate,
-    ICommonSoundContainer commonSoundContainer,
-    IParticleSystem particleSystem)
+    IContentCache contentCache,
+    ICommonSoundContainer commonSoundContainer)
 {
     public ISimulation Simulation { get; } = simulation;
     public IContentManager ContentManager { get; } = contentManager;
     public IIoCContainer Container { get; } = container;
     public IGameTemplate GameTemplate { get; } = gameTemplate;
+    public IContentCache ContentCache { get; } = contentCache;
     public ICommonSoundContainer CommonSoundContainer { get; } = commonSoundContainer;
-    public IParticleSystem ParticleSystem { get; } = particleSystem;
 }

@@ -1,6 +1,6 @@
 namespace Ssit.CrossX2.Framework.Content;
 
-public abstract class ResourceHandle<TResource> : IDisposable where TResource : class, IDisposable
+public abstract class ResourceHandle<TResource> : IDisposable where TResource : class
 {
     /// <summary>
     /// Resource reference.
@@ -59,7 +59,7 @@ public class ResourceHandleManaged<TResource> : ResourceHandle<TResource> where 
     public override ResourceHandle<TResource> Clone() => _cloneDelegate();
 }
 
-public class ResourceHandleUnmanaged<TResource>(TResource resource, string name)
+public class ResourceHandleUnmanaged<TResource>(TResource resource, string name, bool dispose = true)
     : ResourceHandle<TResource>(resource, name)
     where TResource : class, IDisposable
 {
@@ -69,8 +69,12 @@ public class ResourceHandleUnmanaged<TResource>(TResource resource, string name)
     {
         if (_isDisposed)
             return;
-        
-        Resource?.Dispose();
+
+        if (dispose)
+        {
+            Resource?.Dispose();
+        }
+
         _isDisposed = true;
     }
 

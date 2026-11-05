@@ -37,7 +37,8 @@ public class AabbGameInstance : IGameInstance, IMessenger
     }
     
     IIoCContainer IGameInstance.Services => Container;
-    
+    private readonly IContentCache _contentCache;
+
     public event Action<float> FixedUpdate;
     public event Action Updated;
     public event Action<object> Message;
@@ -82,6 +83,9 @@ public class AabbGameInstance : IGameInstance, IMessenger
         IActionScheduler scheduler, IGameTemplate gameTemplate, IFileStorage storage,
         Parameters parameters)
     {
+
+        _contentCache = container.IoCConstruct<IContentCache>(); 
+        
         if (parameters.TargetFps.HasValue)
         {
             _timer = container.IoCConstruct<TargetGameTimer>(new TargetGameTimer.Parameters{ TargetFps = parameters.TargetFps.Value});
@@ -130,6 +134,7 @@ public class AabbGameInstance : IGameInstance, IMessenger
                 parameters.RegisterServices(b);
                 b
                     .WithInstance<IGameInstance>(this)
+                    .WithInstance(_contentCache)
                     .WithSingleton<ICamera, Camera>().As<ISoundListener>()
                     .WithSingleton<GameObjectsServices, GameObjectsServices>();
             })
@@ -298,6 +303,7 @@ public class AabbGameInstance : IGameInstance, IMessenger
             Simulation.Dispose();
             Container?.Dispose();
             _backgroundRenderer?.Dispose();
+            _contentCache?.Dispose();
         });
     }
     

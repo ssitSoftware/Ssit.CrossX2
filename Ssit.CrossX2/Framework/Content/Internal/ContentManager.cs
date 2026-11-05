@@ -118,7 +118,7 @@ internal class ContentManager: IContentManager, IDisposable
     public void RegisterLoader<TResource>(LoadResourceDelegate loadFunc) where TResource : class, IDisposable 
         => _resourceLoaders.Add(typeof(TResource), loadFunc);
 
-    private string GetKey<TResource>(string path) where TResource : class, IDisposable 
+    public static string GetKey<TResource>(string path) where TResource : class, IDisposable 
         => path + $" ({typeof(TResource).Name})";
 
     private TResource LoadResource<TResource>(string path) where TResource : class, IDisposable
