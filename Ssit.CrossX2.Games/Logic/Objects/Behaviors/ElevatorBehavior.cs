@@ -14,7 +14,7 @@ public class ElevatorBehavior(Elevator elevator): Behavior
         elevator.Sprite.Advance(DateTime.Now.Millisecond % 100 / 1000f);
     }
 
-    protected override bool OnFixedUpdate(float dt)
+    protected override bool OnUpdate(float dt)
     {
         if (!elevator.IsOn && elevator.CurrentState != "Off")
         {

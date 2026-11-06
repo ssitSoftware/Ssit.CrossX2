@@ -7,7 +7,7 @@ using Ssit.CrossX2.Framework.Graphics.Sprites;
 
 namespace Ssit.CrossX2.Framework.Games.Logic.Objects;
 
-public abstract class SpriteGameObject: StateGameObject, IGameObjectRenderer, SpriteInstance.IHandler, IBodyOwner
+public abstract class SpriteGameObject: StateGameObject, IGameObjectRenderer, IBodyOwner
 {
     public GameObjectsServices Services { get; }
     public IBody Body { get; }
@@ -15,6 +15,8 @@ public abstract class SpriteGameObject: StateGameObject, IGameObjectRenderer, Sp
     private ResourceHandle<SpriteEx> _spriteObject; 
 
     public int ZOrder { get; }
+
+    protected virtual bool StateMatchesSequence => true;
     
     protected ImageTransform Transform { get; set; }
     
@@ -29,9 +31,6 @@ public abstract class SpriteGameObject: StateGameObject, IGameObjectRenderer, Sp
         cancelUpdate = false;
         OnFixedUpdate(ref cancelUpdate);
     }
-    
-    void IBodyOwner.OnPostFixedUpdate() => OnPostFixedUpdate();
-    void IBodyOwner.OnUpdate(float dt) => OnUpdate(dt);
     
     public bool FaceLeft
     {
@@ -52,15 +51,10 @@ public abstract class SpriteGameObject: StateGameObject, IGameObjectRenderer, Sp
         Transform = parameters.Flipped ? ImageTransform.FlipHorizontal : ImageTransform.None;
     }
 
-    protected void InitializeSprite(string spritePath)
+    protected virtual void InitializeSprite(string spritePath)
     {
         _spriteObject = Services.ContentManager.Get<SpriteEx>(spritePath);
         Sprite = _spriteObject.Resource.CreateSpriteInstance();
-        Sprite.Handler = this;
-    }
-
-    protected virtual void OnSpriteEvent(SpriteInstance instance, ISpriteEvent @event)
-    {
     }
 
     protected virtual void OnRender(IRenderer renderer, RgbaColor color, float depth)
@@ -76,9 +70,12 @@ public abstract class SpriteGameObject: StateGameObject, IGameObjectRenderer, Sp
         Sprite.Advance(dt);
     }
 
-    protected override void SetSequence(string state)
+    protected override void OnStateChanged(string state)
     {
-        Sprite.SetSequence(state);
+        if (StateMatchesSequence)
+        {
+            Sprite.SetSequence(state);
+        }
     }
     
     void IDisposable.Dispose()
@@ -94,8 +91,4 @@ public abstract class SpriteGameObject: StateGameObject, IGameObjectRenderer, Sp
         _spriteObject?.Dispose();
         _spriteObject = null;
     }
-
-    void SpriteInstance.IHandler.OnSpriteEvent(SpriteInstance instance, ISpriteEvent @event) => OnSpriteEvent(instance, @event);
-
-    void SpriteInstance.IHandler.OnSequenceFinished(SpriteInstance instance, string sequenceName, bool reverse) => OnAnimationFinished(sequenceName);
 }

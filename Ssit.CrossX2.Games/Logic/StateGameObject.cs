@@ -4,57 +4,26 @@ namespace Ssit.CrossX2.Framework.Games.Logic;
 
 public abstract class StateGameObject: IUpdatable
 {
-    private readonly Dictionary<string, State> _states = new();
-    private State _currentState;
+    private readonly StateMachine _stateMachine;
 
-    protected virtual void OnAnimationFinished(string sequenceName) => _currentState?.SequenceFinished(sequenceName);
-    
-    protected virtual void CallStateEvent(string eventName, float parameter) => _currentState?.Event(eventName, parameter);
-    
-    public string CurrentState { get; private set; }
-    
-
-    protected virtual void OnUpdate(float dt)
+    protected StateGameObject()
     {
-        _currentState?.Update(dt);
-        SetSequence(CurrentState);
+        _stateMachine = new StateMachine(OnStateChanged);
     }
-    
+
+    public string CurrentState => _stateMachine.CurrentState;
+
     protected void OnFixedUpdate(float dt)
     {
-        _currentState?.FixedUpdate(dt);
-        SetSequence(CurrentState);
-    }
-    
-    protected virtual void OnPostFixedUpdate()
-    {
-        _currentState?.PostFixedUpdate();
-        SetSequence(CurrentState);
+        _stateMachine.FixedUpdate(dt);
+        OnStateChanged(CurrentState);
     }
 
-    protected void AddState(string name, State state)
-    {
-        _states.Add(name, state);
-    }
+    protected void AddState(string name, State state) => _stateMachine.AddState(name, state);
 
-    public void SetState(string state)
-    {
-        if (CurrentState == state)
-            return;
-        
-        if (!_states.TryGetValue(state, out var instance))
-            throw new InvalidOperationException();
+    public void SetState(string state) => _stateMachine.SetState(state);
 
-        _currentState?.Leave();
-        _currentState = instance;
-        
-        CurrentState = state;
-        SetSequence(state);
-        
-        _currentState?.Enter();
-    }
-
-    protected virtual void SetSequence(string state)
+    protected virtual void OnStateChanged(string state)
     {
     }
 }
