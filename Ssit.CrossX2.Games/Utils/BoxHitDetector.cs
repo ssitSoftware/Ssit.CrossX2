@@ -10,7 +10,7 @@ public class BoxHitDetector(Vector2 offset, SizeF size, ColliderType colliderTyp
 
     private static bool DefaultFilter(IBody _1, IHittable _) => true;
     
-    public HitTestResult Detect(IBody body, bool faceLeft, ulong collidesWith, Func<IBody, IHittable, bool> filter = null)
+    public HitTestResult Detect(IBody body, bool faceLeft, ulong collidesWith, Func<IBody, IHittable, bool> filter = null, bool ignoreNoHittable = false)
     {
         filter ??= DefaultFilter;
 
@@ -24,19 +24,23 @@ public class BoxHitDetector(Vector2 offset, SizeF size, ColliderType colliderTyp
             if (collider.AttachedBody?.Owner is IHittable { Alive: true } hittable && filter(body, hittable))
                 return new HitTestResult { HitAnything = true, Collider = collider, Hittable = hittable };
 
-            if (collider.Type is ColliderType.Static or ColliderType.Dynamic)
+            if (collider.Type is ColliderType.Static or ColliderType.Dynamic && !ignoreNoHittable)
                 return new HitTestResult { HitAnything = true, Collider = collider, Hittable = null };
         }
 
         return HitTestResult.None;
     }
 
-    private void QueryAndSort(IBody body, bool faceLeft, ulong collidesWith)
+    public Aabb GetAabb(IBody body, bool faceLeft)
     {
         var off = offset;
         if (faceLeft) off.X = -off.X;
-
-        var aabb = new Aabb(body.Position + off, size);
+        return new Aabb(body.Position + off, size);
+    }
+    
+    private void QueryAndSort(IBody body, bool faceLeft, ulong collidesWith)
+    {
+        var aabb = GetAabb(body, faceLeft);
 
         _colliderBuffer.Clear();
         body.Simulation.CheckCollision(aabb, body, collidesWith: collidesWith, colliders: _colliderBuffer, colliderType: colliderType, debugRegister: true);

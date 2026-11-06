@@ -1,6 +1,8 @@
+using Ssit.CrossX2.Framework.Audio;
 using Ssit.CrossX2.Framework.Games.Logic.Objects.Characters;
 using Ssit.CrossX2.Framework.Games.Logic.Stering;
 using Ssit.CrossX2.Framework.Graphics.Sprites;
+using Ssit.CrossX2.Framework.Utils;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
@@ -8,6 +10,9 @@ public class EventToSoundBehavior: SteeringBehavior<ISteeringCharacter>
 {
     private readonly Dictionary<string, string> _mapping = new();
 
+    public float MinPitch { get; set; } = 1f;
+    public float MaxPitch { get; set; } = 1f;
+    
     public EventToSoundBehavior(params string[] names)
     {
         foreach (var name in names)
@@ -28,7 +33,20 @@ public class EventToSoundBehavior: SteeringBehavior<ISteeringCharacter>
     {
         if (_mapping.TryGetValue(@event.EventName, out var snd))
         {
-            obj.SoundContainer.Play(snd, obj.SteeringParameters.GroundMaterial);
+            if (snd.Contains(','))
+            {
+                var snds = snd.Split(',');
+                snd = snds[MersenneTwister.Shared.Next(snds.Length)];
+            }
+            var pitch = MersenneTwister.Shared.NextSingle() * (MaxPitch - MinPitch) + MinPitch;
+            if (obj.SoundContainer is null)
+            {
+                obj.CommonSoundContainer.Play(snd, pitch: pitch, emitter: obj as ISoundEmitter);
+            }
+            else
+            {
+                obj.SoundContainer.Play(snd, obj.SteeringParameters.GroundMaterial, pitch: pitch);
+            }
         }
         return false;
     }
