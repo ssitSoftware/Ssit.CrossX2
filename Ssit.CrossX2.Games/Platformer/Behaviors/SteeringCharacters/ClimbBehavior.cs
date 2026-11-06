@@ -15,7 +15,7 @@ public class ClimbBehavior(int climbMaterialIndex) : SteeringBehavior<ISteeringC
 
     protected override void OnEnter(ISteeringCharacter obj)
     {
-        var parameters = obj.GetParameters<Parameters>(true);
+        var parameters = obj.GetParameters<Parameters>();
         parameters.ClimbAabb = FindClimbAabb(obj);
 
         obj.Body.IsKinematic = true;
@@ -45,7 +45,7 @@ public class ClimbBehavior(int climbMaterialIndex) : SteeringBehavior<ISteeringC
             return true;
         }
         
-        var parameters = obj.GetParameters<Parameters>(true);
+        var parameters = obj.GetParameters<Parameters>();
         parameters.ClimbAabb ??= FindClimbAabb(obj);
 
         if (parameters.ClimbAabb == null)

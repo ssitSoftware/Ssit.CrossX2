@@ -6,7 +6,7 @@ using Ssit.CrossX2.Framework.Games.Platformer.Builders;
 namespace Ssit.CrossX2.Framework.Games.Logic.Objects;
 
 public abstract class Detector(GameObjectsServices services, ObjectCreationParameters parameters)
-    : SpriteGameObjectWithState(services, parameters), ISwitch
+    : SpriteGameObjectWithState<Detector>(services, parameters), ISwitch
 {
     void ISwitch.Toggle()
     {
@@ -32,8 +32,8 @@ public abstract class Detector(GameObjectsServices services, ObjectCreationParam
         
         Body.IsKinematic = true;
         
-        AddState("Off", new State());
-        AddState("On", new State());
+        AddState("Off", new State<Detector>());
+        AddState("On", new State<Detector>());
         
         SetState("Off");
     }

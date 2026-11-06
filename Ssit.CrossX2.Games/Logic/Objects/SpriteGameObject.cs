@@ -25,6 +25,7 @@ public abstract class SpriteGameObject : IGameObjectRenderer, IBodyOwner, ISound
     protected RectangleF BoundsRect { get; set; }
 
     private readonly List<IUpdatable> _updatables = new();
+    private readonly Dictionary<Type, object> _parameters = new();
     public RectangleF Bounds => BoundsRect.Offset(Body.Position);
     
     public virtual bool FaceLeft
@@ -107,6 +108,16 @@ public abstract class SpriteGameObject : IGameObjectRenderer, IBodyOwner, ISound
         Transform = parameters.Flipped ? ImageTransform.FlipHorizontal : ImageTransform.None;
     }
     
+    public TParameters GetParameters<TParameters>()
+    {
+        if (!_parameters.TryGetValue(typeof(TParameters), out var obj))
+        {
+            obj = Activator.CreateInstance<TParameters>();
+            _parameters.Add(typeof(TParameters), obj);
+        }
+        return (TParameters)obj;
+    }
+
     protected void InitializeSprite(string spritePath, bool useCache = true)
     {
         if (useCache)

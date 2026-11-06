@@ -9,7 +9,7 @@ public class VerticalPatrolBehavior(bool returnToOriginalPositionIfNotVisible) :
 {
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
-        var parameters = obj.GetParameters<HorizontalPatrolBehavior.Parameters>(true);
+        var parameters = obj.GetParameters<HorizontalPatrolBehavior.Parameters>();
         parameters.WasInitialized |= parameters.WasDisplayed;
 
         if (parameters.Target is null || !parameters.WasInitialized)

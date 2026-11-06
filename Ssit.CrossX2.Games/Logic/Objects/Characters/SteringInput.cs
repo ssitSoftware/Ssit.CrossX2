@@ -3,7 +3,7 @@ using Ssit.CrossX2.Framework.Input;
 
 namespace Ssit.CrossX2.Framework.Games.Logic.Objects.Characters;
 
-public class SteeringInput : ISteeringInputController, IUpdatable
+public class SteeringInput : ISteeringInputController, ISteeringInput, IUpdatable
 {
     private readonly Dictionary<string, ButtonState> _buttonStates = new();
     private readonly Dictionary<string, float> _values = new();

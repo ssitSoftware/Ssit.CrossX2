@@ -6,5 +6,5 @@ public interface ICharacter
 {
     bool FaceLeft { get; set; }
     IBody Body { get; }
-    TParameters GetParameters<TParameters>(bool create);
+    TParameters GetParameters<TParameters>();
 }

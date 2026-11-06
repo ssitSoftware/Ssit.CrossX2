@@ -22,7 +22,7 @@ public class HitInRangeBehavior(SizeF size, Vector2 offset, float attackPower = 
 
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
-        var parameters = obj.GetParameters<Parameters>(true);
+        var parameters = obj.GetParameters<Parameters>();
         if (!parameters.CanHit)
             return false;
         
@@ -62,7 +62,7 @@ public class HitInRangeBehavior(SizeF size, Vector2 offset, float attackPower = 
     
     private static void SetCanHit(ISteeringCharacter obj, bool value)
     {
-        var parameters = obj.GetParameters<Parameters>(true);
+        var parameters = obj.GetParameters<Parameters>();
         parameters.CanHit = value;
     }
 }

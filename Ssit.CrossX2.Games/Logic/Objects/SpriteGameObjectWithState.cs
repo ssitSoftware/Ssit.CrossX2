@@ -2,21 +2,22 @@ using Ssit.CrossX2.Framework.Games.Platformer.Builders;
 
 namespace Ssit.CrossX2.Framework.Games.Logic.Objects;
 
-public abstract class SpriteGameObjectWithState : SpriteGameObject
+public abstract class SpriteGameObjectWithState<TObject> : SpriteGameObject
+    where TObject : SpriteGameObjectWithState<TObject>
 {
-    private readonly StateMachine _stateMachine;
+    private readonly StateMachine<TObject> _stateMachine;
 
     protected SpriteGameObjectWithState(GameObjectsServices services, ObjectCreationParameters parameters)
         : base(services, parameters)
     {
-        _stateMachine = new StateMachine(OnStateChanged);
+        _stateMachine = new StateMachine<TObject>((TObject)this, OnStateChanged);
     }
 
     public string CurrentState => _stateMachine.CurrentState;
 
     protected virtual bool StateMatchesSequence => true;
 
-    protected void AddState(string name, State state) => _stateMachine.AddState(name, state);
+    protected void AddState(string name, State<TObject> state) => _stateMachine.AddState(name, state);
 
     public void SetState(string state) => _stateMachine.SetState(state);
 

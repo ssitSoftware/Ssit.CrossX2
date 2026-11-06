@@ -21,7 +21,7 @@ public class HorizontalPatrolBehavior(bool returnToOriginalPositionIfNotVisible)
 
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
-        var parameters = obj.GetParameters<Parameters>(true);
+        var parameters = obj.GetParameters<Parameters>();
         parameters.WasInitialized |= parameters.WasDisplayed;
         
         if (parameters.Target is null || !parameters.WasInitialized)

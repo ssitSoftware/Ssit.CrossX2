@@ -9,7 +9,7 @@ using Ssit.CrossX2.Framework.Graphics.Sprites;
 namespace Ssit.CrossX2.Framework.Games.Logic.Objects;
 
 public abstract class Switch(GameObjectsServices services, ObjectCreationParameters<Switch.Parameters> parameters)
-    : SpriteGameObjectWithState(services, parameters), ISwitch, ILogicOperable, SpriteInstance.IHandler
+    : SpriteGameObjectWithState<Switch>(services, parameters), ISwitch, ILogicOperable, SpriteInstance.IHandler
 {
     [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
     public class Parameters
@@ -43,10 +43,10 @@ public abstract class Switch(GameObjectsServices services, ObjectCreationParamet
         }));
         Body.IsKinematic = true;
 
-        AddState("On", new State());
-        AddState("Off", new State());
-        AddState("TurnOff", new State());
-        AddState("TurnOn", new State());
+        AddState("On", new State<Switch>());
+        AddState("Off", new State<Switch>());
+        AddState("TurnOff", new State<Switch>());
+        AddState("TurnOn", new State<Switch>());
         
         SetState("Off");
         

@@ -1,18 +1,18 @@
 namespace Ssit.CrossX2.Framework.Games.Logic;
 
-public abstract class Behavior
+public abstract class Behavior<TObject>
 {
-    internal bool FixedUpdate(float dt) => OnUpdate(dt);
-    internal void EnterState() => OnEnterState();
-    internal void LeaveState() => OnLeaveState();
-    
-    protected virtual void OnLeaveState()
+    internal bool FixedUpdate(TObject obj, float dt) => OnUpdate(obj, dt);
+    internal void EnterState(TObject obj) => OnEnterState(obj);
+    internal void LeaveState(TObject obj) => OnLeaveState(obj);
+
+    protected virtual void OnLeaveState(TObject obj)
     {
     }
 
-    protected virtual void OnEnterState()
+    protected virtual void OnEnterState(TObject obj)
     {
     }
 
-    protected virtual bool OnUpdate(float dt) => false;
+    protected virtual bool OnUpdate(TObject obj, float dt) => false;
 }
