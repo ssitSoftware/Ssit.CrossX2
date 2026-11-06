@@ -7,7 +7,7 @@ using Ssit.CrossX2.Framework.Games.Platformer.Builders;
 
 namespace Ssit.CrossX2.Framework.Games.Logic.Objects.Characters;
 
-public abstract class CharacterObject<TCharacter> : SpriteGameObject2, IBodyEventsReceiver, IActivationHandler, ISteeringCharacter, IPositionObject where TCharacter: CharacterObject<TCharacter>
+public abstract class CharacterObject<TCharacter> : SpriteGameObject, IBodyEventsReceiver, IActivationHandler, ISteeringCharacter, IPositionObject where TCharacter: CharacterObject<TCharacter>
 {
     TParameters IGameObject.Get<TParameters>(bool create) => GetParameters<TParameters>(create);
     SteeringState<ISteeringCharacter> ISteeringCharacter.CurrentSteeringState => SteeringStateMachine.InternalStateMachine.CurrentState;

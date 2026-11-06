@@ -9,7 +9,7 @@ using Ssit.CrossX2.Framework.Graphics.Sprites;
 namespace Ssit.CrossX2.Framework.Games.Logic.Objects;
 
 public abstract class MechanicalDoor(GameObjectsServices services, ObjectCreationParameters<MechanicalDoor.Parameters> parameters)
-    : SpriteGameObject(services, parameters), SpriteInstance.IHandler
+    : SpriteGameObjectWithState(services, parameters), SpriteInstance.IHandler
 {
     [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
     public class Parameters

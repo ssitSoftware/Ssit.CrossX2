@@ -4,11 +4,12 @@ using Ssit.CrossX2.Framework.Games.Editor;
 using Ssit.CrossX2.Framework.Games.Physics;
 using Ssit.CrossX2.Framework.Games.Physics.Coliders;
 using Ssit.CrossX2.Framework.Games.Platformer.Builders;
+using Ssit.CrossX2.Framework.Graphics.Sprites;
 
 namespace Ssit.CrossX2.Framework.Games.Logic.Objects;
 
 public abstract class Switch(GameObjectsServices services, ObjectCreationParameters<Switch.Parameters> parameters)
-    : SpriteGameObject(services, parameters), ISwitch, ILogicOperable
+    : SpriteGameObjectWithState(services, parameters), ISwitch, ILogicOperable, SpriteInstance.IHandler
 {
     [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
     public class Parameters
@@ -87,15 +88,20 @@ public abstract class Switch(GameObjectsServices services, ObjectCreationParamet
         }
     }
 
-    protected override void OnAnimationFinished(string sequenceName)
+    protected override void InitializeSprite(string spritePath)
     {
-        base.OnAnimationFinished(sequenceName);
+        base.InitializeSprite(spritePath);
+        Sprite.Handler = this;
+    }
+
+    void SpriteInstance.IHandler.OnSequenceFinished(SpriteInstance instance, string sequenceName, bool reverse)
+    {
         switch (sequenceName)
         {
             case "TurnOn":
                 SetState("On");
                 break;
-            
+
             case "TurnOff":
                 SetState("Off");
                 break;

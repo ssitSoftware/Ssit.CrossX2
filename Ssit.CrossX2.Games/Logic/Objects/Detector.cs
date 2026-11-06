@@ -6,7 +6,7 @@ using Ssit.CrossX2.Framework.Games.Platformer.Builders;
 namespace Ssit.CrossX2.Framework.Games.Logic.Objects;
 
 public abstract class Detector(GameObjectsServices services, ObjectCreationParameters parameters)
-    : SpriteGameObject(services, parameters), ISwitch
+    : SpriteGameObjectWithState(services, parameters), ISwitch
 {
     void ISwitch.Toggle()
     {

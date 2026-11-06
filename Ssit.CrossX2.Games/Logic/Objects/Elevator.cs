@@ -9,7 +9,7 @@ using Ssit.CrossX2.Framework.Games.Platformer.Builders;
 namespace Ssit.CrossX2.Framework.Games.Logic.Objects;
 
 public abstract class Elevator(GameObjectsServices services, ObjectCreationParameters<Elevator.Parameters> parameters)
-    : SpriteGameObject(services, parameters), ITarget
+    : SpriteGameObjectWithState(services, parameters), ITarget
 {
     [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
     public class Parameters

@@ -5,7 +5,7 @@ namespace Ssit.CrossX2.Framework.Games.Logic.Objects;
 public static class SpriteGameObjectStateMachineExtensions
 {
     public static SpriteGameObjectStateMachine<TObject, TStateObject> WithBehaviorState<TObject, TStateObject>(
-        this SpriteGameObjectStateMachine<TObject, TStateObject> sm, string name, string sequence, SteeringBehavior<TStateObject>[] behaviors) where TObject: SpriteGameObject2, TStateObject
+        this SpriteGameObjectStateMachine<TObject, TStateObject> sm, string name, string sequence, SteeringBehavior<TStateObject>[] behaviors) where TObject: SpriteGameObject, TStateObject
     {
         var state = new SteeringStateWithBehaviors<TStateObject>(name, behaviors);
         
@@ -16,6 +16,6 @@ public static class SpriteGameObjectStateMachineExtensions
 
     public static SpriteGameObjectStateMachine<TObject, TStateObject> WithBehaviorState<TObject, TStateObject>(
         this SpriteGameObjectStateMachine<TObject, TStateObject> sm, string name, params SteeringBehavior<TStateObject>[] behaviors)
-        where TObject : SpriteGameObject2, TStateObject =>
+        where TObject : SpriteGameObject, TStateObject =>
         sm.WithBehaviorState(name, name, behaviors);
 }

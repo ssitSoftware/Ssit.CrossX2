@@ -10,46 +10,7 @@ public static class PhysicsHelpers
 
     public static Func<int, bool> IsOnPlatform;
     
-    public static void DetectOnGround(this SpriteGameObject spriteGameObject, out bool isOnGround, out bool isOnPlatform, out bool isOnStaticGround, out int groundMaterial)
-    {
-        isOnGround = false;
-        isOnPlatform = true;
-        isOnStaticGround = true;
-        groundMaterial = 0;
-
-        var collidesWith = spriteGameObject.Body.Colliders[0].Material.CollidesWith;
-
-        var leftX = spriteGameObject.FaceLeft ? 0.2f : 0.3f;
-        var rightX = spriteGameObject.FaceLeft ? 0.3f : 0.2f;
-
-        var aabb = new Aabb(spriteGameObject.Body.Position - new Vector2(leftX, 0.05f), spriteGameObject.Body.Position + new Vector2(rightX, 0.25f));
-        spriteGameObject.Services.Simulation.CheckCollision(aabb, spriteGameObject.Body, collidesWith,0, QueryList);
-
-        aabb = spriteGameObject.Body.Colliders[0].Aabb;
-        
-        foreach (var collider in QueryList)
-        {
-            if (collider.Aabb.Top < aabb.Bottom - spriteGameObject.Body.Simulation.MovementEpsilon) continue;
-            
-            isOnGround = true;
-
-            isOnPlatform &= IsOnPlatform?.Invoke(collider.Material.Index) ?? false;
-
-            if (collider.Type != ColliderType.Static)
-            {
-                isOnStaticGround = false;
-            }
-
-            groundMaterial = Math.Max(collider.Material.Index, groundMaterial);
-        }
-        
-        isOnStaticGround &= isOnGround;
-        isOnPlatform &= isOnGround;
-        
-        QueryList.Clear();
-    }
-    
-    public static void DetectOnGround(this SpriteGameObject2 spriteGameObject, out bool isOnGround, out bool isOnPlatform, out bool isOnStaticGround, out IMaterial groundMaterial, Vector2 epsilon)
+    public static void DetectOnGround(this SpriteGameObject spriteGameObject, out bool isOnGround, out bool isOnPlatform, out bool isOnStaticGround, out IMaterial groundMaterial, Vector2 epsilon)
     {
         isOnGround = false;
         isOnPlatform = true;
