@@ -101,4 +101,20 @@ public class SteeringInput : ISteeringInputController, IUpdatable
 
     public void SetValue(string id, float value) => _values[id] = value;
     public void SetButtonState(string id, ButtonState buttonState) => _buttonStates[id] = buttonState;
+
+    public void ProcessStatesManually()
+    {
+        foreach (var id in _buttonStates.Keys)
+        {
+            var state = _buttonStates[id];
+            if (state == ButtonState.JustPressed)
+            {
+                _buttonStates[id] = ButtonState.Down;
+            }
+            else if (state == ButtonState.JustReleased)
+            {
+                _buttonStates[id] = ButtonState.Empty;
+            }
+        }
+    }
 }
