@@ -14,6 +14,7 @@ public class MoveHorizontalBehavior : SteeringBehavior<ISteeringCharacter>
         }
 
         var move = obj.SteeringInput.Value(SteeringControlNames.HorizontalMove);
+        var walk = obj.SteeringInput.Button(SteeringControlNames.Walk).IsDown;
 
         if (MathF.Abs(move) > 0.1f)
         {
@@ -21,7 +22,9 @@ public class MoveHorizontalBehavior : SteeringBehavior<ISteeringCharacter>
             var velocity = obj.Body.Velocity;
             var factor = MathF.Max(0.01f, MathF.Min(1, obj.SteeringParameters.GroundMaterial.Friction * obj.Body.Colliders[0].Material.Friction));
 
-            var newX = Math.Clamp(velocity.X + move * physicsValues.Acceleration * dt * factor, -physicsValues.RunSpeed, physicsValues.RunSpeed);
+            var maxSpeed = walk ? physicsValues.WalkSpeed : physicsValues.RunSpeed;
+            
+            var newX = Math.Clamp(velocity.X + move * physicsValues.Acceleration * dt * factor, -maxSpeed, maxSpeed);
 
             obj.Body.Velocity = velocity with { X = newX };
             obj.FaceLeft = move < 0;
@@ -29,7 +32,7 @@ public class MoveHorizontalBehavior : SteeringBehavior<ISteeringCharacter>
             if (IsBlockedAhead(obj, move < 0))
                 return false;
 
-            obj.SetSteeringState(MathF.Abs(newX) < physicsValues.WalkSpeed ? "Walk" : "Run");
+            obj.SetSteeringState(MathF.Abs(newX) <= physicsValues.WalkSpeed ? "Walk" : "Run");
             obj.SteeringParameters.LastHorizontalVelocity = obj.Body.Velocity.X;
         }
         else

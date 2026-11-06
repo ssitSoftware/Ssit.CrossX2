@@ -6,4 +6,5 @@ public interface ISteeringInputController
 {
     void SetValue(string id, float value);
     void SetButtonState(string id, ButtonState buttonState);
+    void ResetManualInput();
 }

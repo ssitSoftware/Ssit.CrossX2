@@ -12,4 +12,6 @@ public static class SteeringControlNames
     public const string AltAttack = nameof(AltAttack);
     public const string Bow = nameof(Bow);
     public const string Shoot = nameof(Shoot);
+    
+    public const string Walk = nameof(Walk);
 }

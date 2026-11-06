@@ -101,6 +101,12 @@ public class SteeringInput : ISteeringInputController, ISteeringInput, IUpdatabl
 
     public void SetValue(string id, float value) => _values[id] = value;
     public void SetButtonState(string id, ButtonState buttonState) => _buttonStates[id] = buttonState;
+    
+    public void ResetManualInput()
+    {
+        _buttonStates.Clear();
+        _values.Clear();
+    }
 
     public void ProcessStatesManually()
     {
