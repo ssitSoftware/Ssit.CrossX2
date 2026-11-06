@@ -15,14 +15,14 @@ public class WallSlidePhysicsBehavior : SteeringBehavior<ISteeringCharacter>
     {
         base.OnEnter(character);
 
-        var parameters = character.GetParameters<Parameters>(true);
+        var parameters = character.GetParameters<Parameters>();
         parameters.CurrentMaxSpeed = 0;
         character.Body.Velocity = Vector2.Zero;
     }
 
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
-        var parameters = obj.GetParameters<Parameters>(true);
+        var parameters = obj.GetParameters<Parameters>();
         
         parameters.CurrentMaxSpeed += dt * obj.PhysicsValues.WallSlideSpeed / obj.PhysicsValues.WallSlideTimeToFullSpeed;
         parameters.CurrentMaxSpeed = MathF.Min(obj.PhysicsValues.WallSlideSpeed, parameters.CurrentMaxSpeed);

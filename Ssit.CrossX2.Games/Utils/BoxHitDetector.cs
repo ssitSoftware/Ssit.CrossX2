@@ -39,7 +39,7 @@ public class BoxHitDetector(Vector2 offset, SizeF size, ColliderType colliderTyp
         var aabb = new Aabb(body.Position + off, size);
 
         _colliderBuffer.Clear();
-        body.Simulation.CheckCollision(aabb, body, collidesWith: collidesWith, colliders: _colliderBuffer, colliderType: colliderType);
+        body.Simulation.CheckCollision(aabb, body, collidesWith: collidesWith, colliders: _colliderBuffer, colliderType: colliderType, debugRegister: true);
 
         _colliderBuffer.Sort((a, b) =>
             faceLeft ? b.Aabb.Right.CompareTo(a.Aabb.Right) : a.Aabb.Left.CompareTo(b.Aabb.Left));

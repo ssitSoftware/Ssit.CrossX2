@@ -7,9 +7,9 @@ using Ssit.CrossX2.Framework.Games.Platformer.Builders;
 
 namespace Ssit.CrossX2.Framework.Games.Logic.Objects.Characters;
 
-public abstract class CharacterObject<TCharacter> : SpriteGameObject2, IBodyEventsReceiver, IActivationHandler, ISteeringCharacter, IPositionObject where TCharacter: CharacterObject<TCharacter>
+public abstract class CharacterObject<TCharacter> : SpriteGameObject, IBodyEventsReceiver, IActivationHandler, ISteeringCharacter, IPositionObject where TCharacter: CharacterObject<TCharacter>
 {
-    TParameters IGameObject.Get<TParameters>(bool create) => GetParameters<TParameters>(create);
+    TParameters IGameObject.Get<TParameters>() => GetParameters<TParameters>();
     SteeringState<ISteeringCharacter> ISteeringCharacter.CurrentSteeringState => SteeringStateMachine.InternalStateMachine.CurrentState;
     
     ISteeringInput ISteeringCharacter.SteeringInput => SteeringInput;
@@ -29,24 +29,8 @@ public abstract class CharacterObject<TCharacter> : SpriteGameObject2, IBodyEven
 
     protected SpriteGameObjectStateMachine<TCharacter, ISteeringCharacter> SteeringStateMachine { get; private set; }
 
-    private readonly Dictionary<Type, object> _parameters = new();
+    TParameters ICharacter.GetParameters<TParameters>() => GetParameters<TParameters>();
 
-    TParameters ICharacter.GetParameters<TParameters>(bool create) => GetParameters<TParameters>(create);
-    
-    protected TParameters GetParameters<TParameters>(bool create)
-    {
-        if (!_parameters.TryGetValue(typeof(TParameters), out var obj))
-        {
-            if (create)
-            {
-                obj = Activator.CreateInstance<TParameters>();
-                _parameters.Add(typeof(TParameters), obj);
-            }
-            else throw new Exception("No parameters of given type.");
-        }
-        return (TParameters)obj;
-    }
-    
     void IBodyEventsReceiver.OnCollision(ICollider source, ICollider other, Vector2 impact)
     {
         SteeringStateMachine.InternalStateMachine.CurrentState?.Collission((TCharacter)this, source, other, impact);

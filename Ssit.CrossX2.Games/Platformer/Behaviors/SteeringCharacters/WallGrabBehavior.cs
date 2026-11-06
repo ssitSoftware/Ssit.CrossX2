@@ -26,7 +26,7 @@ public class WallGrabBehavior(int grabMaterialIndex) : SteeringBehavior<ISteerin
                 ? grabAabb.Value.Center.X - charAabb.Left
                 : grabAabb.Value.Center.X - charAabb.Right;
             var offsetY = grabAabb.Value.Center.Y - charAabb.Center.Y;
-            obj.GetParameters<Parameters>(true).TargetPosition = obj.Body.Position + new Vector2(offsetX, offsetY);
+            obj.GetParameters<Parameters>().TargetPosition = obj.Body.Position + new Vector2(offsetX, offsetY);
             obj.SoundContainer?.Play("WallGrab");
         }
     }
@@ -44,7 +44,7 @@ public class WallGrabBehavior(int grabMaterialIndex) : SteeringBehavior<ISteerin
             return true;
         }
 
-        var targetPosition = obj.GetParameters<Parameters>(true).TargetPosition;
+        var targetPosition = obj.GetParameters<Parameters>().TargetPosition;
         obj.Body.Position = Vector2.Lerp(obj.Body.Position, targetPosition, MathF.Min(1f, 12f * dt));
         return false;
     }

@@ -7,7 +7,7 @@ using Ssit.CrossX2.Framework.Graphics.Lighting;
 
 namespace Ssit.CrossX2.Framework.Games.Logic.Objects;
 
-public abstract class SpotLightObject: SpriteGameObject2, ILightProvider, IGameObjectRenderer
+public abstract class SpotLightObject: SpriteGameObject, ILightProvider, IGameObjectRenderer
 {
     public class Parameters
     {

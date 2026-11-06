@@ -6,7 +6,7 @@ using Ssit.CrossX2.Framework.Graphics.Sprites;
 
 namespace Ssit.CrossX2.Framework.Games.Logic.Objects;
 
-public abstract class CollectibleObject : SpriteGameObject2, ICollectible, SpriteInstance.IHandler
+public abstract class CollectibleObject : SpriteGameObject, ICollectible, SpriteInstance.IHandler
 {
     private readonly string _idleSequence;
     private readonly string _soundId;

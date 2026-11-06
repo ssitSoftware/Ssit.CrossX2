@@ -7,5 +7,5 @@ public interface IGameObject
 {
     ICommonSoundContainer CommonSoundContainer { get; }
     ContextSoundContainer SoundContainer { get; }
-    TParameters Get<TParameters>(bool create = false) where TParameters : class;
+    TParameters Get<TParameters>() where TParameters : class;
 }

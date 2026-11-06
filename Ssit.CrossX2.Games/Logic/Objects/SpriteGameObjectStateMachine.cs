@@ -5,7 +5,7 @@ using Ssit.CrossX2.Framework.Graphics.Sprites;
 
 namespace Ssit.CrossX2.Framework.Games.Logic.Objects;
 
-public class SpriteGameObjectStateMachine<TObject, TStateObject> : SpriteInstance.IHandler, IUpdatable where TObject: SpriteGameObject2, TStateObject
+public class SpriteGameObjectStateMachine<TObject, TStateObject> : SpriteInstance.IHandler, IUpdatable where TObject: SpriteGameObject, TStateObject
 {
     private readonly TObject _obj;
     public SteeringStateMachine<TStateObject> InternalStateMachine { get; }

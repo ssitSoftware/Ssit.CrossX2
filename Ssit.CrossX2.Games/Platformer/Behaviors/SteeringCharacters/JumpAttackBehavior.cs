@@ -16,13 +16,13 @@ public class JumpAttackBehavior : SteeringBehavior<ISteeringCharacter>
     {
         base.OnEnter(character);
 
-        var parameters = character.GetParameters<Parameters>(true);
+        var parameters = character.GetParameters<Parameters>();
         parameters.CanJumpAttack = character.SteeringInput.Button(SteeringControlNames.Jump).IsDown; 
     }
 
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
-        var parameters = obj.GetParameters<Parameters>(true);
+        var parameters = obj.GetParameters<Parameters>();
         parameters.CanJumpAttack &= obj.SteeringInput.Button(SteeringControlNames.Jump).IsDown;
         
         if (!parameters.CanJumpAttack || obj.SteeringInput.Button(SteeringControlNames.Attack) != ButtonState.JustPressed )

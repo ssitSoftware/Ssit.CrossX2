@@ -22,7 +22,7 @@ public class MoveAwayFromCharacterBehavior(string afterState) : SteeringBehavior
         var otherCenterX = other.Aabb.Center.X;
         var ourCenterX = source.Aabb.Center.X;
 
-        var parameters = obj.GetParameters<Parameters>(true);
+        var parameters = obj.GetParameters<Parameters>();
         parameters.MoveDirection = otherCenterX < ourCenterX ? 1f : -1f;
         obj.FaceLeft = parameters.MoveDirection > 0f;
 
@@ -33,7 +33,7 @@ public class MoveAwayFromCharacterBehavior(string afterState) : SteeringBehavior
 
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
-        var parameters = obj.GetParameters<Parameters>(true);
+        var parameters = obj.GetParameters<Parameters>();
         if (parameters.MoveDirection == 0f)
             return false;
 
