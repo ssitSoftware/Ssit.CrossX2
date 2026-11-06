@@ -66,8 +66,32 @@ public static class MapRenderer
     private delegate void RenderObjects(IRenderer renderer, LayerDisplayElement layer, object world, RectangleF bounds, RgbaColor color, bool front);
     
     public static void Render(IRenderer renderer, MapDisplayElement map, ISimulation world, Vector2 cameraLookAt,
-        Size targetSize, IGameTemplate template) =>
+        Size targetSize, IGameTemplate template)
+    {
         Render(renderer, map, RenderGameObjectsSim, world, cameraLookAt, targetSize, template);
+        RenderPostRenderers(renderer, map, world, cameraLookAt, targetSize, template);
+    }
+
+    private static void RenderPostRenderers(IRenderer renderer, MapDisplayElement map, ISimulation world, Vector2 cameraLookAt,
+        Size targetSize, IGameTemplate template)
+    {
+        var tileSize = template.TileSize;
+        var mainLayer = map.Layers.First(o => o.IsMain);
+        var (offset, _) = GetLayerRenderParameters(mainLayer, mainLayer, cameraLookAt, targetSize, tileSize);
+
+        renderer.StateManager.SaveState();
+        renderer.StateManager.Translate(offset);
+
+        foreach (var body in world.Bodies)
+        {
+            if (body.Owner is IGamePostRenderer postRenderer)
+            {
+                postRenderer.Render(renderer);
+            }
+        }
+
+        renderer.StateManager.RestoreState();
+    }
 
     private static void Render(IRenderer renderer, MapDisplayElement map, RenderObjects renderObjects, object world, Vector2 cameraLookAt, Size targetSize, IGameTemplate template)
     {

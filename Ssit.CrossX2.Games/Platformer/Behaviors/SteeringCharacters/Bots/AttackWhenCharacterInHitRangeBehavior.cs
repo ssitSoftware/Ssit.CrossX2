@@ -44,14 +44,16 @@ public class AttackWhenCharacterInHitRangeBehavior(SizeF detectorSize, float det
 
             if (!hittable.IsEnemy(obj))
                 continue;
+
+            if (!hittable.Alive)
+                continue;
             
             obj.SetSteeringState("Attack");
             obj.CommonSoundContainer?.Play("Slash");
+
+            hittable.Hit(new Vector2(obj.FaceLeft ? -1 : 1, 0), attackPower);
             
-            if (hittable.Hit(new Vector2(obj.FaceLeft ? -1 : 1, 0), attackPower))
-            {
-                onAttackSuccessful?.Invoke(obj);
-            }
+            onAttackSuccessful?.Invoke(obj);
             return true;
         }
 
