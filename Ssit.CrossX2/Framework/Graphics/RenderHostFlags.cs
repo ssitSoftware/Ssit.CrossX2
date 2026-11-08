@@ -6,7 +6,8 @@ public enum RenderHostFlags
     MatchWidth = 1,
     MatchHeight = 2,
     ExactSize = MatchWidth | MatchHeight,
-    PixelPerfect = 4,
-    EnableGlowPass = 8,
-    EnableCrtSimulation = 16
+    PixelPerfect = 8,
+    EnableGlowPass = 16,
+    EnableCrtSimulation = 32
+    
 }

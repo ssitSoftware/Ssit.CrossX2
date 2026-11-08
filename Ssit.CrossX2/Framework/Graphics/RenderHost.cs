@@ -257,8 +257,10 @@ internal class RenderHost : IRenderHost
         }
         
         var pos = _renderer.TargetSize.ToVector() / 2f - sourceTexture.Size.ToVector() * scale / 2f;
-        _renderer.SpriteRenderer.Draw(sourceTexture, pos, null, Vector2.Zero, scale: scale);
-
+        var renderArea = new RectangleF(pos, sourceTexture.Size.ToVector() * scale);
+        
+        _renderer.SpriteRenderer.Draw(sourceTexture, renderArea);
+        
         scale *= sourceTexture.Size.Width / (float)_renderTarget.Size.Width;
         
         Transform = Matrix3x2.CreateScale(scale) * Matrix3x2.CreateTranslation(pos);
@@ -272,7 +274,7 @@ internal class RenderHost : IRenderHost
         }
         
         _renderer.StateManager.Reset();
-        _parameters.PostRenderer?.Render();
+        _parameters.PostRenderer?.Render(renderArea);
     }
     
     public void Dispose()
