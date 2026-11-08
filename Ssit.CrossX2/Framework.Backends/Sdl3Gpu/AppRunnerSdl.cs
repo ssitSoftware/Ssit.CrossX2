@@ -232,9 +232,60 @@ internal static class AppRunnerSdl
                         break;
 
                     case SDL_EventType.SDL_EVENT_WINDOW_ENTER_FULLSCREEN:
+                    case SDL_EventType.SDL_EVENT_WINDOW_LEAVE_FULLSCREEN:
+                    {
+                        // SDL only raises these events once it considers the transition
+                        // finalized, so there's no need to force a sync here. Doing so anyway,
+                        // or rebuilding swapchain-sized resources (e.g. the glow effect)
+                        // synchronously on this path, risks landing a window-state call while
+                        // a macOS Space animation is still settling - which can leave SDL's
+                        // internal "pending operation" flag stuck and make every later
+                        // SDL_SyncWindow call block for its full ~2.5s Cocoa timeout. Defer the
+                        // actual resize/rebuild to the next frame instead.
+                        int w, h;
+                        SDL_GetWindowSizeInPixels(window, &w, &h);
+                        var newSize = new Size(w, h);
+
+                        if (eventType == SDL_EventType.SDL_EVENT_WINDOW_LEAVE_FULLSCREEN)
+                        {
+                            appWindowManager.SetWindowed();
+                        }
+
+                        appWindowManager.UpdateSize(newSize);
+
+                        actionScheduler.Schedule(() =>
+                        {
+                            renderHost.Resize(newSize);
+                            component.Resize();
+                        });
+
+                        SDL_SetWindowMouseGrab(window, false);
+                        SDL_SetWindowMouseGrab(window, pointingDevices.LockMouseInWindow);
+
+                        if ((pointingDevices.Mode & PointingDevicesMode.Mouse) == 0)
+                        {
+                            SDL_HideCursor();
+                        }
+
+                        actionScheduler.Schedule(() =>
+                        {
+                            eventSource.OnPause();
+                            eventSource.OnResume();
+                        });
+
+                        if (eventType == SDL_EventType.SDL_EVENT_WINDOW_ENTER_FULLSCREEN)
+                        {
+                            eventSource.OnEnteredFullscreen();
+                        }
+                        else
+                        {
+                            eventSource.OnLeftFullscreen();
+                        }
+                        break;
+                    }
+
                     case SDL_EventType.SDL_EVENT_WINDOW_RESIZED:
                     case SDL_EventType.SDL_EVENT_WINDOW_RESTORED:
-                    case SDL_EventType.SDL_EVENT_WINDOW_LEAVE_FULLSCREEN:
                     {
                         // Make sure the OS-driven transition (e.g. the window's own
                         // fullscreen button) has fully settled before touching swapchain-sized
@@ -244,41 +295,27 @@ internal static class AppRunnerSdl
                         int w, h;
                         SDL_GetWindowSizeInPixels(window, &w, &h);
 
-                        if ((SDL_EventType)@event.type == SDL_EventType.SDL_EVENT_WINDOW_LEAVE_FULLSCREEN)
-                        {
-                            appWindowManager.SetWindowed();
-                        }
-                        
                         appWindowManager.UpdateSize(new Size(w, h));
-                        
+
                         renderHost.Resize(new Size(w, h));
                         component.Resize();
-                        
+
                         SDL_SetWindowMouseGrab(window, false);
                         SDL_SetWindowMouseGrab(window, pointingDevices.LockMouseInWindow);
-                        
+
                         if ((pointingDevices.Mode & PointingDevicesMode.Mouse) == 0)
                         {
                             SDL_HideCursor();
                         }
-                        
+
                         actionScheduler.Schedule(() =>
                         {
                             eventSource.OnPause();
                             eventSource.OnResume();
                         });
-                        
-                        if (eventType == SDL_EventType.SDL_EVENT_WINDOW_ENTER_FULLSCREEN)
-                        {
-                            eventSource.OnEnteredFullscreen();
-                        }
-                        else if (eventType == SDL_EventType.SDL_EVENT_WINDOW_LEAVE_FULLSCREEN)
-                        {
-                            eventSource.OnLeftFullscreen();
-                        }
                         break;
                     }
-                    
+
                     case SDL_EventType.SDL_EVENT_MOUSE_MOTION:
                         break;
                     

@@ -56,8 +56,12 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
             var flags = SDL_GetWindowFlags(window);
             if ((flags & SDL_WindowFlags.SDL_WINDOW_FULLSCREEN) != 0)
             {
+                // Don't SDL_SyncWindow here - the OS will notify us once the transition
+                // actually finishes via SDL_EVENT_WINDOW_LEAVE_FULLSCREEN, which is handled
+                // separately. Force-waiting on it here as well risks colliding with a still-
+                // settling macOS Space animation and tripping SDL's "stuck pending operation"
+                // bug, where every later SDL_SyncWindow call blocks for its full timeout.
                 SDL_SetWindowFullscreen(window, false);
-                SDL_SyncWindow(window);
             }
 
             var size = _lastWindowSize;
@@ -92,8 +96,6 @@ internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, I
                 SDL_SetWindowPosition(window, (int)SDL_WINDOWPOS_CENTERED, (int)SDL_WINDOWPOS_CENTERED);
                 _firstTimeWindowed = false;
             }
-
-            SDL_SyncWindow(window);
         });
 
         return true;
