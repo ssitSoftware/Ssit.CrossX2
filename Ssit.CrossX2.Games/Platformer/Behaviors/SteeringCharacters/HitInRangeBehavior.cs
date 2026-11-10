@@ -10,6 +10,9 @@ namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 public class HitInRangeBehavior(SizeF size, Vector2 offset, float attackPower = 1) : SteeringBehavior<ISteeringCharacter>
 {
     private readonly List<ICollider> _colliders = new();
+
+    /// <summary>Collider groups that can be hit (see <see cref="IMaterial.Bit"/>). Default: everything.</summary>
+    public ulong CollidesWith { get; init; } = IMaterial.AllColliders;
     
     // ReSharper disable once ClassNeverInstantiated.Local
     private class Parameters
@@ -32,7 +35,7 @@ public class HitInRangeBehavior(SizeF size, Vector2 offset, float attackPower = 
         var aabb = new Aabb(center, size);
         
         _colliders.Clear();
-        obj.Body.Simulation.CheckCollision(aabb, obj.Body, colliders: _colliders, colliderType: ColliderType.Dynamic | ColliderType.Trigger, debugRegister: true);
+        obj.Body.Simulation.CheckCollision(aabb, obj.Body, collidesWith: CollidesWith, colliders: _colliders, colliderType: ColliderType.Dynamic | ColliderType.Trigger, debugRegister: true);
 
         foreach (var collider in _colliders)
         {
