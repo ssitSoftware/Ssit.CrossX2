@@ -39,7 +39,7 @@ public class HitInRangeBehavior(SizeF size, Vector2 offset, float attackPower = 
             if (collider.AttachedBody?.Owner is not IHittable { Alive: true } hittable)
                 continue;
 
-            hittable.Hit(new Vector2(obj.FaceLeft ? -1 : 1, 0), attackPower);
+            hittable.Hit(new Vector2(obj.FaceLeft ? -1 : 1, 0), attackPower, obj as IHittable);
         }
         
         return false;

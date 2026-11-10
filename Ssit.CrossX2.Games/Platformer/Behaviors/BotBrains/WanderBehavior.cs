@@ -2,6 +2,7 @@ using Ssit.CrossX2.Framework.Games.Logic;
 using Ssit.CrossX2.Framework.Games.Logic.Objects.Characters;
 using Ssit.CrossX2.Framework.Games.Physics;
 using Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
+using Ssit.CrossX2.Framework.Games.Platformer.Helpers;
 using Ssit.CrossX2.Framework.Input;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.BotBrains;
@@ -46,7 +47,7 @@ public class WanderBehavior(float aheadProbeDistance, float groundProbeDistance)
             ? new Aabb(aabb.Left - aheadProbeDistance, aabb.Top, aabb.Left - 0.01f, wallBottom)
             : new Aabb(aabb.Right + 0.01f, aabb.Top, aabb.Right + aheadProbeDistance, wallBottom);
 
-        if (HasAnyObstacle(body, wallProbe))
+        if (HasAnyObstacle(body, wallProbe, c => c.BlocksHorizontalMove(faceLeft)))
         {
             return true;
         }
@@ -55,19 +56,19 @@ public class WanderBehavior(float aheadProbeDistance, float groundProbeDistance)
             ? new Aabb(aabb.Left - groundProbeDistance, aabb.Bottom - float.Epsilon, aabb.Left - groundProbeDistance + 0.5f, aabb.Bottom + stepUpTolerance)
             : new Aabb(aabb.Right + groundProbeDistance - 0.5f, aabb.Bottom - float.Epsilon, aabb.Right + groundProbeDistance, aabb.Bottom + stepUpTolerance);
 
-        return !HasAnyObstacle(body, groundProbe);
+        return !HasAnyObstacle(body, groundProbe, c => c.IsGround());
     }
 
-    private static bool HasAnyObstacle(IBody body, Aabb probe)
+    private static bool HasAnyObstacle(IBody body, Aabb probe, Func<ICollider, bool> filter)
     {
         var simulation = body.Simulation;
 
-        if (simulation.GetColliders(probe, body, IMaterial.AllColliders, colliderType: ColliderType.Static).Count > 0)
+        if (simulation.GetColliders(probe, body, IMaterial.AllColliders, colliderType: ColliderType.Static).Any(filter))
         {
             return true;
         }
 
         var collidesWith = body.Colliders[0].Material.CollidesWith;
-        return simulation.GetColliders(probe, body, collidesWith, colliderType: ColliderType.Dynamic).Count > 0;
+        return simulation.GetColliders(probe, body, collidesWith, colliderType: ColliderType.Dynamic).Any(filter);
     }
 }

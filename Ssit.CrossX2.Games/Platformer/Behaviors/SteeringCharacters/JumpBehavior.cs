@@ -5,7 +5,7 @@ using Ssit.CrossX2.Framework.Input;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
-public class JumpBehavior(CheckAdditionalGroundHelper additionalGroundHelper) : SteeringBehavior<ISteeringCharacter>
+public class JumpBehavior(CheckAdditionalGroundHelper additionalGroundHelper, string jumpState = "Raise") : SteeringBehavior<ISteeringCharacter>
 {
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
@@ -16,7 +16,7 @@ public class JumpBehavior(CheckAdditionalGroundHelper additionalGroundHelper) : 
             return false;
 
         obj.SoundContainer?.Play("Jump", obj.SteeringParameters.GroundMaterial);
-        obj.SetSteeringState("Raise");
+        obj.SetSteeringState(jumpState);
         return true;
     }
 }

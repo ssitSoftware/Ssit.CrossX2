@@ -1,6 +1,7 @@
 using Ssit.CrossX2.Framework.Games.Logic.Objects.Characters;
 using Ssit.CrossX2.Framework.Games.Logic.Stering;
 using Ssit.CrossX2.Framework.Games.Physics;
+using Ssit.CrossX2.Framework.Games.Platformer.Helpers;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
@@ -53,6 +54,6 @@ public class MoveHorizontalBehavior : SteeringBehavior<ISteeringCharacter>
 
         var collidesWith = obj.Body.Colliders[0].Material.CollidesWith;
         var colliders = obj.Body.Simulation.GetColliders(probe, obj.Body, collidesWith);
-        return colliders.Count > 0;
+        return colliders.Any(c => c.BlocksHorizontalMove(moveLeft));
     }
 }

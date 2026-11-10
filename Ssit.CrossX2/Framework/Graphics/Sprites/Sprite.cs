@@ -40,6 +40,31 @@ public class Sprite: IDisposable
         _sequences = dict;
     }
 
+    /// <summary>
+    /// Returns a sprite that additionally contains sequences built from frame ranges of existing sequences.
+    /// </summary>
+    internal Sprite WithDerivedSequences(IReadOnlyList<Json.JsonSpriteSequenceDescription> derived)
+    {
+        if (derived is null || derived.Count == 0)
+            return this;
+
+        var sequences = new List<SpriteSequence>(_sequences.Values);
+
+        foreach (var desc in derived)
+        {
+            if (!_sequences.TryGetValue(desc.Source, out var source))
+                throw new Exception($"Derived sequence '{desc.Name}': source sequence '{desc.Source}' not found in {SheetName}");
+
+            var start = Math.Clamp(desc.Start, 0, source.Frames.Length - 1);
+            var count = desc.Count > 0 ? Math.Min(desc.Count, source.Frames.Length - start) : source.Frames.Length - start;
+
+            sequences.RemoveAll(o => o.Name == desc.Name);
+            sequences.Add(new SpriteSequence(desc.Name, source.Frames.Skip(start).Take(count).ToArray()));
+        }
+
+        return new Sprite(SheetName, sequences, SourceSize);
+    }
+
     public SpriteSequence GetSequence(string sequenceName)
     {
         return _sequences[sequenceName];

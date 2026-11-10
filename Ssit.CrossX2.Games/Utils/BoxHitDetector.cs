@@ -9,8 +9,8 @@ public class BoxHitDetector(Vector2 offset, SizeF size, ColliderType colliderTyp
     private readonly List<ICollider> _colliderBuffer = new();
 
     private static bool DefaultFilter(IBody _1, IHittable _) => true;
-    
-    public HitTestResult Detect(IBody body, bool faceLeft, ulong collidesWith, Func<IBody, IHittable, bool> filter = null, bool ignoreNoHittable = false)
+
+    public HitTestResult Detect(IBody body, bool faceLeft, ulong collidesWith, Func<IBody, IHittable, bool> filter = null, ColliderSides bodylessSides = ColliderSides.All)
     {
         filter ??= DefaultFilter;
 
@@ -24,7 +24,7 @@ public class BoxHitDetector(Vector2 offset, SizeF size, ColliderType colliderTyp
             if (collider.AttachedBody?.Owner is IHittable { Alive: true } hittable && filter(body, hittable))
                 return new HitTestResult { HitAnything = true, Collider = collider, Hittable = hittable };
 
-            if (collider.Type is ColliderType.Static or ColliderType.Dynamic && !ignoreNoHittable)
+            if (collider.Type is ColliderType.Static or ColliderType.Dynamic && 0 != (collider.Material.Sides & bodylessSides))
                 return new HitTestResult { HitAnything = true, Collider = collider, Hittable = null };
         }
 

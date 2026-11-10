@@ -17,17 +17,28 @@ public class JsonSpriteObjectDescription
         public JObject Parameters { get; set; }
     }
     
+    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local")]
+    private class Sequence
+    {
+        public string Name { get; set; }
+        public string Source { get; set; }
+        public int Start { get; set; }
+        public int Count { get; set; }
+    }
+    
     private class Desc
     {
         public Vector2 Origin { get; set; }
         public SizeF Size { get; set; }
         public Event[] Events { get; set; }
+        public Sequence[] Sequences { get; set; }
     }
     
     public Vector2 Origin { get; }
     public SizeF Size { get; }
     public Size SourceSize { get; }
     public JsonSpriteEventDescription[] Events { get; }
+    public JsonSpriteSequenceDescription[] Sequences { get; }
 
     public JsonSpriteObjectDescription(Vector2 origin, Size sourceSize)
     {
@@ -44,6 +55,7 @@ public class JsonSpriteObjectDescription
         Size = obj.Size;
         SourceSize = sourceSize;
         Events = obj.Events?.Select(o => new JsonSpriteEventDescription(o.Name, o.Sequence, o.Frame, o.Parameters)).ToArray();
+        Sequences = obj.Sequences?.Select(o => new JsonSpriteSequenceDescription(o.Name, o.Source, o.Start, o.Count)).ToArray();
     }
 }
 

@@ -2,11 +2,16 @@ using Ssit.CrossX2.Framework.Games.Logic;
 using Ssit.CrossX2.Framework.Games.Logic.Objects.Characters;
 using Ssit.CrossX2.Framework.Games.Physics;
 using Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
+using Ssit.CrossX2.Framework.Games.Platformer.Helpers;
 using Ssit.CrossX2.Framework.Input;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.BotBrains;
 
-public class JumpOverObstacleBehavior(float probeDistance, string lostTargetStateName, float jumpableHeightFraction = 1f) : Behavior<IBrainCharacter>
+/// <param name="probeDistance">Base distance ahead to look for obstacles.</param>
+/// <param name="lostTargetStateName">Brain state when the obstacle is too tall and the target is beyond it.</param>
+/// <param name="jumpableHeightFraction">Max obstacle height (fraction of collider height) treated as jumpable.</param>
+/// <param name="leadTime">Extra look-ahead time: probe grows by |velocity.X| * leadTime, so characters with a jump wind-up take off earlier.</param>
+public class JumpOverObstacleBehavior(float probeDistance, string lostTargetStateName, float jumpableHeightFraction = 1f, float leadTime = 0f) : Behavior<IBrainCharacter>
 {
     protected override bool OnUpdate(IBrainCharacter obj, float dt)
     {
@@ -16,12 +21,15 @@ public class JumpOverObstacleBehavior(float probeDistance, string lostTargetStat
         var aabb = body.Colliders[0].Aabb;
         var stepUpTolerance = body.StepUpTolerance;
         var faceLeft = obj.FaceLeft;
+        var distance = probeDistance + MathF.Abs(body.Velocity.X) * leadTime;
 
         var probe = faceLeft
-            ? new Aabb(aabb.Left - probeDistance, aabb.Top, aabb.Left - 0.01f, aabb.Bottom - float.Epsilon)
-            : new Aabb(aabb.Right + 0.01f, aabb.Top, aabb.Right + probeDistance, aabb.Bottom - float.Epsilon);
+            ? new Aabb(aabb.Left - distance, aabb.Top, aabb.Left - 0.01f, aabb.Bottom - float.Epsilon)
+            : new Aabb(aabb.Right + 0.01f, aabb.Top, aabb.Right + distance, aabb.Bottom - float.Epsilon);
 
+        // Only colliders with a side facing us can block - one-way platforms are passed through.
         var collidersByDistance = body.Simulation.GetColliders(probe, body, IMaterial.AllColliders, colliderType: ColliderType.Static)
+            .Where(c => c.BlocksHorizontalMove(faceLeft))
             .OrderBy(c => faceLeft ? aabb.Left - c.Aabb.Right : c.Aabb.Left - aabb.Right);
 
         // Walk the probed colliders from nearest to farthest, simulating the step-by-step
@@ -50,6 +58,8 @@ public class JumpOverObstacleBehavior(float probeDistance, string lostTargetStat
         if (obstacleTop > jumpableTop)
         {
             obj.InputController.SetButtonState(SteeringControlNames.Jump, ButtonState.JustPressed);
+            // Keep pushing towards the obstacle so the jump carries the character onto it.
+            obj.InputController.SetValue(SteeringControlNames.HorizontalMove, faceLeft ? -1f : 1f);
             return false;
         }
 

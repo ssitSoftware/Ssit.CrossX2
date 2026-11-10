@@ -82,6 +82,8 @@ public class SpriteEx: IDisposable
             desc = new JsonSpriteObjectDescription(origin, sourceSize);
         }
         
+        sprite = sprite.WithDerivedSequences(desc.Sequences);
+        
         return new SpriteEx(sprite, desc, contentManager);
     }
 

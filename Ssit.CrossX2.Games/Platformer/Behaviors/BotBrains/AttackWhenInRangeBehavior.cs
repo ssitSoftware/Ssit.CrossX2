@@ -24,7 +24,7 @@ public class AttackWhenInRangeBehavior(BoxHitDetector detector) : Behavior<IBrai
         if (target is not { Alive: true })
             return false;
 
-        var result = detector.Detect(obj.Body, obj.FaceLeft, IMaterial.AllColliders, FilterEnemy, true);
+        var result = detector.Detect(obj.Body, obj.FaceLeft, IMaterial.AllColliders, FilterEnemy, ColliderSides.None);
         if (result.Hittable is not { Alive: true })
             return false;
 

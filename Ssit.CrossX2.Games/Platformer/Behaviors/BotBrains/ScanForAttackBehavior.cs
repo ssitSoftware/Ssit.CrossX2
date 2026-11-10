@@ -10,7 +10,7 @@ public class ScanForAttackBehavior(BoxHitDetector detector, string chaseStateNam
 {
     protected override bool OnUpdate(IBrainCharacter obj, float dt)
     {
-        var result = detector.Detect(obj.Body, obj.FaceLeft, IMaterial.AllColliders, FilterEnemy, true);
+        var result = detector.Detect(obj.Body, obj.FaceLeft, IMaterial.AllColliders, FilterEnemy, ColliderSides.None);
 
         if (result.Hittable is not { Alive: true } hittable)
             return false;
