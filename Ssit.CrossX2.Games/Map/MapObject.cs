@@ -54,15 +54,22 @@ public class MapObject
             parametersType = typeof(StaticObjectParameters);
         }
 
-        object paramsObj;
+        object paramsObj = null;
 
-        try
+        if (parametersType != null)
         {
-            paramsObj = JsonConvert.DeserializeObject(parameters, parametersType);
-        }
-        catch
-        {
-            paramsObj = Activator.CreateInstance(parametersType);
+            try
+            {
+                paramsObj = JsonConvert.DeserializeObject(parameters, parametersType);
+            }
+            catch
+            {
+                paramsObj = null;
+            }
+
+            // Empty string (object saved before its type had parameters) deserializes to null - use defaults,
+            // so the editor shows the parameters and the object gets a parameters instance in game.
+            paramsObj ??= Activator.CreateInstance(parametersType);
         }
 
         var mo = new MapObject

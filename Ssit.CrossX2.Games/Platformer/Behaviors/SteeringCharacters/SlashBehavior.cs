@@ -15,9 +15,6 @@ public class SlashBehavior : SteeringBehavior<ISteeringCharacter>
 
     private readonly List<ICollider> _colliders = new();
     private readonly BoxHitDetector _boxHitDetector;
-
-    /// <summary>Collider groups the slash can hit (see <see cref="IMaterial.Bit"/>). Default: everything.</summary>
-    public ulong CollidesWith { get; init; } = IMaterial.AllColliders;
     
     public SlashBehavior(Vector2 offset, SizeF size, params (string, float)[] powers): this(new BoxHitDetector(offset, size), powers)
     {
@@ -38,7 +35,7 @@ public class SlashBehavior : SteeringBehavior<ISteeringCharacter>
         if (!@event.EventName.Contains("Slash")) return false;
         if (!_powers.TryGetValue(@event.EventName, out var power)) return false;
 
-        var result = _boxHitDetector.Detect(obj.Body, obj.FaceLeft, CollidesWith, Filter, ColliderSides.Left | ColliderSides.Right);
+        var result = _boxHitDetector.Detect(obj.Body, obj.FaceLeft, IMaterial.AllColliders, Filter, ColliderSides.Left | ColliderSides.Right);
 
         result.Hittable?.Hit(obj.FaceLeft ? new Vector2(-1, 0) : new Vector2(1, 0), power, obj as IHittable);
 

@@ -21,7 +21,7 @@ public class FlyOverTargetBehavior(string attackState, string loseState) : Steer
     public float HoverRadius { get; init; } = 1.5f;
     /// <summary>How long to hover over the target before attacking.</summary>
     public float HoverTime { get; init; } = 1.5f;
-    public float LoseRange { get; init; } = 16f;
+    public float LoseRange { get; set; } = 16f;
 
     protected override void OnEnter(ISteeringCharacter obj)
     {

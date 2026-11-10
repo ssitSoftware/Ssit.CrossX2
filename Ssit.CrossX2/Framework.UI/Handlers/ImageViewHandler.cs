@@ -97,7 +97,7 @@ public class ImageViewHandler : BackgroundHandler<ImageView>
 
         if (AttachedView.Source != null)
         {
-            AttachedView.Source.ImageChanged += OnImageChanged;
+            AttachedView.Source.ImageChanged -= OnImageChanged;
             AttachedView.Source.Dispose();
         }
     }

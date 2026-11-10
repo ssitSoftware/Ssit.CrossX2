@@ -10,10 +10,24 @@ namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters.F
 /// <summary>
 /// Looks for an enemy (player) in a radius around the object (both sides). When found, stores it as the target,
 /// turns towards it and switches to <paramref name="nextState"/>.
+/// <see cref="Range"/> can be changed later (e.g. when an editor link resolves).
 /// </summary>
 public class DetectTargetInRangeBehavior(float range, string nextState) : SteeringBehavior<ISteeringCharacter>
 {
-    private readonly BoxHitDetector _detector = new(new Vector2(0, -0.5f), new SizeF(range * 2, range * 2));
+    private float _range = range;
+    private BoxHitDetector _detector = CreateDetector(range);
+
+    public float Range
+    {
+        get => _range;
+        set
+        {
+            _range = value;
+            _detector = CreateDetector(value);
+        }
+    }
+
+    private static BoxHitDetector CreateDetector(float range) => new(new Vector2(0, -0.5f), new SizeF(range * 2, range * 2));
 
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
@@ -22,7 +36,7 @@ public class DetectTargetInRangeBehavior(float range, string nextState) : Steeri
         if (result.Hittable is not { Alive: true } target)
             return false;
 
-        if (Vector2.Distance(target.Position, obj.Body.Position) > range)
+        if (Vector2.Distance(target.Position, obj.Body.Position) > _range)
             return false;
 
         obj.FlyingParameters().Target = target;
