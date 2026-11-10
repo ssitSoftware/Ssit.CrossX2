@@ -30,6 +30,8 @@ public class AttackWhenInRangeBehavior(BoxHitDetector detector) : Behavior<IBrai
 
         obj.InputController.SetValue(SteeringControlNames.HorizontalMove, 0f);
         obj.InputController.SetButtonState(SteeringControlNames.Attack, ButtonState.JustPressed);
+        // Got to attack - target is reachable.
+        obj.GetParameters<AttackTargetParameters>().BackoffCount = 0;
         return true;
     }
 

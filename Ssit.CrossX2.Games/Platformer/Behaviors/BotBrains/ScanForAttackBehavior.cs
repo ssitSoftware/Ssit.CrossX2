@@ -10,12 +10,18 @@ public class ScanForAttackBehavior(BoxHitDetector detector, string chaseStateNam
 {
     protected override bool OnUpdate(IBrainCharacter obj, float dt)
     {
+        var parameters = obj.GetParameters<AttackTargetParameters>();
+        if (parameters.IgnoreTimeRemaining > 0)
+        {
+            parameters.IgnoreTimeRemaining -= dt;
+        }
+
         var result = detector.Detect(obj.Body, obj.FaceLeft, IMaterial.AllColliders, FilterEnemy, ColliderSides.None);
 
-        if (result.Hittable is not { Alive: true } hittable)
+        if (result.Hittable is not { Alive: true } hittable || parameters.IsIgnored(hittable))
             return false;
 
-        obj.GetParameters<AttackTargetParameters>().Target = hittable;
+        parameters.SetTarget(hittable);
         obj.SetBrainState(chaseStateName);
         return true;
     }

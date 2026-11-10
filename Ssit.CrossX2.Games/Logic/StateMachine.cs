@@ -2,6 +2,8 @@ namespace Ssit.CrossX2.Framework.Games.Logic;
 
 public sealed class StateMachine<TObject>(TObject obj, Action<string> onStateChanged = null)
 {
+    public bool Debug { get; set; }
+    
     private readonly Dictionary<string, State<TObject>> _states = new();
     private State<TObject> _currentState;
 
@@ -26,6 +28,11 @@ public sealed class StateMachine<TObject>(TObject obj, Action<string> onStateCha
         onStateChanged?.Invoke(state);
 
         _currentState?.Enter(Object);
+        
+        if (Debug)
+        {
+            Console.WriteLine($"StateMachine<{typeof(TObject).Name}>: {state}");
+        }
     }
 
     public void FixedUpdate(float dt) => _currentState?.FixedUpdate(Object, dt);
