@@ -142,10 +142,10 @@ internal class ContentManager: IContentManager, IDisposable
         var name = Path.Combine(Path.GetDirectoryName(path)!, Path.GetFileNameWithoutExtension(path));
         var ext = Path.GetExtension(path).TrimEnd('!');
 
-        var glowPath =  name + ".glow" + ext;
+        var glowPath =  name + ".glow_" + ext;
         var lightPath = name + ".light" + ext;
         
-        var lightAndGlowPath = name + ".light_and_glow" + ext;
+        var lightAndGlowPath = name + ".glow" + ext;
 
         var hasDiffuseImplicit = _filesProvider.FileExists(name + ext);
         var hasDiffuseExplicit = _filesProvider.FileExists(name + ".diffuse" + ext);
