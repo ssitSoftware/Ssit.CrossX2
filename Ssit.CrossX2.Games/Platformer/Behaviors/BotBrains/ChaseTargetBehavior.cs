@@ -4,6 +4,10 @@ using Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.BotBrains;
 
+/// <summary>
+/// Runs toward the current target. Switches to lostTargetStateName when the target is gone/dead,
+/// and to backoffStateName when it is horizontally closer than tooCloseDistance.
+/// </summary>
 public class ChaseTargetBehavior(float tooCloseDistance, string backoffStateName, string lostTargetStateName) : Behavior<IBrainCharacter>
 {
     protected override bool OnUpdate(IBrainCharacter obj, float dt)
@@ -27,6 +31,7 @@ public class ChaseTargetBehavior(float tooCloseDistance, string backoffStateName
             return true;
         }
 
+        // Face the target and run toward it
         obj.FaceLeft = toTarget < 0;
         obj.InputController.SetValue(SteeringControlNames.HorizontalMove, obj.FaceLeft ? -1f : 1f);
         return false;

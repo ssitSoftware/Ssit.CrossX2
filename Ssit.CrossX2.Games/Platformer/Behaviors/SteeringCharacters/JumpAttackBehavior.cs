@@ -4,11 +4,16 @@ using Ssit.CrossX2.Framework.Input;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
+/// <summary>
+/// Combo attack from a jump: if Jump has been held continuously since the state began and Attack is pressed,
+/// the character gets an upward boost and enters "JumpCombo".
+/// </summary>
 public class JumpAttackBehavior : SteeringBehavior<ISteeringCharacter>
 {
     // ReSharper disable once ClassNeverInstantiated.Local
     private sealed class Parameters
     {
+        // Stays true only as long as Jump has been held since entering the state
         public bool CanJumpAttack;
     }
     
@@ -23,6 +28,7 @@ public class JumpAttackBehavior : SteeringBehavior<ISteeringCharacter>
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
         var parameters = ((ICharacter)obj).GetParameters<Parameters>();
+        // Releasing Jump cancels the combo option
         parameters.CanJumpAttack &= obj.SteeringInput.Button(SteeringControlNames.Jump).IsDown;
         
         if (!parameters.CanJumpAttack || obj.SteeringInput.Button(SteeringControlNames.Attack) != ButtonState.JustPressed )

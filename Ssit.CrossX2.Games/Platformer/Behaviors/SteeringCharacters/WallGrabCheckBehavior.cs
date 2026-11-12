@@ -4,6 +4,10 @@ using Ssit.CrossX2.Framework.Games.Physics;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
+/// <summary>
+/// Switches to "WallGrab" when the character is beside a grab point (trigger with grabMaterialIndex)
+/// and the grab area vertically spans the character's body.
+/// </summary>
 public class WallGrabCheckBehavior(int grabMaterialIndex) : SteeringBehavior<ISteeringCharacter>
 {
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)

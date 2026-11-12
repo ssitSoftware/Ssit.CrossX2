@@ -5,6 +5,10 @@ using Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.BotBrains;
 
+/// <summary>
+/// Makes the bot walk downhill: probes the ground just left and right of its feet (down to probeDepth)
+/// and moves toward the lower side. Does nothing on flat ground or when one side has no ground (e.g. a ledge).
+/// </summary>
 public class DescendSlopeBehavior(float probeDepth) : Behavior<IBrainCharacter>
 {
     protected override bool OnUpdate(IBrainCharacter obj, float dt)
@@ -28,6 +32,9 @@ public class DescendSlopeBehavior(float probeDepth) : Behavior<IBrainCharacter>
         return true;
     }
 
+    /// <summary>
+    /// Returns the highest static ground surface in a thin vertical strip at x below fromY, or null if there is none within probeDepth.
+    /// </summary>
     private static float? FindGroundTop(IBody body, float x, float fromY, float probeDepth)
     {
         var probe = new Aabb(x - 0.05f, fromY - float.Epsilon, x + 0.05f, fromY + probeDepth);

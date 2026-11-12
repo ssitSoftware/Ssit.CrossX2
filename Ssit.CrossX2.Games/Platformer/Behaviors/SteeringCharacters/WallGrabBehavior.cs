@@ -5,16 +5,22 @@ using Ssit.CrossX2.Framework.Games.Physics;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
+/// <summary>
+/// Hanging on a grab point (trigger with material grabMaterialIndex). The body is kinematic and smoothly pulled
+/// to the grab point's center; the character falls if the grab area disappears.
+/// </summary>
 public class WallGrabBehavior(int grabMaterialIndex) : SteeringBehavior<ISteeringCharacter>
 {
     // ReSharper disable once ClassNeverInstantiated.Local
     private sealed class Parameters
     {
+        // Position at which the character hangs from the grab point
         public Vector2 TargetPosition;
     }
 
     protected override void OnEnter(ISteeringCharacter obj)
     {
+        // No physics while hanging
         obj.Body.IsKinematic = true;
         obj.Body.Velocity = Vector2.Zero;
 
@@ -22,6 +28,7 @@ public class WallGrabBehavior(int grabMaterialIndex) : SteeringBehavior<ISteerin
         if (grabAabb.HasValue)
         {
             var charAabb = obj.Body.Colliders[0].Aabb;
+            // Compute where the character's facing side must be to align with the grab point's center
             var offsetX = obj.FaceLeft
                 ? grabAabb.Value.Center.X - charAabb.Left
                 : grabAabb.Value.Center.X - charAabb.Right;
@@ -45,10 +52,14 @@ public class WallGrabBehavior(int grabMaterialIndex) : SteeringBehavior<ISteerin
         }
 
         var targetPosition = ((ICharacter)obj).GetParameters<Parameters>().TargetPosition;
+        // Exponential-style smoothing toward the hang position, frame-rate independent via dt
         obj.Body.Position = Vector2.Lerp(obj.Body.Position, targetPosition, MathF.Min(1f, 12f * dt));
         return false;
     }
 
+    /// <summary>
+    /// Finds grab-point triggers in a thin strip on the facing side and returns their union (null if none).
+    /// </summary>
     private Aabb? FindGrabAabb(ISteeringCharacter obj)
     {
         var collidesWith = obj.Body.Colliders[0].Material.CollidesWith;

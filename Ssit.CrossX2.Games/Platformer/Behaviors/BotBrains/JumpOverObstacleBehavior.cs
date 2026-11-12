@@ -11,16 +11,22 @@ namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.BotBrains;
 /// <param name="lostTargetStateName">Brain state when the obstacle is too tall and the target is beyond it.</param>
 /// <param name="jumpableHeightFraction">Max obstacle height (fraction of collider height) treated as jumpable.</param>
 /// <param name="leadTime">Extra look-ahead time: probe grows by |velocity.X| * leadTime, so characters with a jump wind-up take off earlier.</param>
+/// <summary>
+/// Brain behavior: presses Jump when a jumpable obstacle is ahead. When the obstacle is too tall
+/// and the target is on the other side, the target is dropped and the brain switches to <paramref name="lostTargetStateName"/>.
+/// </summary>
 public class JumpOverObstacleBehavior(float probeDistance, string lostTargetStateName, float jumpableHeightFraction = 1f, float leadTime = 0f) : Behavior<IBrainCharacter>
 {
     protected override bool OnUpdate(IBrainCharacter obj, float dt)
     {
+        // Jump is a one-step press: clear it every update
         obj.InputController.SetButtonState(SteeringControlNames.Jump, ButtonState.Empty);
         
         var body = obj.Body;
         var aabb = body.Colliders[0].Aabb;
         var stepUpTolerance = body.StepUpTolerance;
         var faceLeft = obj.FaceLeft;
+        // Look further ahead when moving faster
         var distance = probeDistance + MathF.Abs(body.Velocity.X) * leadTime;
 
         var probe = faceLeft
@@ -51,9 +57,11 @@ public class JumpOverObstacleBehavior(float probeDistance, string lostTargetStat
             break;
         }
 
+        // Nothing but walkable steps ahead
         if (obstacleTop >= float.MaxValue)
             return false;
 
+        // Highest obstacle top the bot can still jump onto (Y grows downward)
         var jumpableTop = aabb.Bottom - aabb.Height * jumpableHeightFraction;
         if (obstacleTop > jumpableTop)
         {
@@ -69,6 +77,7 @@ public class JumpOverObstacleBehavior(float probeDistance, string lostTargetStat
         if (target is not { Alive: true })
             return false;
 
+        // Use the target's edge closest to the bot (or its position when it has no collider)
         var targetNearEdge = (target as ISteeringCharacter)?.Body.Colliders[0].Aabb is { } targetAabb
             ? faceLeft ? targetAabb.Right : targetAabb.Left
             : target.Position.X;

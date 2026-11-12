@@ -6,6 +6,10 @@ using Ssit.CrossX2.Framework.Games.Utils;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.BotBrains;
 
+/// <summary>
+/// Looks for a hostile target in the detector box. A found target (not currently ignored) becomes the attack target
+/// and the brain switches to chaseStateName. Also counts down the ignore time of a previously given-up target.
+/// </summary>
 public class ScanForAttackBehavior(BoxHitDetector detector, string chaseStateName) : Behavior<IBrainCharacter>
 {
     protected override bool OnUpdate(IBrainCharacter obj, float dt)
@@ -26,6 +30,9 @@ public class ScanForAttackBehavior(BoxHitDetector detector, string chaseStateNam
         return true;
     }
 
+    /// <summary>
+    /// Accepts only hittables that are hostile to the owner of the body.
+    /// </summary>
     private static bool FilterEnemy(IBody body, IHittable hittable)
     {
         return (body.Owner as IHittable)?.IsEnemy(hittable as ISteeringCharacter) ?? false;

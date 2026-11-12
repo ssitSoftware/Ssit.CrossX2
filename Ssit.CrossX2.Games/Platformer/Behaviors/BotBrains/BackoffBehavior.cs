@@ -12,11 +12,16 @@ namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.BotBrains;
 /// <param name="maxDuration">Backoff ends after this time even if <paramref name="minDistance"/> wasn't reached (e.g. blocked by a wall).</param>
 /// <param name="maxBackoffs">Give up after this many backoffs in a row without attacking (target is unreachable). 0 = never.</param>
 /// <param name="ignoreTime">After giving up, the target is ignored by scanning and alerts for this long.</param>
+/// <summary>
+/// Brain behavior: walks away from a target that got too close (see <see cref="ChaseTargetBehavior"/>), then returns to chasing.
+/// Counts backoffs in a row and gives the target up as unreachable after <paramref name="maxBackoffs"/>.
+/// </summary>
 public class BackoffBehavior(float duration, string chaseStateName, string lostTargetStateName,
     float minDistance = 0f, float maxDuration = float.MaxValue, int maxBackoffs = 0, float ignoreTime = 4f) : Behavior<IBrainCharacter>
 {
     private class Parameters
     {
+        // Time spent in the current backoff
         public float ElapsedTime;
     }
 
@@ -54,6 +59,7 @@ public class BackoffBehavior(float duration, string chaseStateName, string lostT
             return true;
         }
 
+        // Walk away from the target, facing the walking direction
         var movingLeft = target.Position.X >= obj.Body.Position.X;
         obj.FaceLeft = !movingLeft;
         obj.InputController.SetValue(SteeringControlNames.HorizontalMove, movingLeft ? -1f : 1f);

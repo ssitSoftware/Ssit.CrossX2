@@ -43,12 +43,14 @@ public class FlyOverTargetBehavior(string attackState, string loseState) : Steer
 
         parameters.FlightTime += dt;
 
+        // Horizontal side-to-side sway around the point above the target
         var sway = MathF.Sin(parameters.FlightTime * SwayFrequency * MathF.Tau) * SwayAmplitude;
         var hoverPoint = target.Position + HoverOffset + new Vector2(sway, 0);
 
         var distance = FlightSteering.SteerTowards(obj.Body, hoverPoint, Speed, Acceleration, SlowRadius, dt);
         obj.FaceLeft = target.Position.X < position.X;
 
+        // Only time spent close to the hover point counts toward the attack
         if (distance < HoverRadius)
         {
             parameters.HoverTime += dt;

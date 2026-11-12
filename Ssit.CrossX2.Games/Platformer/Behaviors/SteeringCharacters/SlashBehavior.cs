@@ -9,8 +9,13 @@ using Ssit.CrossX2.Framework.Graphics.Sprites;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
+/// <summary>
+/// Melee attack hit detection driven by sprite events. Events whose name contains "Slash" and that are registered in the
+/// powers table trigger a box hit test in front of the character; the first hittable is hit with that event's power.
+/// </summary>
 public class SlashBehavior : SteeringBehavior<ISteeringCharacter>
 {
+    // Event name -> attack power
     private readonly Dictionary<string, float> _powers = new();
 
     private readonly List<ICollider> _colliders = new();
@@ -35,10 +40,12 @@ public class SlashBehavior : SteeringBehavior<ISteeringCharacter>
         if (!@event.EventName.Contains("Slash")) return false;
         if (!_powers.TryGetValue(@event.EventName, out var power)) return false;
 
+        // Test the hit box in front of the character (facing-aware), only against left/right collider sides
         var result = _boxHitDetector.Detect(obj.Body, obj.FaceLeft, IMaterial.AllColliders, Filter, ColliderSides.Left | ColliderSides.Right);
 
         result.Hittable?.Hit(obj.FaceLeft ? new Vector2(-1, 0) : new Vector2(1, 0), power, obj as IHittable);
 
+        // Small recoil away from the target when the slash connected with anything (also walls)
         if (result.HitAnything)
         {
             obj.Body.Velocity += new Vector2(obj.FaceLeft ? obj.PhysicsValues.AttackVelocity : -obj.PhysicsValues.AttackVelocity, 0);
@@ -47,5 +54,8 @@ public class SlashBehavior : SteeringBehavior<ISteeringCharacter>
         return false;
     }
 
+    /// <summary>
+    /// Override to exclude some targets from being hit (e.g. allies).
+    /// </summary>
     protected virtual bool Filter(IBody body, IHittable hittable) => true;
 }

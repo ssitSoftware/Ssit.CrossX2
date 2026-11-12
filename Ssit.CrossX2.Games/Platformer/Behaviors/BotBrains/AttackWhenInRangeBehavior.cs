@@ -8,16 +8,22 @@ using Ssit.CrossX2.Framework.Input;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.BotBrains;
 
+/// <summary>
+/// Presses Attack (and stops moving) when the current target is alive and inside the detector box in front of the bot.
+/// Reaching an attack resets the backoff counter, as the target is evidently reachable.
+/// </summary>
 public class AttackWhenInRangeBehavior(BoxHitDetector detector) : Behavior<IBrainCharacter>
 {
     protected override void OnLeaveState(IBrainCharacter obj)
     {
         base.OnLeaveState(obj);
+        // Release all buttons/axes so nothing stays "pressed" in the next state
         obj.InputController.ResetManualInput();
     }
 
     protected override bool OnUpdate(IBrainCharacter obj, float dt)
     {
+        // Attack is a one-step press: clear it every update, set it again only when attacking
         obj.InputController.SetButtonState(SteeringControlNames.Attack, ButtonState.Empty);
         
         var target = obj.GetParameters<AttackTargetParameters>().Target;
@@ -35,6 +41,9 @@ public class AttackWhenInRangeBehavior(BoxHitDetector detector) : Behavior<IBrai
         return true;
     }
 
+    /// <summary>
+    /// Accepts only hittables that are hostile to the owner of the body.
+    /// </summary>
     private static bool FilterEnemy(IBody body, IHittable hittable)
     {
         return (body.Owner as IHittable)?.IsEnemy(hittable as ISteeringCharacter) ?? false;

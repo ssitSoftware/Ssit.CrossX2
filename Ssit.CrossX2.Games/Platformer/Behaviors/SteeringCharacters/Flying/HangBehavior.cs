@@ -19,6 +19,7 @@ public class HangBehavior : SingleSteeringBehavior<ISteeringCharacter, HangBehav
     protected override void OnExit(ISteeringCharacter obj)
     {
         obj.Body.IsKinematic = false;
+        // Wake the body up so physics (gravity) applies again immediately
         obj.Body.Touch();
     }
 }

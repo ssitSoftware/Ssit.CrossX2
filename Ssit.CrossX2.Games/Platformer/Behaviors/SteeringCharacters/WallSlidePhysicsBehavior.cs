@@ -4,10 +4,15 @@ using Ssit.CrossX2.Framework.Games.Logic.Stering;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
+/// <summary>
+/// Wall slide movement: no horizontal motion, and the downward speed accelerates from zero up to WallSlideSpeed
+/// over WallSlideTimeToFullSpeed seconds.
+/// </summary>
 public class WallSlidePhysicsBehavior : SteeringBehavior<ISteeringCharacter>
 {
     private class Parameters
     {
+        // Current sliding speed, grows while the slide lasts
         public float CurrentMaxSpeed = 0;
     }
 
@@ -17,6 +22,7 @@ public class WallSlidePhysicsBehavior : SteeringBehavior<ISteeringCharacter>
 
         var parameters = ((ICharacter)character).GetParameters<Parameters>();
         parameters.CurrentMaxSpeed = 0;
+        // Start the slide from standstill
         character.Body.Velocity = Vector2.Zero;
     }
 
@@ -24,6 +30,7 @@ public class WallSlidePhysicsBehavior : SteeringBehavior<ISteeringCharacter>
     {
         var parameters = ((ICharacter)obj).GetParameters<Parameters>();
         
+        // Linear ramp up toward the maximum slide speed
         parameters.CurrentMaxSpeed += dt * obj.PhysicsValues.WallSlideSpeed / obj.PhysicsValues.WallSlideTimeToFullSpeed;
         parameters.CurrentMaxSpeed = MathF.Min(obj.PhysicsValues.WallSlideSpeed, parameters.CurrentMaxSpeed);
 

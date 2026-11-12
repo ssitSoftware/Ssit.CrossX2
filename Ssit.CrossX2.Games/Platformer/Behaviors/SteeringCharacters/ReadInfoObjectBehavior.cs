@@ -6,6 +6,10 @@ using Ssit.CrossX2.Framework.Games.Physics;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
+/// <summary>
+/// When the character overlaps an <see cref="IInfoObject"/> trigger with unread information, posts the text
+/// as an <see cref="InfoMessage"/> and enters the "Read" state.
+/// </summary>
 public class ReadInfoObjectBehavior : SteeringBehavior<ISteeringCharacter>
 {
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)

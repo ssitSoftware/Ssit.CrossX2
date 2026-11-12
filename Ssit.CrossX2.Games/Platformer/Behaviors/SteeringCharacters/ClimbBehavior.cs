@@ -5,11 +5,17 @@ using Ssit.CrossX2.Framework.Games.Physics;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
+/// <summary>
+/// Climbing on a ladder-like surface (collider material climbMaterialIndex) next to the character.
+/// The body is kinematic while climbing and moves up/down with vertical input. Exits: reaching the top (steps onto it and runs),
+/// reaching the bottom or losing the surface (falls), touching the ground (idle).
+/// </summary>
 public class ClimbBehavior(int climbMaterialIndex) : SteeringBehavior<ISteeringCharacter>()
 {
     // ReSharper disable once ClassNeverInstantiated.Local
     private sealed class Parameters
     {
+        // Combined bounds of the climbable surface beside the character (null if none was found)
         public Aabb? ClimbAabb;
     }
 
@@ -18,12 +24,14 @@ public class ClimbBehavior(int climbMaterialIndex) : SteeringBehavior<ISteeringC
         var parameters = ((ICharacter)obj).GetParameters<Parameters>();
         parameters.ClimbAabb = FindClimbAabb(obj);
 
+        // Take over movement: no gravity/physics while climbing, we move the body ourselves
         obj.Body.IsKinematic = true;
         obj.Body.Velocity = Vector2.Zero;
 
         if (parameters.ClimbAabb.HasValue)
         {
             var charAabb = obj.Body.Colliders[0].Aabb;
+            // Snap horizontally so the character's side is flush against the climbable surface
             var offsetX = obj.FaceLeft
                 ? parameters.ClimbAabb.Value.Right - charAabb.Left
                 : parameters.ClimbAabb.Value.Left - charAabb.Right;
@@ -46,6 +54,7 @@ public class ClimbBehavior(int climbMaterialIndex) : SteeringBehavior<ISteeringC
         }
         
         var parameters = ((ICharacter)obj).GetParameters<Parameters>();
+        // Retry the lookup in case the surface was not found on enter
         parameters.ClimbAabb ??= FindClimbAabb(obj);
 
         if (parameters.ClimbAabb == null)
@@ -79,6 +88,7 @@ public class ClimbBehavior(int climbMaterialIndex) : SteeringBehavior<ISteeringC
             return true;
         }
 
+        // Hanging still: stop the climbing sound, stay in place
         if (verticalMove == 0)
         {
             obj.SoundContainer?.StopLoop("Climb");
@@ -86,10 +96,14 @@ public class ClimbBehavior(int climbMaterialIndex) : SteeringBehavior<ISteeringC
         }
 
         obj.SoundContainer?.PlayLoop("Climb");
+        // Move along the surface (negative Y is up)
         obj.Body.KinematicMove(new Vector2(0, verticalMove * obj.PhysicsValues.WallClimbSpeed * dt), KinematicMoveMode.Kinematic);
         return false;
     }
 
+    /// <summary>
+    /// Looks for climbable colliders in a thin strip on the side the character faces and returns their union (null if none).
+    /// </summary>
     private Aabb? FindClimbAabb(ISteeringCharacter obj)
     {
         var collidesWith = obj.Body.Colliders[0].Material.CollidesWith;

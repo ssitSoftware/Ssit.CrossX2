@@ -3,6 +3,9 @@ using Ssit.CrossX2.Framework.Games.Logic.Stering;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
+/// <summary>
+/// Runs at full RunSpeed scaled by horizontal input and plays the looping run sound while the state is active.
+/// </summary>
 public class AutoRunBehavior : SteeringBehavior<ISteeringCharacter>
 {
     protected override void OnExit(ISteeringCharacter obj)

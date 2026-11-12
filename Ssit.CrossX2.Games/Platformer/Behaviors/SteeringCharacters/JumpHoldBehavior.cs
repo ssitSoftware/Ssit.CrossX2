@@ -4,6 +4,9 @@ using Ssit.CrossX2.Framework.Games.Logic.Stering;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
+/// <summary>
+/// Variable jump height: while rising and Jump is held, applies an extra upward acceleration so a longer press jumps higher.
+/// </summary>
 public class JumpHoldBehavior : SteeringBehavior<ISteeringCharacter>
 {
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)

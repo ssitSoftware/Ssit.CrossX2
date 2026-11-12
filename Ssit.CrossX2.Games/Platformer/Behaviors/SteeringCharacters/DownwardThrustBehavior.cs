@@ -4,6 +4,10 @@ using Ssit.CrossX2.Framework.Input;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
+/// <summary>
+/// Downward thrust attack: Attack pressed while Jump is held. Stops horizontal movement, shoots the character down
+/// and enters the "Thrust" state.
+/// </summary>
 public class DownwardThrustBehavior : SteeringBehavior<ISteeringCharacter>
 {
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)

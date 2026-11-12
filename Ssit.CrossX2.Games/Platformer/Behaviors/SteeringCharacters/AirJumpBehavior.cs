@@ -6,10 +6,18 @@ using Ssit.CrossX2.Framework.Input;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
+/// <summary>
+/// Mid-air jump that is only possible while the character's feet overlap a trigger implementing <see cref="IAirJumpPad"/>
+/// (e.g. a bounce pad or floating orb). Consumes the Jump press and launches the character.
+/// </summary>
 public class AirJumpBehavior : SteeringBehavior<ISteeringCharacter>
 {
+    /// <summary>
+    /// Implemented by trigger objects that can launch a character in mid-air.
+    /// </summary>
     public interface IAirJumpPad
     {
+        // Returns true if the pad fired. direction, when set, overrides the launch velocity; otherwise the default jump velocity is used.
         bool Activate(out Vector2? direction);
     }
 
@@ -24,6 +32,7 @@ public class AirJumpBehavior : SteeringBehavior<ISteeringCharacter>
         var collidesWith = obj.Body.Colliders[0].Material.CollidesWith;
         
         var charAabb = obj.Body.Colliders[0].Aabb;
+        // Small box around the feet, slightly inset horizontally, used to find pads the character is touching
         var feetProbe = new Aabb(
             charAabb.Left + 0.1f,
             charAabb.Bottom - 0.2f,
@@ -40,11 +49,14 @@ public class AirJumpBehavior : SteeringBehavior<ISteeringCharacter>
             {
                 obj.SetSteeringState("Raise");
 
+                // Snap to the pad's center so the launch always starts from the same spot
                 obj.Body.Position = collider.Aabb.Center;
                 
+                // Default launch: standard jump height and run speed in the facing direction (Y grows downward, hence the minus)
                 obj.Body.Velocity = obj.Body.Velocity with { Y = -obj.PhysicsValues.JumpVelocity };
                 obj.Body.Velocity = obj.Body.Velocity with { X = obj.FaceLeft ? -obj.PhysicsValues.RunSpeed : obj.PhysicsValues.RunSpeed };
 
+                // A pad-specific direction replaces the default launch velocity and may turn the character
                 if (dir.HasValue)
                 {
                     obj.Body.Velocity = dir.Value;

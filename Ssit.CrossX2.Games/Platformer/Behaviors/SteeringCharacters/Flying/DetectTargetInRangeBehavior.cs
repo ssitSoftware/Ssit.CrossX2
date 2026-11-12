@@ -27,6 +27,7 @@ public class DetectTargetInRangeBehavior(float range, string nextState) : Steeri
         }
     }
 
+    // Square box covering the range on both sides; the exact circular range is checked afterwards
     private static BoxHitDetector CreateDetector(float range) => new(new Vector2(0, -0.5f), new SizeF(range * 2, range * 2));
 
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)

@@ -4,6 +4,9 @@ using Ssit.CrossX2.Framework.Games.Logic.Objects.Characters;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.BotBrains;
 
+/// <summary>
+/// Drops the target and switches to lostTargetStateName when the target gets farther away than maxDistance.
+/// </summary>
 public class LoseTargetBehavior(float maxDistance, string lostTargetStateName) : Behavior<IBrainCharacter>
 {
     protected override bool OnUpdate(IBrainCharacter obj, float dt)

@@ -7,13 +7,19 @@ using Ssit.CrossX2.Framework.Graphics.Sprites;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
+/// <summary>
+/// Damages every living <see cref="IHittable"/> inside a box in front of the character, every fixed update, while the hit window is open.
+/// The window is opened by the "Begin" sprite event and closed by the "End" event (and on enter/exit).
+/// </summary>
 public class HitInRangeBehavior(SizeF size, Vector2 offset, float attackPower = 1) : SteeringBehavior<ISteeringCharacter>
 {
     private readonly List<ICollider> _colliders = new();
     
     // ReSharper disable once ClassNeverInstantiated.Local
+    // Per-character state
     private class Parameters
     {
+        // True between the "Begin" and "End" animation events
         public bool CanHit;
     }
 
@@ -26,6 +32,7 @@ public class HitInRangeBehavior(SizeF size, Vector2 offset, float attackPower = 
         if (!parameters.CanHit)
             return false;
         
+        // Mirror the offset by facing; offset.Y is measured to the box's top, so shift to get the vertical center
         var flippedOffset = new Vector2(obj.FaceLeft ? -offset.X : offset.X, offset.Y - size.Height / 2);
         var center = obj.Body.Position + flippedOffset;
 
@@ -39,6 +46,7 @@ public class HitInRangeBehavior(SizeF size, Vector2 offset, float attackPower = 
             if (collider.AttachedBody?.Owner is not IHittable { Alive: true } hittable)
                 continue;
 
+            // Hit direction is the facing direction
             hittable.Hit(new Vector2(obj.FaceLeft ? -1 : 1, 0), attackPower, obj as IHittable);
         }
         

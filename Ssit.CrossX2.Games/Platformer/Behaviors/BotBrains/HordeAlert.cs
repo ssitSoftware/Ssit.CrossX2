@@ -3,6 +3,9 @@ using Ssit.CrossX2.Framework.Games.Physics;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.BotBrains;
 
+/// <summary>
+/// Helper that spreads a target to nearby <see cref="IHordeMember"/>s.
+/// </summary>
 public static class HordeAlert
 {
     /// <summary>
@@ -15,6 +18,7 @@ public static class HordeAlert
             return;
 
         var position = body.Position;
+        // Square query area around the body (radius on each side)
         var area = new Aabb(position.X - radius, position.Y - radius, position.X + radius, position.Y + radius);
 
         var colliders = body.Simulation.GetColliders(area, body, IMaterial.AllColliders, colliderType: ColliderType.Dynamic);

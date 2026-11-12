@@ -27,12 +27,14 @@ public class DiveAttackBehavior(BoxHitDetector hitBox, string afterState) : Stee
         var parameters = obj.FlyingParameters();
         parameters.StateTime = 0;
 
+        // Without a target dive diagonally down-forward
         var direction = new Vector2(obj.FaceLeft ? -0.5f : 0.5f, 1f);
         if (parameters.Target is { } target)
         {
             direction = target.Position + AimOffset - obj.Body.Position;
         }
 
+        // Normalize; fall back to straight down for a zero vector
         direction = direction.LengthSquared() > 0.0001f ? Vector2.Normalize(direction) : Vector2.UnitY;
 
         parameters.AttackDirection = direction;
@@ -56,12 +58,14 @@ public class DiveAttackBehavior(BoxHitDetector hitBox, string afterState) : Stee
         // Physics zeroes velocity on the blocked axis - terrain stopped the dive.
         var blocked = parameters.StateTime > 0.05f && Vector2.Dot(obj.Body.Velocity, direction) < Speed * 0.5f;
 
+        // Flew past the aim point by more than Overshoot along the dive direction
         var overshot = parameters.Target is { } target &&
                        Vector2.Dot(target.Position + AimOffset - obj.Body.Position, direction) < -Overshoot;
 
         if (blocked || overshot || parameters.StateTime > MaxTime)
             return Finish(obj);
 
+        // Keep constant speed along the locked direction (counteracts gravity)
         obj.Body.Velocity = direction * Speed;
         return false;
     }

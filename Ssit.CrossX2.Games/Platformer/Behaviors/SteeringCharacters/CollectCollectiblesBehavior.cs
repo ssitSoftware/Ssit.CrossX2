@@ -5,6 +5,9 @@ using Ssit.CrossX2.Framework.Games.Physics;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
+/// <summary>
+/// Every fixed update, picks up all active <see cref="ICollectible"/> triggers overlapping the character's collider.
+/// </summary>
 public class CollectCollectiblesBehavior<TObject> : SteeringBehavior<ISteeringCharacter> where TObject: ISteeringCharacter, ICollector
 {
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)

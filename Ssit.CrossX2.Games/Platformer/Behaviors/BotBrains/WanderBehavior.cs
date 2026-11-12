@@ -7,11 +7,16 @@ using Ssit.CrossX2.Framework.Input;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.BotBrains;
 
+/// <summary>
+/// Patrol: walks in the facing direction and turns around at walls or ledges.
+/// aheadProbeDistance is how far ahead walls are checked, groundProbeDistance how far ahead there must be ground.
+/// </summary>
 public class WanderBehavior(float aheadProbeDistance, float groundProbeDistance): Behavior<IBrainCharacter>
 {
     protected override void OnLeaveState(IBrainCharacter obj)
     {
         base.OnLeaveState(obj);
+        // Release movement/walk input so it does not leak into the next state
         obj.InputController.ResetManualInput();
     }
 
@@ -32,16 +37,21 @@ public class WanderBehavior(float aheadProbeDistance, float groundProbeDistance)
         }
 
         obj.InputController.SetValue(SteeringControlNames.HorizontalMove, obj.FaceLeft ? -1f : 1f);
+        // Wander at walk speed
         obj.InputController.SetButtonState(SteeringControlNames.Walk, ButtonState.Down);
         return false;
     }
 
+    /// <summary>
+    /// True if walking in the given direction is blocked by a wall (ignoring small steps) or leads off a ledge.
+    /// </summary>
     private bool IsObstacleAhead(IBrainCharacter obj, bool faceLeft)
     {
         var body = obj.Body;
         var aabb = body.Colliders[0].Aabb;
         var stepUpTolerance = body.StepUpTolerance;
 
+        // Probe stops above StepUpTolerance so walkable steps are not treated as walls
         var wallBottom = aabb.Bottom - (stepUpTolerance + float.Epsilon);
         var wallProbe = faceLeft
             ? new Aabb(aabb.Left - aheadProbeDistance, aabb.Top, aabb.Left - 0.01f, wallBottom)
@@ -52,6 +62,7 @@ public class WanderBehavior(float aheadProbeDistance, float groundProbeDistance)
             return true;
         }
 
+        // Small box at foot level groundProbeDistance ahead - no ground there means a ledge
         var groundProbe = faceLeft
             ? new Aabb(aabb.Left - groundProbeDistance, aabb.Bottom - float.Epsilon, aabb.Left - groundProbeDistance + 0.5f, aabb.Bottom + stepUpTolerance)
             : new Aabb(aabb.Right + groundProbeDistance - 0.5f, aabb.Bottom - float.Epsilon, aabb.Right + groundProbeDistance, aabb.Bottom + stepUpTolerance);
@@ -59,6 +70,9 @@ public class WanderBehavior(float aheadProbeDistance, float groundProbeDistance)
         return !HasAnyObstacle(body, groundProbe, c => c.IsGround());
     }
 
+    /// <summary>
+    /// Checks static colliders, then dynamic ones the body collides with (e.g. moving platforms, other characters).
+    /// </summary>
     private static bool HasAnyObstacle(IBody body, Aabb probe, Func<ICollider, bool> filter)
     {
         var simulation = body.Simulation;

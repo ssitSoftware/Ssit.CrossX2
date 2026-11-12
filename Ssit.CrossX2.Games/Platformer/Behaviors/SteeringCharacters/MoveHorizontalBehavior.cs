@@ -12,6 +12,7 @@ public class MoveHorizontalBehavior : SingleSteeringBehavior<ISteeringCharacter,
 {
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
+        // Ground movement only; air movement is handled by AirSteerBehavior
         if (!obj.SteeringParameters.IsOnGround)
         {
             return false;
@@ -24,6 +25,7 @@ public class MoveHorizontalBehavior : SingleSteeringBehavior<ISteeringCharacter,
         {
             var physicsValues = obj.PhysicsValues;
             var velocity = obj.Body.Velocity;
+            // Traction: slippery ground (low friction) makes acceleration slower
             var factor = MathF.Max(0.01f, MathF.Min(1, obj.SteeringParameters.GroundMaterial.Friction * obj.Body.Colliders[0].Material.Friction));
 
             var maxSpeed = walk ? physicsValues.WalkSpeed : physicsValues.RunSpeed;
@@ -33,6 +35,7 @@ public class MoveHorizontalBehavior : SingleSteeringBehavior<ISteeringCharacter,
             obj.Body.Velocity = velocity with { X = newX };
             obj.FaceLeft = move < 0;
 
+            // Pushing against a wall: keep the facing but do not switch to the Walk/Run animation
             if (IsBlockedAhead(obj, move < 0))
                 return false;
 
@@ -41,11 +44,15 @@ public class MoveHorizontalBehavior : SingleSteeringBehavior<ISteeringCharacter,
         }
         else
         {
+            // No input: go idle (friction slows the body down elsewhere)
             obj.SetSteeringState("Idle");
         }
         return false;
     }
 
+    /// <summary>
+    /// True if something solid blocks the way in the move direction. The probe starts above StepUpTolerance so that small steps do not count.
+    /// </summary>
     private static bool IsBlockedAhead(ISteeringCharacter obj, bool moveLeft)
     {
         var charAabb = obj.Body.Colliders[0].Aabb;

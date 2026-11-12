@@ -6,11 +6,10 @@ using Ssit.CrossX2.Framework.Games.Utils;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters.Bots;
 
-public class EnemyAttackParameters
-{
-    public DateTime LastAttackTime = DateTime.Now;
-}
-
+/// <summary>
+/// Enemy attack trigger: when an enemy of this character (e.g. the player) is alive inside the detector box
+/// and at least timeBetweenAttacks seconds passed since the last attack, lunges forward and enters attackStateName.
+/// </summary>
 public class EnemyAttackDetectionBehavior(BoxHitDetector detector, string attackStateName, float timeBetweenAttacks) : SteeringBehavior<ISteeringCharacter>
 {
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
@@ -34,6 +33,9 @@ public class EnemyAttackDetectionBehavior(BoxHitDetector detector, string attack
         return true;
     }
 
+    /// <summary>
+    /// Accepts only hittables that are hostile to the owner of the body.
+    /// </summary>
     private static bool FilterEnemy(IBody body, IHittable hittable)
     {
         return (body.Owner as IHittable)?.IsEnemy(hittable as ISteeringCharacter) ?? false;

@@ -18,6 +18,7 @@ public class ReturnHomeBehavior(string landState) : SteeringBehavior<ISteeringCh
         var distance = FlightSteering.SteerTowards(obj.Body, home, Speed, Acceleration, SlowRadius, dt);
 
         var velocity = obj.Body.Velocity;
+        // Face the flight direction (ignore near-vertical flight to avoid flicker)
         if (MathF.Abs(velocity.X) > 0.1f)
         {
             obj.FaceLeft = velocity.X < 0;
@@ -26,6 +27,7 @@ public class ReturnHomeBehavior(string landState) : SteeringBehavior<ISteeringCh
         if (distance > ArriveDistance)
             return false;
 
+        // Arrived: snap exactly onto the perch and stop
         obj.Body.Position = home;
         obj.Body.Velocity = Vector2.Zero;
         obj.SetSteeringState(landState);

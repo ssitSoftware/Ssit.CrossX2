@@ -6,6 +6,10 @@ using Ssit.CrossX2.Framework.Graphics.Sprites;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters.Bots;
 
+/// <summary>
+/// <see cref="SlashBehavior"/> for enemies: only hits hostile targets (not other enemies)
+/// and records the slash time for the attack cooldown in <see cref="EnemyAttackParameters"/>.
+/// </summary>
 public class EnemySlashBehavior(BoxHitDetector detector, params (string, float)[] powers) : SlashBehavior(detector, powers)
 {
     protected override bool OnEvent(ISteeringCharacter obj, ISpriteEvent @event)

@@ -4,10 +4,18 @@ using Ssit.CrossX2.Framework.Input;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
+/// <summary>
+/// Starts a ground attack when the given control is pressed: lunges forward with AttackVelocity and switches to attackStateName.
+/// Presses are ignored while the post-attack cooldown (<see cref="AttackingData.NextAttackTimeout"/>) is running.
+/// </summary>
 public class AttackBehavior(string control, string attackStateName) : SteeringBehavior<ISteeringCharacter>
 {
+    /// <summary>
+    /// Per-character attack state.
+    /// </summary>
     public class AttackingData
     {
+        // Remaining cooldown in seconds before another attack may start
         public float NextAttackTimeout;
     }
 

@@ -4,6 +4,9 @@ using Ssit.CrossX2.Framework.Games.Platformer.Helpers;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
+/// <summary>
+/// Switches to "Fall" as soon as the character is no longer standing on ground (walked off a ledge, platform vanished).
+/// </summary>
 public class CheckFallBehavior(CheckAdditionalGroundHelper additionalGroundHelper) : SteeringBehavior<ISteeringCharacter>
 {
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)

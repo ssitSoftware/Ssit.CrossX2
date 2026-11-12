@@ -6,6 +6,11 @@ using Ssit.CrossX2.Framework.Utils;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
+/// <summary>
+/// Plays sounds in response to sprite animation events (e.g. footsteps on specific frames).
+/// Mapping is event name -> sound name. A sound entry may contain several comma-separated names, one is chosen at random.
+/// Pitch is randomized between <see cref="MinPitch"/> and <see cref="MaxPitch"/>.
+/// </summary>
 public class EventToSoundBehavior: SteeringBehavior<ISteeringCharacter>
 {
     private readonly Dictionary<string, string> _mapping = new();
@@ -13,6 +18,7 @@ public class EventToSoundBehavior: SteeringBehavior<ISteeringCharacter>
     public float MinPitch { get; set; } = 1f;
     public float MaxPitch { get; set; } = 1f;
     
+    // Each event plays the sound with the same name
     public EventToSoundBehavior(params string[] names)
     {
         foreach (var name in names)
@@ -21,6 +27,7 @@ public class EventToSoundBehavior: SteeringBehavior<ISteeringCharacter>
         }
     }
     
+    // Explicit event name -> sound name mapping
     public EventToSoundBehavior(params (string name, string sound)[] events)
     {
         foreach (var evnt in events)
@@ -33,12 +40,14 @@ public class EventToSoundBehavior: SteeringBehavior<ISteeringCharacter>
     {
         if (_mapping.TryGetValue(@event.EventName, out var snd))
         {
+            // Several variants: pick one at random
             if (snd.Contains(','))
             {
                 var snds = snd.Split(',');
                 snd = snds[MersenneTwister.Shared.Next(snds.Length)];
             }
             var pitch = MersenneTwister.Shared.NextSingle() * (MaxPitch - MinPitch) + MinPitch;
+            // Without a character sound set, fall back to the shared sounds; otherwise let the container choose a variant for the ground material
             if (obj.SoundContainer is null)
             {
                 obj.CommonSoundContainer.Play(snd, pitch: pitch, emitter: obj as ISoundEmitter);

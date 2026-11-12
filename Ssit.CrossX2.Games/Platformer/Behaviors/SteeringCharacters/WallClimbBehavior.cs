@@ -5,11 +5,17 @@ using Ssit.CrossX2.Framework.Games.Physics;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
+/// <summary>
+/// Automatic climb up a wall made of the wallClimbMaterialIndex material.
+/// The body is kinematic and moves up at WallClimbSpeed until it reaches the top (then steps onto it and runs);
+/// it falls if the wall is lost or the movement is blocked.
+/// </summary>
 public class WallClimbBehavior(int wallClimbMaterialIndex) : SteeringBehavior<ISteeringCharacter>()
 {
     // ReSharper disable once ClassNeverInstantiated.Local
     private sealed class Parameters
     {
+        // Combined bounds of the climbable wall beside the character
         public Aabb? ClimbAabb;
     }
     
@@ -18,12 +24,14 @@ public class WallClimbBehavior(int wallClimbMaterialIndex) : SteeringBehavior<IS
         var parameters = ((ICharacter)obj).GetParameters<Parameters>();
         parameters.ClimbAabb = FindClimbAabb(obj);
         
+        // Take over movement: no gravity/physics while climbing
         obj.Body.IsKinematic = true;
         obj.Body.Velocity = Vector2.Zero;
 
         if (parameters.ClimbAabb.HasValue)
         {
             var charAabb = obj.Body.Colliders[0].Aabb;
+            // Snap horizontally so the character is flush against the wall
             var offsetX = obj.FaceLeft
                 ? parameters.ClimbAabb.Value.Right - charAabb.Left
                 : parameters.ClimbAabb.Value.Left - charAabb.Right;
@@ -48,6 +56,7 @@ public class WallClimbBehavior(int wallClimbMaterialIndex) : SteeringBehavior<IS
             return true;
         }
 
+        // Start the looped climbing sound (repeated call is expected to be harmless)
         obj.SoundContainer?.PlayLoop("Climb");
         
         var charAabb = obj.Body.Colliders[0].Aabb;
@@ -65,6 +74,7 @@ public class WallClimbBehavior(int wallClimbMaterialIndex) : SteeringBehavior<IS
 
         var previousPosition = obj.Body.Position;
         obj.Body.KinematicMove(new Vector2(0, -obj.PhysicsValues.WallClimbSpeed * dt), KinematicMoveMode.Kinematic);
+        // Blocked (e.g. ceiling) - the body did not move up, so let go
         if (obj.Body.Position.Y >= previousPosition.Y)
         {
             obj.SetSteeringState("Fall");
@@ -73,6 +83,10 @@ public class WallClimbBehavior(int wallClimbMaterialIndex) : SteeringBehavior<IS
         return false;
     }
 
+    /// <summary>
+    /// Looks for wall-climb colliders in a thin strip on the facing side and returns their union (null if none).
+    /// The probe ends slightly above the feet so the floor is not detected.
+    /// </summary>
     private Aabb? FindClimbAabb(ISteeringCharacter obj)
     {
         var collidesWith = obj.Body.Colliders[0].Material.CollidesWith;
