@@ -3,6 +3,9 @@ using Ssit.CrossX2.Framework.Input.Internal;
 
 namespace Ssit.CrossX2.Framework.Input;
 
+/// <summary>
+/// Tracks mouse and touch pointers and applies pointer coordinate transforms.
+/// </summary>
 public interface IPointingDevices
 {
     bool LockMouseInWindow { get; set; }

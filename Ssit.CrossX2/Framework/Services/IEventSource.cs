@@ -1,5 +1,8 @@
 namespace Ssit.CrossX2.Framework.Services;
 
+/// <summary>
+/// Publishes application lifecycle, frame update and fullscreen transition events.
+/// </summary>
 public interface IEventSource
 {
     event Action<float> Updating;

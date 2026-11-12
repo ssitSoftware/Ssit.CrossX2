@@ -2,6 +2,9 @@ using System.Numerics;
 
 namespace Ssit.CrossX2.Framework.Input;
 
+/// <summary>
+/// Represents a mouse or touch pointer with current state, position and transform history.
+/// </summary>
 public sealed class Pointer(int id)
 {
     public int Id { get; } = id;

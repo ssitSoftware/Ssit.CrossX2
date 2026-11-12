@@ -3,6 +3,9 @@ using Ssit.CrossX2.Framework.Services;
 
 namespace Ssit.CrossX2.Framework.Audio;
 
+/// <summary>
+/// Stores named sound effects and reuses their instances when playing common one-shot sounds.
+/// </summary>
 internal class CommonSoundContainer(IContentManager contentManager, IActionScheduler scheduler, ISoundListener listener = null) : ICommonSoundContainer, IDisposable
 {
     private readonly Dictionary<string, (ResourceHandle<ISoundEffect>, float, List<ISoundEffectInstance>)> _sounds = new();

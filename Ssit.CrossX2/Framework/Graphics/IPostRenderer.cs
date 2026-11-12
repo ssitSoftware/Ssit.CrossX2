@@ -1,7 +1,7 @@
 namespace Ssit.CrossX2.Framework.Graphics;
 
 /// <summary>
-/// Custom drawing performed directly on the screen after the render host has presented the game frame
+/// Custom drawing performed directly on the screen after the render host has rendered the game frame
 /// (e.g. overlays rendered at native resolution).
 /// </summary>
 public interface IPostRenderer: IDisposable

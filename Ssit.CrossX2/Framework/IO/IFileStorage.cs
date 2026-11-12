@@ -1,5 +1,8 @@
 namespace Ssit.CrossX2.Framework.IO;
 
+/// <summary>
+/// Reads and writes persistent application files.
+/// </summary>
 public interface IFileStorage
 {
     string ReadText(string path);

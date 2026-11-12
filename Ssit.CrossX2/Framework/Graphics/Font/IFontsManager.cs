@@ -19,7 +19,7 @@ public interface IFontsManager
     void SetDefaultFont(string name);
     
     /// <summary>
-    /// Loads font definitions from a JSON stream and initializes the fonts' collection.
+    /// Loads font definitions from a JSON file and initializes the fonts' collection.
     /// </summary>
     /// <param name="fontsJsonPath">A path to the JSON data describing the fonts.</param>
     void LoadFonts(string fontsJsonPath);
@@ -44,7 +44,6 @@ public interface IFontsManager
     /// </summary>
     /// <param name="name">The name of the font to retrieve.</param>
     /// <param name="size">The size of the font to retrieve.</param>
-    /// <param name="scaleMode">Mode for scaling</param>
-    /// <returns>Pair of an <see cref="IFont"/> instance corresponding to the specified name and size, or null if not found and scaling factor.</returns>
+    /// <returns>An <see cref="IFont"/> instance corresponding to the specified name and size, or null if not found.</returns>
     IFont GetFont(string name, float size = 0);
 }

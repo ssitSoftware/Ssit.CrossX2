@@ -4,6 +4,9 @@ using Ssit.CrossX2.Framework.Backends.Sdl3Gpu;
 
 namespace Ssit.CrossX2.Framework.Core;
 
+/// <summary>
+/// Starts a CrossX2 application on desktop platforms.
+/// </summary>
 public static class AppRunner
 {
     public static void Run(IAppInitializer appInitializer, InitializeServicesDelegate registerServices = null, InitializeAppDelegate configure = null) 

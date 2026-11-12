@@ -1,8 +1,7 @@
 namespace Ssit.CrossX2.Framework.Audio;
 
 /// <summary>
-/// SoundParameters struct holds various properties and parameters related to sound effects.
-/// It is used in conjunction with sound emitting structures and interfaces to provide detailed control over sound playback characteristics.
+/// Playback parameters for a sound effect, including volume, pitch and stereo pan.
 /// </summary>
 public readonly record struct SoundParameters(float Volume, float Pitch = 1, float Pan = 0)
 {

@@ -1,5 +1,8 @@
 namespace Ssit.CrossX2.Framework.Core;
 
+/// <summary>
+/// Base wrapper that forwards application component lifecycle calls to another component.
+/// </summary>
 public abstract class WrapperAppComponent(IAppComponent component) : IAppComponent
 {
     void IDisposable.Dispose() => OnDispose();

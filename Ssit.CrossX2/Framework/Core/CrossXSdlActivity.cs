@@ -11,6 +11,9 @@ using Ssit.CrossX2.Framework.Services.Internal;
 
 namespace Ssit.CrossX2.Framework.Core;
 
+/// <summary>
+/// Android SDL activity base class for running a CrossX2 application.
+/// </summary>
 public abstract class CrossXSdlActivity : SDLActivity
 {
     private EventSource _eventSource;

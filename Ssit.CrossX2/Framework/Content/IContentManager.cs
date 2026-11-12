@@ -2,6 +2,9 @@ using Ssit.CrossX2.Framework.IO;
 
 namespace Ssit.CrossX2.Framework.Content;
 
+/// <summary>
+/// Loads, caches and releases typed content resources through disposable handles.
+/// </summary>
 public interface IContentManager
 {
     /// <summary>

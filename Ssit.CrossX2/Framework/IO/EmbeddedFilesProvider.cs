@@ -2,6 +2,9 @@ using System.Reflection;
 
 namespace Ssit.CrossX2.Framework.IO;
 
+/// <summary>
+/// Serves files from an assembly's embedded resources.
+/// </summary>
 public class EmbeddedFilesProvider: IFilesProvider
 {
     private Assembly _assembly;

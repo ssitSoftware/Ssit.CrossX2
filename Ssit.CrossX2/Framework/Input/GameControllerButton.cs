@@ -1,7 +1,7 @@
 namespace Ssit.CrossX2.Framework.Input;
 
 /// <summary>
-/// Indicates the movement of the right analog stick toward the left direction on a game controller.
+/// Defines digital buttons and directional virtual buttons available on a game controller.
 /// </summary>
 public enum GameControllerButton
 {

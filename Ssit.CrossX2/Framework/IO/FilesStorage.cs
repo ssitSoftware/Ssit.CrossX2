@@ -1,5 +1,8 @@
 namespace Ssit.CrossX2.Framework.IO;
 
+/// <summary>
+/// Stores application data files under the user's local application data directory.
+/// </summary>
 public class FilesStorage(string appName) : IFileStorage
 {
     public string ReadText(string path)

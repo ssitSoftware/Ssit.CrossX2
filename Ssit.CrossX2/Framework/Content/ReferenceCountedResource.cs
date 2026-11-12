@@ -1,5 +1,8 @@
 namespace Ssit.CrossX2.Framework.Content;
 
+/// <summary>
+/// Wraps a disposable resource and releases it after the last cloned reference is disposed.
+/// </summary>
 public class ReferenceCountedResource<TResource>: IDisposable where TResource : class, IDisposable
 {
     private class ResourceWithCounter(TResource resource)

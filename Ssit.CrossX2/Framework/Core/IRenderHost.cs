@@ -2,6 +2,9 @@ using System.Numerics;
 
 namespace Ssit.CrossX2.Framework.Core;
 
+/// <summary>
+/// Owns render-host scaling state and coordinate transforms for the current frame.
+/// </summary>
 public interface IRenderHost : IDisposable
 {
     public Matrix3x2 Transform { get; }

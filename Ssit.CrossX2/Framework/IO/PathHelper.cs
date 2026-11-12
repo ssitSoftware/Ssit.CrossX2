@@ -1,5 +1,8 @@
 namespace Ssit.CrossX2.Framework.IO;
 
+/// <summary>
+/// Utility methods for normalized virtual file paths.
+/// </summary>
 public static class PathHelper
 {
     public static string NormalizePath(string path)

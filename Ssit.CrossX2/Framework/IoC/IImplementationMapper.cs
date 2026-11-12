@@ -2,6 +2,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Ssit.CrossX2.Framework.IoC;
 
+/// <summary>
+/// Resolves registered concrete implementation types for abstract service types.
+/// </summary>
 public interface IImplementationMapper
 {
     /// <summary>

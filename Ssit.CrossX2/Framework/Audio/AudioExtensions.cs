@@ -2,6 +2,9 @@ using Ssit.CrossX2.Framework.IoC;
 
 namespace Ssit.CrossX2.Framework.Audio;
 
+/// <summary>
+/// Provides IoC registration helpers for audio services.
+/// </summary>
 public static class AudioExtensions
 {
     public static IIoCContainerBuilder WithCommonSoundsContainer(this IIoCContainerBuilder builder)

@@ -2,6 +2,9 @@ using System.Reflection;
 
 namespace Ssit.CrossX2.Framework.IO;
 
+/// <summary>
+/// Copies files from another provider into application data and serves them from that cache.
+/// </summary>
 public class CacheFilesProvider: IFilesProvider
 {
     private readonly string _dir;

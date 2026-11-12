@@ -1,5 +1,8 @@
 namespace Ssit.CrossX2.Framework.Input;
 
+/// <summary>
+/// Provides readable and writable virtual game controller input state.
+/// </summary>
 public interface IVirtualGameInput
 {
     ButtonState GetButton(GameControllerButton button);

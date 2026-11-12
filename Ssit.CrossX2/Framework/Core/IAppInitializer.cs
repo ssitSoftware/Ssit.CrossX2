@@ -3,6 +3,9 @@ using Ssit.CrossX2.Framework.IoC;
 
 namespace Ssit.CrossX2.Framework.Core;
 
+/// <summary>
+/// Configures services and creates the root application component.
+/// </summary>
 public interface IAppInitializer
 {
     string WindowTitle { get; }

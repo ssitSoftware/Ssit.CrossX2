@@ -9,6 +9,9 @@ using Ssit.CrossX2.Framework.Input;
 
 namespace Ssit.CrossX2.Framework.Core
 {
+    /// <summary>
+    /// Starts a CrossX2 application on iOS through SDL's app entry point.
+    /// </summary>
     public static class AppRunner
     {
         private static Action _runAction;

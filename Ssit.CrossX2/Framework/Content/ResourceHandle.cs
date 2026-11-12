@@ -1,5 +1,8 @@
 namespace Ssit.CrossX2.Framework.Content;
 
+/// <summary>
+/// Disposable reference to a named loaded resource.
+/// </summary>
 public abstract class ResourceHandle<TResource> : IDisposable where TResource : class
 {
     /// <summary>
@@ -59,6 +62,9 @@ public class ResourceHandleManaged<TResource> : ResourceHandle<TResource> where 
     public override ResourceHandle<TResource> Clone() => _cloneDelegate();
 }
 
+/// <summary>
+/// Resource handle that owns an unmanaged content instance directly.
+/// </summary>
 public class ResourceHandleUnmanaged<TResource>(TResource resource, string name, bool dispose = true)
     : ResourceHandle<TResource>(resource, name)
     where TResource : class, IDisposable

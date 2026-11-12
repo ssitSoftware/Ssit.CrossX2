@@ -1,5 +1,8 @@
 namespace Ssit.CrossX2.Framework.IO;
 
+/// <summary>
+/// Reads files directly from the local filesystem.
+/// </summary>
 public class LocalFilesProvider : IFilesProvider
 {
     public Stream Open(string path)
@@ -32,6 +35,9 @@ public class LocalFilesProvider : IFilesProvider
     }
 }
 
+/// <summary>
+/// Reads bundled application resources from the discovered bundle resources directory.
+/// </summary>
 public class BundleFilesProvider: IFilesProvider
 {
     private readonly string _bundleDir = "";

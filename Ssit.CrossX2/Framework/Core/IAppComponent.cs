@@ -1,5 +1,8 @@
 namespace Ssit.CrossX2.Framework.Core;
 
+/// <summary>
+/// Root application component driven by the framework lifecycle.
+/// </summary>
 public interface IAppComponent: IDisposable
 {
     void Initialize();

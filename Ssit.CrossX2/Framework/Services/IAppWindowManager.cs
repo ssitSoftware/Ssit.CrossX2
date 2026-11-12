@@ -1,5 +1,8 @@
 namespace Ssit.CrossX2.Framework.Services;
 
+/// <summary>
+/// Window sizing behavior used when the application runs in windowed mode.
+/// </summary>
 public enum WindowedMode
 {
     None = 0,
@@ -7,6 +10,9 @@ public enum WindowedMode
     KeepSize = 2,
 }
 
+/// <summary>
+/// Controls the application window state, size, title and close lifecycle.
+/// </summary>
 public interface IAppWindowManager
 {
     bool IsFullscreen { get; }

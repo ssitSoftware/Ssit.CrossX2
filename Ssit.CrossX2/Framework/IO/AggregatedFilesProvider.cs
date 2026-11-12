@@ -1,5 +1,8 @@
 namespace Ssit.CrossX2.Framework.IO;
 
+/// <summary>
+/// Routes virtual drive paths to one or more files providers.
+/// </summary>
 public class AggregatedFilesProvider: IFilesProvider
 {
     private readonly Dictionary<string, IFilesProvider[]> _fileProviders = new();

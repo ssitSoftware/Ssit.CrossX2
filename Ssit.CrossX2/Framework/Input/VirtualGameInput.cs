@@ -1,5 +1,8 @@
 namespace Ssit.CrossX2.Framework.Input;
 
+/// <summary>
+/// In-memory game input source whose button and axis states can be set programmatically.
+/// </summary>
 internal class VirtualGameInput : IVirtualGameInput
 {
     private readonly Dictionary<GameControllerButton, ButtonState> _buttonStates = new();

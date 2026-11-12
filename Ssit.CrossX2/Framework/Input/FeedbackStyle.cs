@@ -1,5 +1,8 @@
 namespace Ssit.CrossX2.Framework.Input;
 
+/// <summary>
+/// Identifies the kind of haptic feedback to play.
+/// </summary>
 public enum FeedbackStyle
 {
     ButtonRelease,
@@ -10,6 +13,9 @@ public enum FeedbackStyle
     RumbleHeavy,
 }
 
+/// <summary>
+/// Configures how much haptic feedback is allowed.
+/// </summary>
 public enum FeedbackLevel
 {
     Disabled = 0,
