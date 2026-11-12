@@ -5,6 +5,11 @@ using Ssit.CrossX2.Framework.Utils;
 
 namespace Ssit.CrossX2.Framework.Graphics;
 
+/// <summary>
+/// Splits a color-coded image into one mask texture per palette color. Each pixel is assigned to the nearest palette color;
+/// the resulting textures are white masks (with glow taken from the diffuse) that can be tinted freely at runtime.
+/// The returned <see cref="TextureArray"/> has one entry per palette color (null where the color is not used).
+/// </summary>
 public class TextureArrayLoader(IFilesProvider filesProvider, IIoCContainer container, RgbaColor[] palette)
 {
     private class Map
@@ -12,6 +17,9 @@ public class TextureArrayLoader(IFilesProvider filesProvider, IIoCContainer cont
         public RgbaColor[,] Colors;
     }
 
+    /// <summary>
+    /// Loads the image at path and returns a <see cref="TextureArray"/>. Errors are logged to the console and rethrown.
+    /// </summary>
     public IDisposable Load(string path)
     {
         try
@@ -41,6 +49,7 @@ public class TextureArrayLoader(IFilesProvider filesProvider, IIoCContainer cont
                 if (color.A == 0)
                     continue;
                 
+                // Find the nearest palette color for this pixel
                 var dist = float.MaxValue;
                 var index = -1;
                 

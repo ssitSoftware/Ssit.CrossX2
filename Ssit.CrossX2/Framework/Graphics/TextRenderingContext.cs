@@ -3,14 +3,36 @@ using Ssit.CrossX2.Framework.Text;
 
 namespace Ssit.CrossX2.Framework.Graphics;
 
+/// <summary>
+/// Cached text layout (lines and size). Reused between frames so text is laid out again only when
+/// text, font, spacing, width or line spacing change (see <see cref="IsValid"/>).
+/// </summary>
 public class TextRenderingContext
 {
+    /// <summary>
+    /// One laid-out line.
+    /// </summary>
     public struct LineDefinition
     {
+        /// <summary>
+        /// Line width in pixels.
+        /// </summary>
         public float Width;
+        /// <summary>
+        /// Text of the line.
+        /// </summary>
         public TextSource Text;
+        /// <summary>
+        /// Number of whitespace characters (used for justification).
+        /// </summary>
         public int Whitespaces;
+        /// <summary>
+        /// True if the line ends a paragraph (not justified).
+        /// </summary>
         public bool EndOfParagraph;
+        /// <summary>
+        /// Extra vertical space after the line (paragraph/line spacing).
+        /// </summary>
         public float Spacing;
     }
 
@@ -20,6 +42,9 @@ public class TextRenderingContext
     private int _textHashCode = -1;
     private int _targetWidth;
     
+    /// <summary>
+    /// Laid-out lines.
+    /// </summary>
     public List<LineDefinition> Lines { get; } = new ();
 
     private float _width;
@@ -28,8 +53,14 @@ public class TextRenderingContext
 
     internal IGlyphFont Font => _font;
     
+    /// <summary>
+    /// Wrapping width used for the layout (0 = no wrapping).
+    /// </summary>
     public float TargetWidth => _targetWidth;
     
+    /// <summary>
+    /// Width of the widest line (computed lazily).
+    /// </summary>
     public float Width
     {
         get
@@ -52,6 +83,9 @@ public class TextRenderingContext
         }
     }
     
+    /// <summary>
+    /// Total height of all lines including spacing (computed lazily).
+    /// </summary>
     public float Height
     {
         get
@@ -74,6 +108,10 @@ public class TextRenderingContext
         }
     }
 
+    /// <summary>
+    /// When enabled, a copy of the text is kept and compared character by character in <see cref="IsValid"/>;
+    /// otherwise only hash code and length are compared (cheaper, may miss rare changes).
+    /// </summary>
     public bool FullStringCheckEnabled
     {
         get;
@@ -87,6 +125,9 @@ public class TextRenderingContext
         }
     }
 
+    /// <summary>
+    /// Starts a new layout for the given inputs: stores them and clears the lines (filled in by the layout code).
+    /// </summary>
     public void Update(TextSource text, IGlyphFont font, TextSpacing spacing, int targetWidth = 0, int lineSpacing = 0)
     {
         if (FullStringCheckEnabled)
@@ -144,6 +185,9 @@ public class TextRenderingContext
         return true;
     }
 
+    /// <summary>
+    /// Invalidates the cached layout.
+    /// </summary>
     public void Reset()
     {
         _targetWidth = -1;
@@ -156,10 +200,14 @@ public class TextRenderingContext
         Lines.Clear();
     }
 
+    /// <summary>
+    /// True if the cached layout can be reused for these inputs.
+    /// </summary>
     public bool IsValid(TextSource text, IGlyphFont font, TextSpacing spacing, int targetWidth = 0, int lineSpacing = 0)
     {
         if (_targetWidth != targetWidth)
         {
+            // A layout without wrapping is still valid for a wider target as long as the text fits
             if(_targetWidth != 0) return false;
 
             if (targetWidth > 0 && Width > targetWidth + font.Metrics.WhitespaceWidth)
