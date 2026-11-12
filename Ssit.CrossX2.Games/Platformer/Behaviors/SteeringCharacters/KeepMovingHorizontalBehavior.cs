@@ -7,7 +7,7 @@ namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 /// Applies horizontal input on the ground like <see cref="MoveHorizontalBehavior"/>, but never changes the steering state.
 /// Use in ground states that should keep momentum (e.g. a jump wind-up) so the following jump starts with full horizontal speed.
 /// </summary>
-public class KeepMovingHorizontalBehavior : SteeringBehavior<ISteeringCharacter>
+public class KeepMovingHorizontalBehavior : SingleSteeringBehavior<ISteeringCharacter, KeepMovingHorizontalBehavior>
 {
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {

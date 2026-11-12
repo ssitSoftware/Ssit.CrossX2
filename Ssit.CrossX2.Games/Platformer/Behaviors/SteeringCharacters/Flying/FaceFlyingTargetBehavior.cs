@@ -4,7 +4,7 @@ using Ssit.CrossX2.Framework.Games.Logic.Stering;
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters.Flying;
 
 /// <summary>Keeps the object turned towards its current target.</summary>
-public class FaceFlyingTargetBehavior : SteeringBehavior<ISteeringCharacter>
+public class FaceFlyingTargetBehavior : SingleSteeringBehavior<ISteeringCharacter, FaceFlyingTargetBehavior>
 {
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {

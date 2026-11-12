@@ -3,7 +3,7 @@ using Ssit.CrossX2.Framework.Games.Logic.Stering;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
-public class AirSteerBehavior : SteeringBehavior<ISteeringCharacter>
+public class AirSteerBehavior : SingleSteeringBehavior<ISteeringCharacter, AirSteerBehavior>
 {
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {

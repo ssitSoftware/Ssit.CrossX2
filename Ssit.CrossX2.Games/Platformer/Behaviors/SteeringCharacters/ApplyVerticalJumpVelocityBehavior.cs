@@ -4,7 +4,7 @@ using Ssit.CrossX2.Framework.Games.Logic.Stering;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
-public class ApplyVerticalJumpVelocityBehavior : SteeringBehavior<ISteeringCharacter>
+public class ApplyVerticalJumpVelocityBehavior : SingleSteeringBehavior<ISteeringCharacter, ApplyVerticalJumpVelocityBehavior>
 {
     protected override void OnEnter(ISteeringCharacter obj)
     {

@@ -8,7 +8,7 @@ namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters.F
 /// Keeps the object hanging in place (e.g. a bat under a ceiling): the body is kinematic while in the state,
 /// so it neither falls nor gets pushed. Leaving the state makes the body dynamic again.
 /// </summary>
-public class HangBehavior : SteeringBehavior<ISteeringCharacter>
+public class HangBehavior : SingleSteeringBehavior<ISteeringCharacter, HangBehavior>
 {
     protected override void OnEnter(ISteeringCharacter character)
     {

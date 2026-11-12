@@ -5,12 +5,10 @@ using Ssit.CrossX2.Framework.Games.Platformer.Helpers;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
-/// <param name="stateFromWalkButton">
-/// false (default): "Walk"/"Run" state is chosen from the current speed.
-/// true: chosen from the Walk button - "Run" whenever Walk isn't held, even while still accelerating or turning around
-/// (e.g. a bot backing off), so a separate Walk animation only plays when the character really walks.
-/// </param>
-public class MoveHorizontalBehavior(bool stateFromWalkButton = false) : SteeringBehavior<ISteeringCharacter>
+/// <summary>
+/// Moves horizontally on the ground and chooses "Walk" only while the Walk button is held.
+/// </summary>
+public class MoveHorizontalBehavior : SingleSteeringBehavior<ISteeringCharacter, MoveHorizontalBehavior>
 {
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
@@ -38,8 +36,7 @@ public class MoveHorizontalBehavior(bool stateFromWalkButton = false) : Steering
             if (IsBlockedAhead(obj, move < 0))
                 return false;
 
-            var walking = stateFromWalkButton ? walk : MathF.Abs(newX) <= physicsValues.WalkSpeed;
-            obj.SetSteeringState(walking ? "Walk" : "Run");
+            obj.SetSteeringState(walk ? "Walk" : "Run");
             obj.SteeringParameters.LastHorizontalVelocity = obj.Body.Velocity.X;
         }
         else
