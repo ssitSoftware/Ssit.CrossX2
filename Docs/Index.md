@@ -10,6 +10,9 @@ This is the first version of the project documentation. It focuses on the framew
 - [Content loading](Guides/ContentLoading.md)
 - [Rendering](Guides/Rendering.md)
 - [Audio](Guides/Audio.md)
+- [Input](Guides/Input.md)
+- [UI](Guides/UI.md)
+- [Custom views and handlers](Guides/CustomViews.md)
 
 ## Main Concepts
 
@@ -19,6 +22,8 @@ This is the first version of the project documentation. It focuses on the framew
 - Content is loaded through `IContentManager` and released by disposing `ResourceHandle<T>`.
 - Rendering is driven by `IRenderer`, specialized renderers, and the render host.
 - Audio is exposed through `ISoundManager`, `ISoundEffect`, `IMusicPlayer`, and `ICommonSoundContainer`.
+- Input is polled through `IKeyboard`, `IGameControllers`, and `IPointingDevices`; gameplay reads named actions through `IInputMappings`.
+- UI apps are built with `CrossX2Ui.CreateAppBuilder`. Pages pair a `Page<TViewModel>` with a view model, and each view is rendered by a view handler.
 
 ## Typical Application Shape
 
