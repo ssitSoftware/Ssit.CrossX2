@@ -16,6 +16,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ssit.CrossX.Cli", "Tools\Ss
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ssit.CrossX2.Editor", "Ssit.CrossX2.Editor\Ssit.CrossX2.Editor.csproj", "{4BA75FE4-5DC9-4950-967B-A2059B0D4128}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{F5F20E66-DC38-4B5A-A6E6-B77D458731B8}"
+	ProjectSection(SolutionItems) = preProject
+		Docs\Index.md = Docs\Index.md
+		Docs\Guides\AppLifecycle.md = Docs\Guides\AppLifecycle.md
+		Docs\Guides\Audio.md = Docs\Guides\Audio.md
+		Docs\Guides\ContentLoading.md = Docs\Guides\ContentLoading.md
+		Docs\Guides\Rendering.md = Docs\Guides\Rendering.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

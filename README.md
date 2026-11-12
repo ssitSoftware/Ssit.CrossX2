@@ -15,3 +15,7 @@ Engine is composed of given parts:
 3. XXGames Framework including Aabb physics implementation.
 4. Editor app module.
 5. SDL3 based rendering API implementation with specialized shaders.
+
+## Documentation
+
+Start with the [CrossX2 documentation index](Docs/Index.md).
