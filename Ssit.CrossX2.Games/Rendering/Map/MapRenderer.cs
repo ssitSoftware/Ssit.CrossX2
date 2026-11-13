@@ -46,6 +46,16 @@ public static class MapRenderer
         return (offset, visibleBounds);
     }
     
+    /// <summary>
+    /// World-space rectangle (in tiles) of the main layer visible for the given camera position and target size
+    /// (camera clamped to the map edges the same way as in rendering).
+    /// </summary>
+    public static RectangleF GetVisibleBounds(MapDisplayElement map, Vector2 cameraLookAt, Size targetSize, int tileSize)
+    {
+        var mainLayer = map.Layers.First(o => o.IsMain);
+        return GetLayerRenderParameters(mainLayer, mainLayer, cameraLookAt, targetSize, tileSize).bounds;
+    }
+
     public static void RenderDebug(IRenderer renderer, MapDisplayElement map, ISimulation world, Vector2 cameraLookAt,
         Size targetSize, IGameTemplate gameTemplate)
     {

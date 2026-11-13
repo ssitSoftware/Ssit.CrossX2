@@ -26,6 +26,26 @@ internal class Camera(IGameTemplate template, IInputMappings inputMappings): ICa
 
     public Vector2 LookAt => GetLookAt();
 
+    private RectangleF? _visibleBounds;
+
+    /// <summary>
+    /// Set by the game instance on every render. Until the first frame is rendered it is approximated
+    /// from the template target size centered at <see cref="LookAt"/>.
+    /// </summary>
+    public RectangleF VisibleBounds
+    {
+        get
+        {
+            if (_visibleBounds.HasValue)
+                return _visibleBounds.Value;
+
+            var size = new Vector2(template.TargetSize.Width, template.TargetSize.Height) / template.TileSize;
+            var lookAt = LookAt;
+            return new RectangleF(lookAt.X - size.X / 2, lookAt.Y - size.Y / 2, size.X, size.Y);
+        }
+        internal set => _visibleBounds = value;
+    }
+
     private List<Vector2> _lastTargetPositions = new();
     private Vector2 _cameraMove;
     

@@ -35,5 +35,16 @@ public sealed class StateMachine<TObject>(TObject obj, Action<string> onStateCha
         }
     }
 
+    /// <summary>
+    /// Leaves the current state without entering a new one - the next <see cref="SetState"/> always enters its state
+    /// (also when it is the same state as before the reset).
+    /// </summary>
+    public void Reset()
+    {
+        _currentState?.Leave(Object);
+        _currentState = null;
+        CurrentState = null;
+    }
+
     public void FixedUpdate(float dt) => _currentState?.FixedUpdate(Object, dt);
 }

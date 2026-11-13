@@ -5,6 +5,12 @@ namespace Ssit.CrossX2.Framework.Games.Logic;
 public interface ICamera
 {
     Vector2 LookAt { get; }
+
+    /// <summary>
+    /// World-space rectangle (in tiles) visible on the screen in the last rendered frame.
+    /// Empty when the camera doesn't know what is visible.
+    /// </summary>
+    RectangleF VisibleBounds => default;
     void SetPrimaryTarget(IPositionObject positionObject, Vector2 offset, float followFactor);
     
     /// <summary>

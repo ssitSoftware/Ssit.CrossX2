@@ -9,6 +9,15 @@ public sealed class SteeringStateMachine<TObject>(TObject obj)
     
     public event EventHandler<SteeringState<TObject>> OnStateChanged;
     
+    /// <summary>
+    /// Exits the current state without entering a new one.
+    /// </summary>
+    public void Reset()
+    {
+        CurrentState?.Exit(Object);
+        CurrentState = null;
+    }
+
     public void SetState(SteeringState<TObject> state)
     {
         CurrentState?.Exit(Object);

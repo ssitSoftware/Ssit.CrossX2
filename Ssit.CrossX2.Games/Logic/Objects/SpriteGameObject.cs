@@ -124,6 +124,17 @@ public abstract class SpriteGameObject : IGameObjectRenderer, IBodyOwner, ISound
         return (TParameters)obj;
     }
 
+    /// <summary>
+    /// Removes the parameters object of the given type - the next <see cref="GetParameters{TParameters}"/> creates a new instance.
+    /// </summary>
+    /// <returns>True if the parameters existed.</returns>
+    public bool RemoveParameters<TParameters>() => _parameters.Remove(typeof(TParameters));
+
+    /// <summary>
+    /// Removes all parameters objects - every <see cref="GetParameters{TParameters}"/> creates a new instance afterward.
+    /// </summary>
+    public void ClearParameters() => _parameters.Clear();
+
     protected void InitializeSprite(string spritePath, bool useCache = true)
     {
         if (useCache)

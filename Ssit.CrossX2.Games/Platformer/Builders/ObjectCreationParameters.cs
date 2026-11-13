@@ -23,6 +23,12 @@ public class ObjectCreationParameters
 
     public ILinkMap LinkMap { get; internal set; }
     public int ZOrder { get; internal set; }
+
+    /// <summary>
+    /// The object's editor parameters (see <see cref="ObjectCreationParameters{TParameters}.Parameters"/>), null when it has none.
+    /// Lets a base class read parameters without knowing the derived object's parameters type.
+    /// </summary>
+    public virtual object GetParametersObject() => null;
     
     public static ObjectCreationParameters Create(Vector2 position, bool flipped, int zOrder, ILinkMap linkMap = null)
     {
@@ -54,6 +60,8 @@ public class ObjectCreationParameters<TParameters>: ObjectCreationParameters
     }
     
     public TParameters Parameters { get; private set; }
+
+    public override object GetParametersObject() => Parameters;
 
     internal override object ParametersObject
     {

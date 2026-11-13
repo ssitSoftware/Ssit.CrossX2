@@ -254,9 +254,15 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
         _backgroundRenderer?.Render(renderer);
         
         var size = target.Size.ToVector() / scale;
+        var renderSize = new Size((int)MathF.Ceiling(size.X), (int)MathF.Ceiling(size.Y));
+
+        if (_camera is Camera camera)
+        {
+            camera.VisibleBounds = MapRenderer.GetVisibleBounds(_mapDisplayElement, _camera.LookAt, renderSize, _gameTemplate.TileSize);
+        }
         
         MapRenderer.Render(renderer, _mapDisplayElement, Simulation, _camera.LookAt, 
-            new Size((int)MathF.Ceiling(size.X), (int)MathF.Ceiling(size.Y)), 
+            renderSize, 
             _gameTemplate, FilterMode);
 
         renderer.StateManager.RestoreState();

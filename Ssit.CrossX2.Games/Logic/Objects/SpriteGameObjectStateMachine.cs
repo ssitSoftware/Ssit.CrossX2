@@ -38,6 +38,16 @@ public class SpriteGameObjectStateMachine<TObject, TStateObject> : SpriteInstanc
         Debug.WriteLine($"{GetType().Name} Steering State: {stateName}");
     }
     
+    /// <summary>
+    /// Exits the current state and enters <paramref name="stateName"/> - also when it is the current state,
+    /// so its behaviors (and the sprite sequence) start over.
+    /// </summary>
+    public void ResetSteeringState(string stateName)
+    {
+        InternalStateMachine.Reset();
+        SetSteeringState(stateName);
+    }
+
     public SpriteGameObjectStateMachine<TObject, TStateObject> RegisterState(SteeringState<TStateObject> state)
     {
         var name =  state.Name;

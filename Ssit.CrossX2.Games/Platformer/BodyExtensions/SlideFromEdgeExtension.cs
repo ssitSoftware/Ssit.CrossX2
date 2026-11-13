@@ -21,6 +21,21 @@ public class SlideFromEdgeExtension: IBodyExtension, IBodyEventsReceiver
         BodyExtensions.List.Add(new SlideFromEdgeExtension(body, stableWidthNormalized, slideSpeed, minSizeToSlide, noSlideMaterialIndices));
     }
     
+    /// <summary>
+    /// Removes all slide-from-edge extensions attached to the body.
+    /// </summary>
+    public static void Detach(IBody body)
+    {
+        for (var idx = BodyExtensions.List.Count - 1; idx >= 0; idx--)
+        {
+            if (BodyExtensions.List[idx] is SlideFromEdgeExtension extension && ReferenceEquals(extension._body, body))
+            {
+                body.RemoveEventsReceiver(extension);
+                BodyExtensions.List.RemoveAt(idx);
+            }
+        }
+    }
+
     private SlideFromEdgeExtension(IBody body, float stableWidthNormalized, float slideSpeed, float minSizeToSlide,
         int[] noSlideMaterialIndices)
     {

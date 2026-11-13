@@ -37,6 +37,9 @@ public abstract class CharacterObject<TCharacter> : SpriteGameObject, IBodyEvent
     }
     
     public void SetSteeringState(string name) => SteeringStateMachine.SetSteeringState(name);
+
+    /// <summary>Enters the given steering state from scratch (exits the current one even if it is the same state).</summary>
+    protected void ResetSteeringState(string name) => SteeringStateMachine.ResetSteeringState(name);
     
     ContextSoundContainer IGameObject.SoundContainer => SoundContainer;
     
