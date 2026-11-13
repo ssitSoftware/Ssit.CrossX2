@@ -21,7 +21,7 @@ public class WallClimbBehavior(int wallClimbMaterialIndex) : SteeringBehavior<IS
     
     protected override void OnEnter(ISteeringCharacter obj)
     {
-        var parameters = ((ICharacter)obj).GetParameters<Parameters>();
+        var parameters = obj.GetParameters<Parameters>();
         parameters.ClimbAabb = FindClimbAabb(obj);
         
         // Take over movement: no gravity/physics while climbing
@@ -47,7 +47,7 @@ public class WallClimbBehavior(int wallClimbMaterialIndex) : SteeringBehavior<IS
 
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
-        var parameters = ((ICharacter)obj).GetParameters<Parameters>();
+        var parameters = obj.GetParameters<Parameters>();
         parameters.ClimbAabb ??= FindClimbAabb(obj);
 
         if (parameters.ClimbAabb == null)

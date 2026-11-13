@@ -17,7 +17,7 @@ public class ApplyHorizontalFrictionBehavior(float frictionMultiplier) : Steerin
         if (!obj.SteeringParameters.IsOnStaticGround)
             return false;
 
-        var landingParameters = ((ICharacter)obj).GetParameters<LandingParameters>();
+        var landingParameters = obj.GetParameters<LandingParameters>();
         // Forget the stored landing velocity once the character has stopped, reversed or become faster than at landing
         if (landingParameters.Velocity is { } landingVelocity)
         {

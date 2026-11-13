@@ -9,4 +9,5 @@ public interface ISteeringCharacter: ICharacter, IGameObject
     ICharacterPhysicsValues PhysicsValues { get; }
     SteeringState<ISteeringCharacter> CurrentSteeringState { get; }
     void SetSteeringState(string name);
+    new TParameters GetParameters<TParameters>();
 }

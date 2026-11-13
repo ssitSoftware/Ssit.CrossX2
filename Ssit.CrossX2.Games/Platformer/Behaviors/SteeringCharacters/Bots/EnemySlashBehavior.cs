@@ -16,7 +16,7 @@ public class EnemySlashBehavior(BoxHitDetector detector, params (string, float)[
     {
         if (IsAttackEvent(@event.EventName))
         {
-            var parameters = ((ICharacter)obj).GetParameters<EnemyAttackParameters>();
+            var parameters = obj.GetParameters<EnemyAttackParameters>();
             parameters.LastAttackTime = DateTime.Now;
         }
         return base.OnEvent(obj, @event);

@@ -21,7 +21,7 @@ public class ClimbBehavior(int climbMaterialIndex) : SteeringBehavior<ISteeringC
 
     protected override void OnEnter(ISteeringCharacter obj)
     {
-        var parameters = ((ICharacter)obj).GetParameters<Parameters>();
+        var parameters = obj.GetParameters<Parameters>();
         parameters.ClimbAabb = FindClimbAabb(obj);
 
         // Take over movement: no gravity/physics while climbing, we move the body ourselves
@@ -53,7 +53,7 @@ public class ClimbBehavior(int climbMaterialIndex) : SteeringBehavior<ISteeringC
             return true;
         }
         
-        var parameters = ((ICharacter)obj).GetParameters<Parameters>();
+        var parameters = obj.GetParameters<Parameters>();
         // Retry the lookup in case the surface was not found on enter
         parameters.ClimbAabb ??= FindClimbAabb(obj);
 

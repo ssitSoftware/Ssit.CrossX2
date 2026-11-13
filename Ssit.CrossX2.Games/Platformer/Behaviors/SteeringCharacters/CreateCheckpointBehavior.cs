@@ -29,7 +29,7 @@ public class CreateCheckpointBehavior(float holdTime = 1f, string controlName = 
         if (obj is not ICheckpointCreator creator)
             return false;
         
-        var parameters = ((ICharacter)obj).GetParameters<Parameters>();
+        var parameters = obj.GetParameters<Parameters>();
 
         if (!obj.SteeringInput.Button(controlName).IsDown)
         {

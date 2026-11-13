@@ -20,7 +20,7 @@ public class FacePlayerBehavior(BoxHitDetector detector, float timeAdjustment) :
             return false;
 
         obj.FaceLeft = !obj.FaceLeft;
-        var parameters = ((ICharacter)obj).GetParameters<EnemyAttackParameters>();
+        var parameters = obj.GetParameters<EnemyAttackParameters>();
         // Pretend the last attack was timeAdjustment seconds ago so the enemy can strike sooner after turning
         parameters.LastAttackTime = DateTime.Now - TimeSpan.FromSeconds(timeAdjustment);
         return false;

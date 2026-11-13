@@ -14,7 +14,7 @@ public class EnemyAttackDetectionBehavior(BoxHitDetector detector, string attack
 {
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
-        var parameters = ((ICharacter)obj).GetParameters<EnemyAttackParameters>();
+        var parameters = obj.GetParameters<EnemyAttackParameters>();
         
         var delta = DateTime.Now - parameters.LastAttackTime;
         if (delta.TotalSeconds < timeBetweenAttacks)

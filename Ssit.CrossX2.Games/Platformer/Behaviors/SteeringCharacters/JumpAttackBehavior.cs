@@ -27,7 +27,7 @@ public class JumpAttackBehavior : SteeringBehavior<ISteeringCharacter>
 
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
-        var parameters = ((ICharacter)obj).GetParameters<Parameters>();
+        var parameters = obj.GetParameters<Parameters>();
         // Releasing Jump cancels the combo option
         parameters.CanJumpAttack &= obj.SteeringInput.Button(SteeringControlNames.Jump).IsDown;
         

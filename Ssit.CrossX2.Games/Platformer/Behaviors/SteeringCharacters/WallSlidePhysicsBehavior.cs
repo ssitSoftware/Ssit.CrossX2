@@ -28,7 +28,7 @@ public class WallSlidePhysicsBehavior : SteeringBehavior<ISteeringCharacter>
 
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
-        var parameters = ((ICharacter)obj).GetParameters<Parameters>();
+        var parameters = obj.GetParameters<Parameters>();
         
         // Linear ramp up toward the maximum slide speed
         parameters.CurrentMaxSpeed += dt * obj.PhysicsValues.WallSlideSpeed / obj.PhysicsValues.WallSlideTimeToFullSpeed;

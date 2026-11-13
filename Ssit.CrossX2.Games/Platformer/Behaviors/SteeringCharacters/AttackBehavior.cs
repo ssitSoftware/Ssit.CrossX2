@@ -21,7 +21,7 @@ public class AttackBehavior(string control, string attackStateName) : SteeringBe
 
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
-        var parameters = ((ICharacter)obj).GetParameters<AttackingData>();
+        var parameters = obj.GetParameters<AttackingData>();
         if (parameters.NextAttackTimeout > 0)
         {
             parameters.NextAttackTimeout -= dt;

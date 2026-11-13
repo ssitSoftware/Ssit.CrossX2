@@ -17,7 +17,7 @@ public class AlertHordeOnEventBehavior(float radius, string horde, params string
         if (Array.IndexOf(eventNames, @event.EventName) < 0)
             return false;
 
-        var target = ((ICharacter)obj).GetParameters<AttackTargetParameters>().Target;
+        var target = obj.GetParameters<AttackTargetParameters>().Target;
         HordeAlert.Alert(obj.Body, target, radius, horde);
         return false;
     }

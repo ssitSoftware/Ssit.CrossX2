@@ -14,7 +14,7 @@ internal static class FlightSteering
     /// Per-object flying state.
     /// </summary>
     public static FlyingEnemyParameters FlyingParameters(this ISteeringCharacter obj) =>
-        ((ICharacter)obj).GetParameters<FlyingEnemyParameters>();
+        obj.GetParameters<FlyingEnemyParameters>();
 
     /// <summary>
     /// Accelerates the body towards the point (with arrival slow-down). Returns the distance to the point.

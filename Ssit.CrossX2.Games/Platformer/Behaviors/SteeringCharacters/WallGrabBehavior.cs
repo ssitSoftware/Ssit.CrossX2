@@ -33,7 +33,7 @@ public class WallGrabBehavior(int grabMaterialIndex) : SteeringBehavior<ISteerin
                 ? grabAabb.Value.Center.X - charAabb.Left
                 : grabAabb.Value.Center.X - charAabb.Right;
             var offsetY = grabAabb.Value.Center.Y - charAabb.Center.Y;
-            ((ICharacter)obj).GetParameters<Parameters>().TargetPosition = obj.Body.Position + new Vector2(offsetX, offsetY);
+            obj.GetParameters<Parameters>().TargetPosition = obj.Body.Position + new Vector2(offsetX, offsetY);
             obj.SoundContainer?.Play("WallGrab");
         }
     }
@@ -51,7 +51,7 @@ public class WallGrabBehavior(int grabMaterialIndex) : SteeringBehavior<ISteerin
             return true;
         }
 
-        var targetPosition = ((ICharacter)obj).GetParameters<Parameters>().TargetPosition;
+        var targetPosition = obj.GetParameters<Parameters>().TargetPosition;
         // Exponential-style smoothing toward the hang position, frame-rate independent via dt
         obj.Body.Position = Vector2.Lerp(obj.Body.Position, targetPosition, MathF.Min(1f, 12f * dt));
         return false;

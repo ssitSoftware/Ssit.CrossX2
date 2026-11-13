@@ -19,12 +19,12 @@ public class WallSlideTimeoutBehavior(bool keepSlidingOnPush = false) : Steering
 
     protected override void OnEnter(ISteeringCharacter obj)
     {
-        ((ICharacter)obj).GetParameters<Parameters>().Elapsed = 0f;
+        obj.GetParameters<Parameters>().Elapsed = 0f;
     }
 
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
-        var parameters = ((ICharacter)obj).GetParameters<Parameters>();
+        var parameters = obj.GetParameters<Parameters>();
         parameters.Elapsed += dt;
         
         if (keepSlidingOnPush)
