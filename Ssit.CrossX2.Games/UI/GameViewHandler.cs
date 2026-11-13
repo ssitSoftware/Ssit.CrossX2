@@ -45,7 +45,7 @@ internal class GameViewHandler : BackgroundHandler<GameView>
         if (dt > 0 && (AttachedView.Active?.Value ?? true))
         {
             var gameInstance = AttachedView.GameInstance;
-            gameInstance.Update(dt * AttachedView.SpeedFactor);
+            gameInstance.Update(dt * (AttachedView.SpeedFactor?.Value ?? 1));
         }
     }
 
