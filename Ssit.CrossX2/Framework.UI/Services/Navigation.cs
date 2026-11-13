@@ -100,6 +100,23 @@ internal class Navigation: INavigation, IDisposable
         NavigateTo<TViewModel>(parameter, false, false);
     }
 
+    public void ClearStackTo<TViewModel>() where TViewModel : class
+    {
+        if (!_navigationStack.Any(d => d.ViewModel is TViewModel))
+        {
+            throw new InvalidOperationException($"{typeof(TViewModel).Name} is not on the navigation stack.");
+        }
+
+        while (_navigationStack.Peek().ViewModel is not TViewModel)
+        {
+            var data = _navigationStack.Pop();
+            if (data.ViewModel is IDisposable disposable)
+            {
+                _objectsToDisposeOnTransitionFinished.Add(disposable);
+            }
+        }
+    }
+
     private void InitializePageNavigation(object vm, bool skipTransition = false)
     {
         var page = InitializePage(vm, null);
@@ -128,7 +145,12 @@ internal class Navigation: INavigation, IDisposable
         if (_navigationStack.Count > 0)
         {
             var data = _navigationStack.Peek();
-            data.FocusedId = CurrentPage.FocusedElement?.UniqueId;
+            
+            // After ClearStackTo the current page is no longer on the stack - don't store its focus in other entry.
+            if (CurrentPage != null && ReferenceEquals(data.ViewModel, CurrentPage.ViewModel))
+            {
+                data.FocusedId = CurrentPage.FocusedElement?.UniqueId;
+            }
         }
         
         var vm = _iocContainer.IoCConstruct<TViewModel>(parameter);
@@ -308,5 +330,12 @@ internal class Navigation: INavigation, IDisposable
                 disposable.Dispose();
             }
         }
+
+        foreach (var disposable in _objectsToDisposeOnTransitionFinished)
+        {
+            disposable?.Dispose();
+        }
+        
+        _objectsToDisposeOnTransitionFinished.Clear();
     }
 }
