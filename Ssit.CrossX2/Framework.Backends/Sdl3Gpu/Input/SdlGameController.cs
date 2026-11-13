@@ -175,8 +175,19 @@ internal unsafe class SdlGameController: IDisposable
                         continue;
 
                     var gp = SDL_OpenGamepad(joysticks[i]);
+
+                    if (gp == null)
+                    {
+                        Console.Error.WriteLine($"[Gamepad] SDL_OpenGamepad failed: {SDL_GetError()}");
+                        AttachedControllers.Remove((uint)joysticks[i]);
+                        continue;
+                    }
+                    
                     SDL_SetGamepadPlayerIndex(gp, _playerIndex);
                     _handle = new SdlHandle<SDL_Gamepad>(gp);
+
+                    var canRumble = SDL_GetBooleanProperty(SDL_GetGamepadProperties(gp), SDL_PROP_GAMEPAD_CAP_RUMBLE_BOOLEAN, false);
+                    Console.WriteLine($"[Gamepad] Player {_playerIndex}: '{SDL_GetGamepadName(gp)}' type={SDL_GetGamepadType(gp)} rumble={canRumble}");
                     break;
                 }
             }
@@ -199,6 +210,9 @@ internal unsafe class SdlGameController: IDisposable
         var lowVib = (int)low * 0xffff / 10;
         var highVib = (int)high * 0xffff / 10;
         
-        SDL_RumbleGamepad(gamepad, (ushort)lowVib, (ushort)highVib, ms);
+        if (SDL_RumbleGamepad(gamepad, (ushort)lowVib, (ushort)highVib, ms) != true)
+        {
+            Console.Error.WriteLine($"[Gamepad] SDL_RumbleGamepad failed for player {_playerIndex}: {SDL_GetError()}");
+        }
     }
 }

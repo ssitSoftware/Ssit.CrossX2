@@ -19,4 +19,7 @@ public static class SteeringControlNames
     
     // Hold to move at walk speed instead of run speed
     public const string Walk = nameof(Walk);
+    
+    // Hold to save a checkpoint (see CreateCheckpointBehavior)
+    public const string Save = nameof(Save);
 }
