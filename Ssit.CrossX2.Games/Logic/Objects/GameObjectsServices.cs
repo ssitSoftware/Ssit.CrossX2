@@ -13,7 +13,8 @@ public class GameObjectsServices(
     IIoCContainer container,
     IGameTemplate gameTemplate,
     IContentCache contentCache,
-    ICommonSoundContainer commonSoundContainer)
+    ICommonSoundContainer commonSoundContainer,
+    ICamera camera)
 {
     public ISimulation Simulation { get; } = simulation;
     public IContentManager ContentManager { get; } = contentManager;
@@ -21,4 +22,5 @@ public class GameObjectsServices(
     public IGameTemplate GameTemplate { get; } = gameTemplate;
     public IContentCache ContentCache { get; } = contentCache;
     public ICommonSoundContainer CommonSoundContainer { get; } = commonSoundContainer;
+    public ICamera Camera { get; } = camera;
 }
