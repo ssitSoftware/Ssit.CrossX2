@@ -10,8 +10,8 @@ using Ssit.CrossX2.Framework.Graphics.Sprites;
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
 /// <summary>
-/// Melee attack hit detection driven by sprite events. Events whose name contains "Slash" and that are registered in the
-/// powers table trigger a box hit test in front of the character; the first hittable is hit with that event's power.
+/// Melee attack hit detection driven by sprite events. Events registered in the powers table (any name, e.g. "Slash", "Bite")
+/// trigger a box hit test in front of the character; the first hittable is hit with that event's power.
 /// </summary>
 public class SlashBehavior : SteeringBehavior<ISteeringCharacter>
 {
@@ -37,7 +37,6 @@ public class SlashBehavior : SteeringBehavior<ISteeringCharacter>
 
     protected override bool OnEvent(ISteeringCharacter obj, ISpriteEvent @event)
     {
-        if (!@event.EventName.Contains("Slash")) return false;
         if (!_powers.TryGetValue(@event.EventName, out var power)) return false;
 
         // Test the hit box in front of the character (facing-aware), only against left/right collider sides
@@ -53,6 +52,9 @@ public class SlashBehavior : SteeringBehavior<ISteeringCharacter>
 
         return false;
     }
+
+    /// <summary>True if the event is one of this behavior's attack events (registered in the powers table).</summary>
+    protected bool IsAttackEvent(string eventName) => _powers.ContainsKey(eventName);
 
     /// <summary>
     /// Override to exclude some targets from being hit (e.g. allies).

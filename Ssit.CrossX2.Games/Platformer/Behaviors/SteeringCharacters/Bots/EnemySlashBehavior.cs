@@ -14,7 +14,7 @@ public class EnemySlashBehavior(BoxHitDetector detector, params (string, float)[
 {
     protected override bool OnEvent(ISteeringCharacter obj, ISpriteEvent @event)
     {
-        if (@event.EventName.Contains("Slash"))
+        if (IsAttackEvent(@event.EventName))
         {
             var parameters = ((ICharacter)obj).GetParameters<EnemyAttackParameters>();
             parameters.LastAttackTime = DateTime.Now;
