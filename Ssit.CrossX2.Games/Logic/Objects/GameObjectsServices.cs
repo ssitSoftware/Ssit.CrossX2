@@ -1,7 +1,6 @@
 using Ssit.CrossX2.Framework.Audio;
 using Ssit.CrossX2.Framework.Content;
 using Ssit.CrossX2.Framework.Games.Physics;
-using Ssit.CrossX2.Framework.Games.Rendering;
 using Ssit.CrossX2.Framework.Games.Template;
 using Ssit.CrossX2.Framework.IoC;
 
