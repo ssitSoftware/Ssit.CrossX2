@@ -13,6 +13,8 @@ public class ObjectParticles<TParent> : IGameObjectRenderer, IBodyOwner where  T
 
     public record Parameters(TParent Parent, string TexturePath, Size ElementSize);
 
+    public bool UsesLighting { get; set; } = true;
+    
     private class Particle
     {
         public Vector2 Position;
@@ -66,6 +68,8 @@ public class ObjectParticles<TParent> : IGameObjectRenderer, IBodyOwner where  T
     int IGameObjectRenderer.ZOrder => _parent.ZOrder + 1;
     
     public int Count { get; }
+    public int FilterMode { get; set; }
+
     private readonly int _columns;
     
     private readonly List<Particle> _particles = new();
@@ -128,6 +132,9 @@ public class ObjectParticles<TParent> : IGameObjectRenderer, IBodyOwner where  T
     
     void IGameObjectRenderer.Render(IRenderer renderer, RgbaColor color, float depth)
     {
+        var lightEnabled = renderer.LightingManager.LightingEnabled;
+        renderer.LightingManager.EnableLighting(UsesLighting);
+        
         foreach (var particle in _particles)
         {
             var position = particle.Position;
@@ -143,5 +150,7 @@ public class ObjectParticles<TParent> : IGameObjectRenderer, IBodyOwner where  T
             
             renderer.SpriteRenderer.Draw(_texture.Resource, position, src, _elementSize.ToVector() / 2, scale: particle.Scale, color: RgbaColor.White * particle.Opacity);
         }
+        
+        renderer.LightingManager.EnableLighting(lightEnabled);
     }
 }

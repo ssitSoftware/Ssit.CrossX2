@@ -12,5 +12,6 @@ public interface ILightsContainer: ILightsProvider
 
 public interface ILightProvider
 {
+    int FilterMode => 0;
     void FillLights(ILightsContainer lightsContainer);
 }

@@ -5,7 +5,8 @@ public interface ILightingManager
     public const int MaxPointLights = 8;
     public const int MaxSpotLights = 8;
     public const int MaxGlobalLights = 4;
-
+    
+    bool LightingEnabled { get; }
     void EnableLighting(bool enable);
     void SetResolution(float resolution);
     void SetAmbientLight(RgbaColor color);

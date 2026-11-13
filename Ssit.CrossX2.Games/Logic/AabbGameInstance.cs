@@ -17,7 +17,7 @@ using Ssit.CrossX2.Framework.Services;
 
 namespace Ssit.CrossX2.Framework.Games.Logic;
 
-public class AabbGameInstance : IGameInstance, IMessenger
+public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
 {
     public interface IBackgroundRenderer: IDisposable
     {
@@ -56,6 +56,8 @@ public class AabbGameInstance : IGameInstance, IMessenger
     public readonly ISimulation Simulation;
     public readonly IIoCContainer Container;
     private readonly ICamera _camera;
+    
+    public int FilterMode { get; set; } = 0;
     
     private bool _isDisposed;
 
@@ -133,7 +135,7 @@ public class AabbGameInstance : IGameInstance, IMessenger
             {
                 parameters.RegisterServices(b);
                 b
-                    .WithInstance<IGameInstance>(this)
+                    .WithInstance<IGameInstance>(this).As<IGameRendererFilter>().As<IMessenger>()
                     .WithInstance(_contentCache)
                     .WithSingleton<ICamera, Camera>().As<ISoundListener>()
                     .WithSingleton<GameObjectsServices, GameObjectsServices>();
@@ -213,7 +215,7 @@ public class AabbGameInstance : IGameInstance, IMessenger
 
             foreach (var body in Simulation.Bodies)
             {
-                if (body.Owner is ILightProvider provider)
+                if (body.Owner is ILightProvider provider && (FilterMode == 0 || FilterMode == provider.FilterMode))
                 {
                     provider.FillLights(_lightsContainer);
                 }
@@ -222,7 +224,7 @@ public class AabbGameInstance : IGameInstance, IMessenger
             _lightsContainer.Apply(_camera.LookAt * _gameTemplate.TileSize);
         }
 
-        var bgColor = GetBgColor();
+        var bgColor = FilterMode == 0 ? GetBgColor() : RgbaColor.Transparent;
         
         renderer.StateManager.SaveState();
         
@@ -243,7 +245,7 @@ public class AabbGameInstance : IGameInstance, IMessenger
         
         MapRenderer.Render(renderer, _mapDisplayElement, Simulation, _camera.LookAt, 
             new Size((int)MathF.Ceiling(size.X), (int)MathF.Ceiling(size.Y)), 
-            _gameTemplate);
+            _gameTemplate, FilterMode);
 
         renderer.StateManager.RestoreState();
     }

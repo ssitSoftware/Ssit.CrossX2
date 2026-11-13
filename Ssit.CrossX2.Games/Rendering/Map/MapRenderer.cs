@@ -63,17 +63,17 @@ public static class MapRenderer
         renderer.StateManager.RestoreState();
     }
 
-    private delegate void RenderObjects(IRenderer renderer, LayerDisplayElement layer, object world, RectangleF bounds, RgbaColor color, bool front);
+    private delegate void RenderObjects(IRenderer renderer, LayerDisplayElement layer, object world, RectangleF bounds, RgbaColor color, bool front, int renderFilter);
     
     public static void Render(IRenderer renderer, MapDisplayElement map, ISimulation world, Vector2 cameraLookAt,
-        Size targetSize, IGameTemplate template)
+        Size targetSize, IGameTemplate template, int filterMode)
     {
-        Render(renderer, map, RenderGameObjectsSim, world, cameraLookAt, targetSize, template);
-        RenderPostRenderers(renderer, map, world, cameraLookAt, targetSize, template);
+        Render(renderer, map, RenderGameObjectsSim, world, cameraLookAt, targetSize, template, filterMode);
+        RenderPostRenderers(renderer, map, world, cameraLookAt, targetSize, template, filterMode);
     }
 
     private static void RenderPostRenderers(IRenderer renderer, MapDisplayElement map, ISimulation world, Vector2 cameraLookAt,
-        Size targetSize, IGameTemplate template)
+        Size targetSize, IGameTemplate template, int filterMode)
     {
         var tileSize = template.TileSize;
         var mainLayer = map.Layers.First(o => o.IsMain);
@@ -86,14 +86,17 @@ public static class MapRenderer
         {
             if (body.Owner is IGamePostRenderer postRenderer)
             {
-                postRenderer.Render(renderer);
+                if (filterMode == 0 || filterMode == postRenderer.FilterMode)
+                {
+                    postRenderer.Render(renderer);
+                }
             }
         }
 
         renderer.StateManager.RestoreState();
     }
 
-    private static void Render(IRenderer renderer, MapDisplayElement map, RenderObjects renderObjects, object world, Vector2 cameraLookAt, Size targetSize, IGameTemplate template)
+    private static void Render(IRenderer renderer, MapDisplayElement map, RenderObjects renderObjects, object world, Vector2 cameraLookAt, Size targetSize, IGameTemplate template, int filterMode)
     {
         int tileSize = template.TileSize;
         var mainLayer = map.Layers.First(o => o.IsMain);
@@ -112,9 +115,9 @@ public static class MapRenderer
 
             if (layer.IsMain)
             {
-                renderObjects(renderer, layer, world, visibleBounds, layer.TintColor, false);
+                renderObjects(renderer, layer, world, visibleBounds, layer.TintColor, false, filterMode);
             }
-            else
+            else if (filterMode == 0)
             {
                 foreach (var obj in layer.DisplayObjects)
                 {
@@ -126,14 +129,17 @@ public static class MapRenderer
                     DrawObject(renderer, visibleBounds, obj, layer.TintColor);
                 }
             }
-            
-            RenderLayer(renderer, layer, visibleBounds);
+
+            if (filterMode == 0)
+            {
+                RenderLayer(renderer, layer, visibleBounds);
+            }
 
             if (layer.IsMain)
             {
-                renderObjects(renderer, layer, world, visibleBounds, layer.TintColor, true);
+                renderObjects(renderer, layer, world, visibleBounds, layer.TintColor, true, filterMode);
             }
-            else
+            else if (filterMode == 0)
             {
                 foreach (var obj in layer.DisplayObjects)
                 {
@@ -187,7 +193,7 @@ public static class MapRenderer
     }
     
     private static void RenderGameObjectsSim(IRenderer renderer, LayerDisplayElement layer,
-        object worldObj, RectangleF bounds, RgbaColor color, bool front)
+        object worldObj, RectangleF bounds, RgbaColor color, bool front, int filterMode)
     {
         if (worldObj is not ISimulation simulation)
             return;
@@ -197,7 +203,7 @@ public static class MapRenderer
         {
             bool isFront = obj.Zorder >= 0;
 
-            if (isFront == front)
+            if (isFront == front && filterMode == 0)
             {
                 GameObjects.Add(new ObjectRenderInfo(obj));
             }
@@ -209,7 +215,7 @@ public static class MapRenderer
             {
                 bool isFront = gor.ZOrder >= 0;
 
-                if (isFront == front)
+                if (isFront == front && (filterMode == 0 || filterMode == gor.FilterMode))
                 {
                     GameObjects.Add(new ObjectRenderInfo(gor));
                 }
