@@ -4,6 +4,12 @@ namespace Ssit.CrossX2.Framework.Games.Platformer.Builders;
 
 public class ObjectCreationParameters
 {
+    /// <summary>
+    /// Id of the object in the map file. 0 for objects created at runtime (they are not part of the map
+    /// and are not tracked by <see cref="IMapObjects"/> or checkpoints).
+    /// </summary>
+    public int MapId { get; internal set; }
+    
     public Vector2 Position { get; internal set; }
     public bool Flipped { get; internal set; }
     
@@ -58,6 +64,7 @@ public class ObjectCreationParameters<TParameters>: ObjectCreationParameters
     {
         return new ObjectCreationParameters<T>
         {
+            MapId = MapId,
             Position = Position,
             Flipped = Flipped,
             LinkMap = LinkMap,

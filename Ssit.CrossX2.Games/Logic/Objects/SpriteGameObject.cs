@@ -14,6 +14,11 @@ public abstract class SpriteGameObject : IGameObjectRenderer, IBodyOwner, ISound
 {
     public GameObjectsServices Services { get; }
     public IBody Body { get; }
+    
+    /// <summary>
+    /// Id of the object in the map file. 0 for objects created at runtime.
+    /// </summary>
+    public int MapId { get; }
     public event Action FixedUpdate;
     public int ZOrder { get; protected set; }
     
@@ -97,6 +102,7 @@ public abstract class SpriteGameObject : IGameObjectRenderer, IBodyOwner, ISound
     protected SpriteGameObject(GameObjectsServices services, ObjectCreationParameters parameters)
     {
         ZOrder = parameters.ZOrder;
+        MapId = parameters.MapId;
         
         Services = services;
 

@@ -97,8 +97,11 @@ public class AabbSimulationBuilder
         simulation.Messenger = _messenger;
         simulation.SimulationParameters.GravityAcceleration = _gameTemplate.Gravity;
 
+        var linkMap = new LinkMap();
+        
         servicesBuilder.WithInstance<ISimulation>(simulation);
         servicesBuilder.WithInstance(_gameTemplate);
+        servicesBuilder.WithInstance<IMapObjects>(linkMap);
         
         _registerServices?.Invoke(servicesBuilder);
         
@@ -108,7 +111,7 @@ public class AabbSimulationBuilder
         
         try
         {
-            GenerateObjects(_mapFile.MainLayer.Objects, container);
+            GenerateObjects(_mapFile.MainLayer.Objects, container, linkMap);
         }
         catch (Exception e)
         {
@@ -276,10 +279,8 @@ public class AabbSimulationBuilder
         }
     }
 
-    private void GenerateObjects(List<MapObject> mainLayerObjects, IIoCContainer container)
+    private void GenerateObjects(List<MapObject> mainLayerObjects, IIoCContainer container, LinkMap linkMap)
     {
-        var linkMap = new LinkMap();
-        
         foreach (var obj in mainLayerObjects)
         {
             if (!obj.HasLogic) continue;
@@ -294,6 +295,7 @@ public class AabbSimulationBuilder
             }
             
             parameters ??= new ObjectCreationParameters();
+            parameters.MapId = obj.Id;
             parameters.Position = obj.Position;
             parameters.Flipped = obj.Flipped;
             parameters.ParametersObject = obj.ParametersObject;
@@ -301,7 +303,7 @@ public class AabbSimulationBuilder
             parameters.ZOrder = obj.ZOrder;
             
             var instance = container.IoCConstruct(obj.Type, parameters);
-            linkMap.AddMapping(obj.Id, instance);
+            linkMap.AddMapping(obj.Id, obj.TypeId, instance);
         }
         linkMap.ResolveLinks();
     }

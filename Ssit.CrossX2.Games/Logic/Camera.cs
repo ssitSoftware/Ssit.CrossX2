@@ -65,6 +65,15 @@ internal class Camera(IGameTemplate template, IInputMappings inputMappings): ICa
         _lookAt = _primaryTarget.Position + _primaryOffset;
     }
 
+    public void SnapToPrimaryTarget()
+    {
+        if (_primaryTarget is null)
+            return;
+        
+        _lastTargetPositions.Clear();
+        _lookAt = _primaryTarget.Position + _primaryOffset;
+    }
+
     public void SetTemporaryTarget(IPositionObject positionObject, Vector2 offset, float followFactor, Action onFocused, TimeSpan returnAfter)
     {
         _temporaryTarget = positionObject;

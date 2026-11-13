@@ -3,6 +3,7 @@ using System.Reflection;
 using Ssit.CrossX2.Framework.Audio;
 using Ssit.CrossX2.Framework.Content;
 using Ssit.CrossX2.Framework.Core;
+using Ssit.CrossX2.Framework.Games.Logic.Checkpoints;
 using Ssit.CrossX2.Framework.Games.Logic.Objects;
 using Ssit.CrossX2.Framework.Games.Map;
 using Ssit.CrossX2.Framework.Games.Physics;
@@ -34,6 +35,11 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
         public int? MaxFps { get; set; }
         public int? TargetFps { get; set; }
         public IBackgroundRenderer BackgroundRenderer { get; set; }
+        
+        /// <summary>
+        /// Checkpoint restored right after the map is loaded. Its <see cref="CheckpointData.MapPath"/> must match <see cref="MapPath"/>.
+        /// </summary>
+        public CheckpointData RestoreFrom { get; set; }
     }
     
     IIoCContainer IGameInstance.Services => Container;
@@ -139,6 +145,7 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
                     .WithInstance(_contentCache)
                     .WithSingleton<ICamera, Camera>().As<ISoundListener>()
                     .WithSingleton<GameObjectsServices, GameObjectsServices>();
+                b.WithSingleton<ICheckpointService, CheckpointService>(new CheckpointService.Parameters { MapPath = parameters.MapPath });
             })
             .WithGameTemplate(gameTemplate);
         
@@ -165,6 +172,11 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
         
         _camera = Container.Get<ICamera>();
         FixedUpdate += _camera.Update;
+
+        if (parameters.RestoreFrom is not null)
+        {
+            Container.Get<ICheckpointService>().Restore(parameters.RestoreFrom);
+        }
 
         if (cache?.Length > 0)
         {

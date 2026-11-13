@@ -20,4 +20,18 @@ public class GameState(IActionScheduler actionScheduler) : IGameState
 
         actionScheduler.Schedule(() => StateUpdated?.Invoke());
     }
+
+    public IReadOnlyCollection<string> Flags => _flags.Keys.ToArray();
+
+    public void RestoreFlags(IEnumerable<string> flags)
+    {
+        _flags.Clear();
+        
+        foreach (var flag in flags)
+        {
+            _flags.TryAdd(flag, true);
+        }
+
+        actionScheduler.Schedule(() => StateUpdated?.Invoke());
+    }
 }
