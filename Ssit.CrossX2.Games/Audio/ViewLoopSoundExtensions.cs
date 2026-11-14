@@ -27,13 +27,18 @@ public static class ViewLoopSoundExtensions
     }
 
     /// <summary>
-    /// Updates a looped sound instance from its emitter's on-screen position. Call every update.
+    /// Updates a looped sound instance from its emitter's position relative to the camera. Call every update.
     /// Stops the sound when <see cref="GetViewVolume"/> drops to 0 (emitter at/beyond the max distance),
     /// (re)starts it when the emitter gets back within it, and adjusts its volume (full at the view center).
+    /// Applies a Doppler shift (<see cref="ISoundEffectInstance.ApplyDoppler"/>) on top of <paramref name="pitch"/>.
     /// </summary>
-    public static void UpdateViewLoop(this ISoundEffectInstance instance, ICamera camera, float volume = 1, float pitch = 1)
+    /// <param name="dt">Time since the previous update in seconds.</param>
+    /// <param name="speedOfSound">Speed of sound in tiles/s; 0 or less disables the Doppler effect.</param>
+    public static void UpdateViewLoop(this ISoundEffectInstance instance, ICamera camera, float dt,
+        float volume = 1, float pitch = 1, float speedOfSound = ISoundEffectInstance.DefaultSpeedOfSound)
     {
-        var factor = instance.Emitter is { } emitter ? camera.GetViewVolume(emitter.Position) : 0;
+        var emitter = instance.Emitter;
+        var factor = emitter is not null ? camera.GetViewVolume(emitter.Position) : 0;
 
         if (factor <= 0)
         {
@@ -51,5 +56,7 @@ public static class ViewLoopSoundExtensions
         {
             instance.Play(true);
         }
+
+        instance.ApplyDoppler(dt, speedOfSound);
     }
 }

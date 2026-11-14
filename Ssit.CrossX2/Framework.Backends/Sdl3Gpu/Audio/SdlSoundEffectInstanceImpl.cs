@@ -15,7 +15,7 @@ internal unsafe class SdlSoundEffectInstanceImpl : ISoundEffectInstance
         set
         {
             field = value;
-            InternalParameters = Parameters.Apply(Emitter, field);
+            UpdateInternalParameters();
         }
     }
     
@@ -25,7 +25,7 @@ internal unsafe class SdlSoundEffectInstanceImpl : ISoundEffectInstance
         set
         {
             field = value;
-            InternalParameters = Parameters.Apply(field, Listener);
+            UpdateInternalParameters();
         }
     }
 
@@ -35,7 +35,7 @@ internal unsafe class SdlSoundEffectInstanceImpl : ISoundEffectInstance
         set
         {
             field = value;
-            InternalParameters = field.Apply(Emitter, Listener);
+            UpdateInternalParameters();
         }
     }
     
@@ -49,6 +49,17 @@ internal unsafe class SdlSoundEffectInstanceImpl : ISoundEffectInstance
         }
     }
     
+    // Time constant (s) for smoothing the emitter's radial velocity (filters camera/frame jitter).
+    private const float DopplerSmoothingTime = 0.1f;
+
+    // Pitch multiplier limits for the Doppler effect.
+    private const float MinDopplerFactor = 0.5f;
+    private const float MaxDopplerFactor = 2f;
+
+    private float? _dopplerLastDistance;
+    private float _dopplerRadialVelocity;
+    private float _dopplerFactor = 1;
+
     private bool _isLooped;
     private bool _isPaused;
 
@@ -161,6 +172,52 @@ internal unsafe class SdlSoundEffectInstanceImpl : ISoundEffectInstance
         }
     }
 
+    private void UpdateInternalParameters()
+    {
+        var parameters = Parameters.Apply(Emitter, Listener);
+        InternalParameters = parameters with { Pitch = parameters.Pitch * _dopplerFactor };
+    }
+
+    public void ApplyDoppler(float dt, float speedOfSound = ISoundEffectInstance.DefaultSpeedOfSound)
+    {
+        if (Emitter is null || Listener is null || speedOfSound <= 0)
+        {
+            ResetDoppler();
+            return;
+        }
+
+        var distance = (Emitter.Position - Listener.Position).Length();
+
+        if (dt > 0 && _dopplerLastDistance is { } lastDistance)
+        {
+            // Positive = receding, negative = approaching.
+            var radialVelocity = (distance - lastDistance) / dt;
+            var blend = 1 - MathF.Exp(-dt / DopplerSmoothingTime);
+            _dopplerRadialVelocity += (radialVelocity - _dopplerRadialVelocity) * blend;
+        }
+
+        _dopplerLastDistance = distance;
+
+        // Classic Doppler for a source moving relative to the listener: f' = f * c / (c + v_r).
+        // Clamp the velocity so the denominator stays positive (e.g. on camera snaps).
+        var velocity = Math.Clamp(_dopplerRadialVelocity, -speedOfSound * 0.9f, speedOfSound * 0.9f);
+        _dopplerFactor = Math.Clamp(speedOfSound / (speedOfSound + velocity), MinDopplerFactor, MaxDopplerFactor);
+
+        UpdateInternalParameters();
+    }
+
+    private void ResetDoppler()
+    {
+        _dopplerLastDistance = null;
+        _dopplerRadialVelocity = 0;
+
+        if (_dopplerFactor != 1)
+        {
+            _dopplerFactor = 1;
+            UpdateInternalParameters();
+        }
+    }
+
     /// <summary>
     /// Pushes current volume, pitch and pan to the playback track (if any), so parameter changes
     /// take effect on a sound that is already playing (e.g. looped sounds updated every frame).
@@ -192,6 +249,9 @@ internal unsafe class SdlSoundEffectInstanceImpl : ISoundEffectInstance
 
         _startPosition = 0;
         _isPaused = false;
+
+        // Start fresh next time (no velocity spike from the gap).
+        ResetDoppler();
     }
 
     public void Pause()

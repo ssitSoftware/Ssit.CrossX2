@@ -6,6 +6,12 @@ namespace Ssit.CrossX2.Framework.Audio;
 public interface ISoundEffectInstance: IDisposable
 {
     /// <summary>
+    /// Default speed of sound in logical units (tiles) per second used by <see cref="ApplyDoppler"/>.
+    /// Much lower than a realistic value, so in-game speeds produce an audible shift.
+    /// </summary>
+    const float DefaultSpeedOfSound = 50f;
+
+    /// <summary>
     /// Event that is triggered when the playback of the sound effect instance is finished.
     /// </summary>
     event Action<ISoundEffectInstance> Finished;
@@ -53,4 +59,14 @@ public interface ISoundEffectInstance: IDisposable
     /// Resumes a paused sound effect instance.
     /// </summary>
     void Resume();
+
+    /// <summary>
+    /// Updates the Doppler effect from how fast the distance between <see cref="Emitter"/> and
+    /// <see cref="Listener"/> changes (approaching = higher pitch, receding = lower) and applies it
+    /// on top of <see cref="Parameters"/> pitch. Call every update while the sound is playing.
+    /// No effect without an emitter and a listener. The Doppler state resets when the sound is stopped.
+    /// </summary>
+    /// <param name="dt">Time since the previous call in seconds.</param>
+    /// <param name="speedOfSound">Speed of sound in logical units per second; 0 or less disables the effect.</param>
+    void ApplyDoppler(float dt, float speedOfSound = DefaultSpeedOfSound);
 }
