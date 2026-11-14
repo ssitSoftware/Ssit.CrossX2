@@ -209,5 +209,12 @@ public abstract class SpriteGameObject : IGameObjectRenderer, IBodyOwner, ISound
         _spriteObject = null;
     }
 
-    Vector2 ISoundEmitter.Position => Body.Colliders[0].Aabb.Center;
+    /// <summary>
+    /// Position used when this object is a sound emitter. Defaults to the first collider's center,
+    /// or the body position for objects without colliders.
+    /// </summary>
+    protected virtual Vector2 SoundEmitterPosition =>
+        Body.Colliders.Length > 0 ? Body.Colliders[0].Aabb.Center : Body.Position;
+
+    Vector2 ISoundEmitter.Position => SoundEmitterPosition;
 }

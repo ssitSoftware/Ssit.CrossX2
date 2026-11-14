@@ -39,7 +39,15 @@ internal unsafe class SdlSoundEffectInstanceImpl : ISoundEffectInstance
         }
     }
     
-    private SoundParameters InternalParameters { get; set; }
+    private SoundParameters InternalParameters
+    {
+        get;
+        set
+        {
+            field = value;
+            ApplyTrackParameters();
+        }
+    }
     
     private bool _isLooped;
     private bool _isPaused;
@@ -115,7 +123,7 @@ internal unsafe class SdlSoundEffectInstanceImpl : ISoundEffectInstance
         _sm.DetachInstance(this);
         SDL_DestroyProperties(_properties);
         
-        _sm.SoundVolumeUpdated += SmOnSoundVolumeUpdated;
+        _sm.SoundVolumeUpdated -= SmOnSoundVolumeUpdated;
     }
     
     public void Play(bool loop = false)
@@ -137,16 +145,7 @@ internal unsafe class SdlSoundEffectInstanceImpl : ISoundEffectInstance
                 }
             }
             
-            MIX_SetTrackGain(_playbackTrack.Pointer, InternalParameters.Volume * _sm.SoundVolume);
-            MIX_SetTrackFrequencyRatio(_playbackTrack.Pointer, InternalParameters.Pitch);
-
-            var pan = InternalParameters.Pan;
-            var gains = new MIX_StereoGains
-            {
-                left = 1f - MathF.Max(0f, pan),
-                right = 1f + MathF.Min(0f, pan)
-            };
-            MIX_SetTrackStereo(_playbackTrack.Pointer, &gains);
+            ApplyTrackParameters();
 
             MIX_SetTrackPlaybackPosition(_playbackTrack.Pointer, _startPosition);
             MIX_SetTrackAudio(_playbackTrack.Pointer, _chunk.Pointer);
@@ -160,6 +159,26 @@ internal unsafe class SdlSoundEffectInstanceImpl : ISoundEffectInstance
             _isLooped = loop;
             _startPosition = 0;
         }
+    }
+
+    /// <summary>
+    /// Pushes current volume, pitch and pan to the playback track (if any), so parameter changes
+    /// take effect on a sound that is already playing (e.g. looped sounds updated every frame).
+    /// </summary>
+    private void ApplyTrackParameters()
+    {
+        if (_playbackTrack.Pointer == null) return;
+
+        MIX_SetTrackGain(_playbackTrack.Pointer, InternalParameters.Volume * _sm.SoundVolume);
+        MIX_SetTrackFrequencyRatio(_playbackTrack.Pointer, InternalParameters.Pitch);
+
+        var pan = InternalParameters.Pan;
+        var gains = new MIX_StereoGains
+        {
+            left = 1f - MathF.Max(0f, pan),
+            right = 1f + MathF.Min(0f, pan)
+        };
+        MIX_SetTrackStereo(_playbackTrack.Pointer, &gains);
     }
 
     public void Stop()
