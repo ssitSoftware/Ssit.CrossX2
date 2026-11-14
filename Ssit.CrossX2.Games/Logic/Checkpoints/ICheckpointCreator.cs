@@ -5,15 +5,14 @@ namespace Ssit.CrossX2.Framework.Games.Logic.Checkpoints;
 /// </summary>
 public interface ICheckpointCreator
 {
-    ICheckpointService CheckpointService { get; }
-    
     /// <summary>
     /// False when a checkpoint can't be saved at the moment (e.g. during a fight).
     /// </summary>
     bool CanCreateCheckpoint { get; }
     
     /// <summary>
-    /// Called after the checkpoint was saved.
+    /// Saves the checkpoint (usually via <see cref="ICheckpointService"/>) and gives the player feedback.
+    /// Called only when <see cref="CanCreateCheckpoint"/> is true.
     /// </summary>
-    void OnCheckpointCreated();
+    void CreateCheckpoint();
 }

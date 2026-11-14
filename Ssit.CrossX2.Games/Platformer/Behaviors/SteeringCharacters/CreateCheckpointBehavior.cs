@@ -62,8 +62,7 @@ public class CreateCheckpointBehavior(float holdTime = 1f, string controlName = 
 
         parameters.Created = true;
         
-        creator.CheckpointService.Save(0);
-        creator.OnCheckpointCreated();
+        creator.CreateCheckpoint();
         
         return LeaveCreatingState(obj);
     }
