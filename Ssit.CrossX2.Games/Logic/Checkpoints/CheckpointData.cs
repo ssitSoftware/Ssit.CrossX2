@@ -32,6 +32,11 @@ public class CheckpointData
     /// States of map objects by their map ids.
     /// </summary>
     public Dictionary<int, ObjectSnapshot> Objects { get; set; } = new();
+
+    /// <summary>
+    /// States of objects created at runtime (not from the map file), e.g. dropped collectibles.
+    /// </summary>
+    public List<SpawnedObjectSnapshot> SpawnedObjects { get; set; } = new();
 }
 
 /// <summary>
@@ -53,5 +58,25 @@ public class ObjectSnapshot
     /// <summary>
     /// Object state (<see cref="IStatefulObject{TState}"/>), null if the object doesn't store a state.
     /// </summary>
+    public JToken State { get; set; }
+}
+
+/// <summary>
+/// Stored state of an object created at runtime. It has no map id - it is recreated from its type when restored:
+/// the type needs a public constructor taking its state object (other parameters are resolved from the game services),
+/// <see cref="IStatefulObject.RestoreState"/> is called afterwards.
+/// </summary>
+public class SpawnedObjectSnapshot
+{
+    /// <summary>
+    /// Type of the object: "Full.Type.Name, AssemblyName".
+    /// </summary>
+    public string ObjectType { get; set; }
+    
+    /// <summary>
+    /// Type of the state object: "Full.Type.Name, AssemblyName".
+    /// </summary>
+    public string StateType { get; set; }
+    
     public JToken State { get; set; }
 }

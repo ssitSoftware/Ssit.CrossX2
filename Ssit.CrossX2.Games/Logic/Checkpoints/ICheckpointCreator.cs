@@ -9,10 +9,31 @@ public interface ICheckpointCreator
     /// False when a checkpoint can't be saved at the moment (e.g. during a fight).
     /// </summary>
     bool CanCreateCheckpoint { get; }
+
+    /// <summary>
+    /// True when the creator is at an existing checkpoint - a single press of the save button saves there
+    /// immediately, without holding.
+    /// </summary>
+    bool IsAtCheckpoint => false;
     
     /// <summary>
     /// Saves the checkpoint (usually via <see cref="ICheckpointService"/>) and gives the player feedback.
     /// Called only when <see cref="CanCreateCheckpoint"/> is true.
     /// </summary>
     void CreateCheckpoint();
+
+    /// <summary>
+    /// Called when the character enters the creating state (the save button has been held for half of the hold time).
+    /// </summary>
+    void BeginCreateCheckpoint()
+    {
+    }
+
+    /// <summary>
+    /// Called when creating was interrupted before the checkpoint was saved
+    /// (button released or <see cref="CanCreateCheckpoint"/> became false).
+    /// </summary>
+    void CancelCreateCheckpoint()
+    {
+    }
 }

@@ -9,7 +9,8 @@ public interface IHittable
     /// <param name="dir">Push direction (away from the attacker).</param>
     /// <param name="power">Damage.</param>
     /// <param name="attacker">Who dealt the hit, if known (e.g. the arrow's shooter).</param>
-    void Hit(Vector2 dir, float power, IHittable attacker = null);
+    /// <returns>True when the hit was taken; false when it was ignored (e.g. a short invulnerability window).</returns>
+    bool Hit(Vector2 dir, float power, IHittable attacker = null);
     bool Alive { get; }
     bool IsEnemy(ISteeringCharacter hitter);
 }

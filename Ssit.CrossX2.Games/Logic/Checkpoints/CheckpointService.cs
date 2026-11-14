@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using Ssit.CrossX2.Framework.Games.Physics;
 using Ssit.CrossX2.Framework.Games.Platformer.Builders;
 using Ssit.CrossX2.Framework.IO;
+using Ssit.CrossX2.Framework.IoC;
 
 namespace Ssit.CrossX2.Framework.Games.Logic.Checkpoints;
 
@@ -20,14 +21,16 @@ public class CheckpointService : ICheckpointService
     private readonly IFileStorage _storage;
     private readonly ICamera _camera;
     private readonly IGameState _gameState;
+    private readonly IIoCContainer _container;
 
     public string MapPath { get; }
     
     public CheckpointData LastCheckpoint { get; private set; }
 
     public CheckpointService(IMapObjects mapObjects, ISimulation simulation, IFileStorage storage, ICamera camera,
-        Parameters parameters, IGameState gameState = null)
+        IIoCContainer container, Parameters parameters, IGameState gameState = null)
     {
+        _container = container;
         _mapObjects = mapObjects;
         _simulation = simulation;
         _storage = storage;
@@ -71,8 +74,35 @@ public class CheckpointService : ICheckpointService
             };
         }
 
+        CaptureSpawnedObjects(data);
+
         LastCheckpoint = data;
         return data;
+    }
+
+    /// <summary>
+    /// Stores stateful objects that are in the simulation but weren't created from the map.
+    /// </summary>
+    private void CaptureSpawnedObjects(CheckpointData data)
+    {
+        var mapInstances = _mapObjects.All.Select(o => o.Instance).ToHashSet(ReferenceEqualityComparer.Instance);
+
+        foreach (var body in _simulation.Bodies)
+        {
+            if (body.Owner is not IStatefulObject stateful || mapInstances.Contains(stateful))
+                continue;
+
+            var state = stateful.CaptureState();
+            if (state is null)
+                continue;
+
+            data.SpawnedObjects.Add(new SpawnedObjectSnapshot
+            {
+                ObjectType = TypeName(stateful.GetType()),
+                StateType = TypeName(state.GetType()),
+                State = JToken.FromObject(state, Serializer)
+            });
+        }
     }
 
     public CheckpointData Save(int checkpointId)
@@ -140,10 +170,13 @@ public class CheckpointService : ICheckpointService
             }
         }
 
-        // 2. Global game state.
+        // 2. Objects created at runtime.
+        var spawned = RestoreSpawnedObjects(data.SpawnedObjects);
+
+        // 3. Global game state.
         _gameState?.RestoreFlags(data.Flags ?? Enumerable.Empty<string>());
 
-        // 3. Let objects re-sync with their linked objects.
+        // 4. Let objects re-sync with their linked objects.
         foreach (var entry in _mapObjects.All)
         {
             if (!removed.Contains(entry.MapId) && entry.Instance is IStateRestoredHandler handler)
@@ -152,8 +185,54 @@ public class CheckpointService : ICheckpointService
             }
         }
 
+        foreach (var obj in spawned)
+        {
+            (obj as IStateRestoredHandler)?.OnStateRestored();
+        }
+
         _camera.SnapToPrimaryTarget();
         
         LastCheckpoint = data;
     }
+
+    /// <summary>
+    /// Recreates runtime objects: constructs each through the IoC container with its state object as the creation
+    /// parameter (so the type needs a public constructor taking its state) and calls RestoreState.
+    /// </summary>
+    private List<IStatefulObject> RestoreSpawnedObjects(List<SpawnedObjectSnapshot> snapshots)
+    {
+        var restored = new List<IStatefulObject>();
+        
+        if (snapshots is null)
+            return restored;
+
+        foreach (var snapshot in snapshots)
+        {
+            try
+            {
+                var type = Type.GetType(snapshot.ObjectType);
+                var stateType = Type.GetType(snapshot.StateType ?? "");
+                
+                if (type is null || stateType is null || !typeof(IStatefulObject).IsAssignableFrom(type) || snapshot.State is null)
+                {
+                    Console.WriteLine($"Can't restore spawned object of type '{snapshot.ObjectType}'.");
+                    continue;
+                }
+
+                var state = snapshot.State.ToObject(stateType, Serializer);
+                
+                var obj = (IStatefulObject)_container.IoCConstruct(type, state);
+                obj.RestoreState(state);
+                restored.Add(obj);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Failed to restore spawned object of type '{snapshot.ObjectType}': {e}");
+            }
+        }
+
+        return restored;
+    }
+
+    private static string TypeName(Type type) => $"{type.FullName}, {type.Assembly.GetName().Name}";
 }

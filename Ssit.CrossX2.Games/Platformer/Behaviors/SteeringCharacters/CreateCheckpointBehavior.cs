@@ -1,6 +1,7 @@
 using Ssit.CrossX2.Framework.Games.Logic.Checkpoints;
 using Ssit.CrossX2.Framework.Games.Logic.Objects.Characters;
 using Ssit.CrossX2.Framework.Games.Logic.Stering;
+using Ssit.CrossX2.Framework.Input;
 
 namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 
@@ -34,26 +35,37 @@ public class CreateCheckpointBehavior(float holdTime = 1f, string controlName = 
         
         var parameters = obj.GetParameters<Parameters>();
 
-        if (!obj.SteeringInput.Button(controlName).IsDown)
+        var button = obj.SteeringInput.Button(controlName);
+        
+        if (!button.IsDown)
         {
             parameters.HeldTime = 0;
             parameters.Created = false;
-            return LeaveCreatingState(obj);
+            return LeaveCreatingState(obj, creator);
         }
 
         if (parameters.Created)
-            return LeaveCreatingState(obj);
+            return LeaveCreatingState(obj, creator);
+
+        // At an existing checkpoint a single press saves right away.
+        if (button == ButtonState.JustPressed && creator.IsAtCheckpoint && creator.CanCreateCheckpoint)
+        {
+            parameters.Created = true;
+            creator.CreateCheckpoint();
+            return false;
+        }
         
         parameters.HeldTime += dt;
 
         if (!creator.CanCreateCheckpoint)
-            return LeaveCreatingState(obj);
+            return LeaveCreatingState(obj, creator);
 
         if (parameters.HeldTime < holdTime)
         {
             if (parameters.HeldTime > holdTime / 2 && !IsInCreatingState(obj))
             {
                 obj.SetSteeringState(creatingState);
+                creator.BeginCreateCheckpoint();
                 return true;
             }
             
@@ -64,15 +76,20 @@ public class CreateCheckpointBehavior(float holdTime = 1f, string controlName = 
         
         creator.CreateCheckpoint();
         
-        return LeaveCreatingState(obj);
+        return LeaveCreatingState(obj, creator, cancelled: false);
     }
 
     private bool IsInCreatingState(ISteeringCharacter obj) => obj.CurrentSteeringState?.Name == creatingState;
 
-    private bool LeaveCreatingState(ISteeringCharacter obj)
+    private bool LeaveCreatingState(ISteeringCharacter obj, ICheckpointCreator creator, bool cancelled = true)
     {
         if (!IsInCreatingState(obj))
             return false;
+
+        if (cancelled)
+        {
+            creator.CancelCreateCheckpoint();
+        }
         
         obj.SetSteeringState(returnState);
         return true;
