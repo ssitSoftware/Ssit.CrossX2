@@ -7,7 +7,7 @@ using Ssit.CrossX2.Framework.IO;
 namespace Ssit.CrossX2.Framework.Games.Logic.Checkpoints;
 
 /// <summary>
-/// Reads and writes the last checkpoint in the application storage, as BSON or JSON (<see cref="Parameters.UseBson"/>).
+/// Reads and writes the last checkpoint in the application storage, as BSON or JSON (<see cref="Parameters.Binary"/>).
 /// The checkpoint is signed with HMAC-SHA256 (<see cref="Parameters.SigningKey"/>), so a file edited by hand is detected:
 /// it is treated as non-existing and deleted.
 /// Registered in the application services (one instance per game, with the game's own signing key).
@@ -25,13 +25,13 @@ public class CheckpointStorage
         /// True: the checkpoint is stored as BSON (binary). False: as JSON (readable, e.g. for debugging).
         /// Either way it is signed, so it still can't be edited by hand.
         /// </summary>
-        public bool UseBson { get; init; } = true;
+        public bool Binary { get; init; }
     }
 
     private readonly Lock _lock = new();
     private readonly IFileStorage _storage;
     private readonly byte[] _signingKey;
-    private readonly bool _useBson;
+    private readonly bool _useBinary;
 
     /// <summary>
     /// Stored BSON file: the checkpoint BSON kept as raw bytes and signed exactly as stored,
@@ -70,39 +70,46 @@ public class CheckpointStorage
         
         _storage = storage;
         _signingKey = parameters.SigningKey;
-        _useBson = parameters.UseBson;
+        _useBinary = parameters.Binary;
     }
+
+    /// <summary>
+    /// Extension matching the stored format: ".bson" or ".json". Added to the file names given to the methods.
+    /// </summary>
+    private string FileExtension => _useBinary ? ".bson" : ".json";
     
     /// <summary>
-    /// Writes the checkpoint to <paramref name="fileName"/> in the application storage.
+    /// Writes the checkpoint to <paramref name="fileName"/> (without extension) in the application storage.
     /// </summary>
     public void Write(string fileName, CheckpointData data)
     {
-        var bytes = _useBson ? SerializeBson(data) : SerializeJson(data);
+        var bytes = _useBinary ? SerializeBson(data) : SerializeJson(data);
 
         lock (_lock)
         {
-            _storage.WriteData(fileName, bytes);
+            _storage.WriteData(fileName + FileExtension, bytes);
         }
     }
 
     /// <summary>
-    /// Deletes the checkpoint stored in <paramref name="fileName"/> (if any).
+    /// Deletes the checkpoint stored in <paramref name="fileName"/> (without extension), if any.
     /// </summary>
     public void Delete(string fileName)
     {
         lock (_lock)
         {
-            _storage.Delete(fileName);
+            _storage.Delete(fileName + FileExtension);
         }
     }
 
     /// <summary>
-    /// Reads the checkpoint stored in <paramref name="fileName"/>. Returns null if there is no checkpoint or it can't be used.
+    /// Reads the checkpoint stored in <paramref name="fileName"/> (without extension). Returns null if there is no checkpoint or it can't be used.
     /// A corrupted checkpoint (changed by hand, wrong signature, unreadable content) is deleted.
     /// </summary>
     public CheckpointData Read(string fileName)
     {
+        fileName += FileExtension;
+        
         lock (_lock)
         {
             byte[] bytes;
@@ -147,7 +154,7 @@ public class CheckpointStorage
         
         try
         {
-            var (payload, signature) = _useBson ? UnwrapBson(bytes) : UnwrapJson(bytes);
+            var (payload, signature) = _useBinary ? UnwrapBson(bytes) : UnwrapJson(bytes);
             if (payload is null || signature is null)
                 return ReadResult.Corrupted;
 
@@ -155,7 +162,7 @@ public class CheckpointStorage
             if (!CryptographicOperations.FixedTimeEquals(expected, signature))
                 return ReadResult.Corrupted;
 
-            data = _useBson
+            data = _useBinary
                 ? FromBson<CheckpointData>(payload)
                 : JsonConvert.DeserializeObject<CheckpointData>(Encoding.UTF8.GetString(payload));
             if (data is null || string.IsNullOrEmpty(data.MapPath))
