@@ -15,6 +15,11 @@ public class FilesStorage(string appName) : IFileStorage
         File.WriteAllText(Path.Combine(StorageDirectory(appName), path), text);
     }
 
+    public void Delete(string path)
+    {
+        File.Delete(Path.Combine(StorageDirectory(appName), path));
+    }
+
     public void WriteData(string path, byte[] data)
     {
         File.WriteAllBytes(Path.Combine(StorageDirectory(appName), path), data);

@@ -40,6 +40,11 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
         /// Checkpoint restored right after the map is loaded. Its <see cref="CheckpointData.MapPath"/> must match <see cref="MapPath"/>.
         /// </summary>
         public CheckpointData RestoreFrom { get; set; }
+        
+        /// <summary>
+        /// Save slot the game is played in.
+        /// </summary>
+        public int Slot { get; set; }
     }
     
     IIoCContainer IGameInstance.Services => Container;
@@ -70,6 +75,8 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
     private Queue<object> _messages = new();
 
     int IGameInstance.RenderPasses => 1;
+    
+    public int Slot { get; }
     
     private readonly Stopwatch _internalStopwatch = new();
     private TimeSpan _lastTimeElapsed = TimeSpan.Zero;
@@ -104,6 +111,8 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
         }
 
         _internalStopwatch.Start();
+        
+        Slot = parameters.Slot;
         
         _scheduler = scheduler;
         _gameTemplate = gameTemplate;

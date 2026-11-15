@@ -2,7 +2,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Ssit.CrossX2.Framework.Games.Physics;
 using Ssit.CrossX2.Framework.Games.Platformer.Builders;
-using Ssit.CrossX2.Framework.IO;
 using Ssit.CrossX2.Framework.IoC;
 
 namespace Ssit.CrossX2.Framework.Games.Logic.Checkpoints;
@@ -18,7 +17,7 @@ public class CheckpointService : ICheckpointService
     
     private readonly IMapObjects _mapObjects;
     private readonly ISimulation _simulation;
-    private readonly IFileStorage _storage;
+    private readonly CheckpointStorage _storage;
     private readonly ICamera _camera;
     private readonly IGameState _gameState;
     private readonly IIoCContainer _container;
@@ -27,7 +26,7 @@ public class CheckpointService : ICheckpointService
     
     public CheckpointData LastCheckpoint { get; private set; }
 
-    public CheckpointService(IMapObjects mapObjects, ISimulation simulation, IFileStorage storage, ICamera camera,
+    public CheckpointService(IMapObjects mapObjects, ISimulation simulation, CheckpointStorage storage, ICamera camera,
         IIoCContainer container, Parameters parameters, IGameState gameState = null)
     {
         _container = container;
@@ -105,7 +104,7 @@ public class CheckpointService : ICheckpointService
         }
     }
 
-    public CheckpointData Save(int checkpointId)
+    public CheckpointData Save(string fileName, int checkpointId)
     {
         var data = Capture(checkpointId);
 
@@ -113,7 +112,7 @@ public class CheckpointService : ICheckpointService
         {
             try
             {
-                CheckpointStorage.Write(_storage, data);
+                _storage.Write(fileName, data);
             }
             catch (Exception e)
             {

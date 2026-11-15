@@ -16,4 +16,9 @@ public interface IGameInstance: IDisposable
     TService GetComponent<TService>() where TService : class;
     void Activate(bool active);
     IIoCContainer Services { get; }
+    
+    /// <summary>
+    /// Save slot the game is played in - checkpoints of this game are stored in this slot.
+    /// </summary>
+    int Slot { get; }
 }

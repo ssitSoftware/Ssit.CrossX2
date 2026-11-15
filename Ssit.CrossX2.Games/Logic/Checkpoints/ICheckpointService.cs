@@ -22,10 +22,10 @@ public interface ICheckpointService
     CheckpointData Capture(int checkpointId);
     
     /// <summary>
-    /// Captures the current state and writes it to the application storage as the last checkpoint.
+    /// Captures the current state and writes it to <paramref name="fileName"/> in the application storage.
     /// The file is written in the background.
     /// </summary>
-    CheckpointData Save(int checkpointId);
+    CheckpointData Save(string fileName, int checkpointId);
     
     /// <summary>
     /// Restores the state of the map objects. Called by the game instance right after the map is loaded,

@@ -9,13 +9,17 @@ namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 /// Slows the character down on static ground using the ground material's friction (no input handling).
 /// frictionMultiplier scales the friction; right after a hard landing the friction is additionally modified
 /// (FrictionModifierOnLandingFactor), so the character slides or stops depending on the landing speed.
+/// On dynamic ground (moving platforms, elevators) the body is carried by the platform and its own velocity is relative
+/// to it, so friction applies exactly the same way as on static ground.
 /// </summary>
 public class ApplyHorizontalFrictionBehavior(float frictionMultiplier) : SteeringBehavior<ISteeringCharacter>
 {
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
-        if (!obj.SteeringParameters.IsOnStaticGround)
+        if (!obj.SteeringParameters.IsOnGround)
             return false;
+
+        var colliders = obj.Body.Colliders;
 
         var landingParameters = obj.GetParameters<LandingParameters>();
         // Forget the stored landing velocity once the character has stopped, reversed or become faster than at landing
@@ -36,7 +40,6 @@ public class ApplyHorizontalFrictionBehavior(float frictionMultiplier) : Steerin
         // Blend between normal friction (factor 0) and the landing friction modifier (factor 1)
         var landingFrictionModifier =  factor * obj.PhysicsValues.FrictionModifierOnLandingFactor + 1 - factor;
 
-        var colliders = obj.Body.Colliders;
         PhysicsUtils.ApplyHorizontalFriction(colliders[0], obj.SteeringParameters.GroundMaterial, dt * frictionMultiplier * landingFrictionModifier);
 
         return false;

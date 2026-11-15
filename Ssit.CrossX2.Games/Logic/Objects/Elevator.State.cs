@@ -15,21 +15,25 @@ public abstract partial class Elevator : IStatefulObject<Elevator.State>
         /// 0 if unknown - the elevator keeps the target it was created with.
         /// </summary>
         public int TargetId { get; set; }
+
+        public bool FaceLeft { get; set; }
     }
 
     public State CaptureState() => new()
     {
         Position = Body.Position,
-        TargetId = FindTargetId(CurrentTarget)
+        TargetId = FindTargetId(CurrentTarget),
+        FaceLeft = FaceLeft
     };
 
     /// <summary>
-    /// Restores only the position and the current target - everything else stays as created from the map.
+    /// Restores only the position, the facing and the current target - everything else stays as created from the map.
     /// </summary>
     public void RestoreState(State state)
     {
         Body.Position = state.Position;
         Body.Touch();
+        FaceLeft = state.FaceLeft;
 
         if (state.TargetId == 0)
             return;

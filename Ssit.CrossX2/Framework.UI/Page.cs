@@ -72,7 +72,12 @@ public abstract class Page<TViewModel>: View, IPage where TViewModel: class
     }
 
     float IPage.Scale => Scale;
-    TransitionType IPage.TransitionType { get; set; }
+    TransitionType IPage.TransitionType { get => TransitionType; set => TransitionType = value; }
+
+    /// <summary>
+    /// Type of the transition the page is currently in (set by the navigation). 0 when there is no transition.
+    /// </summary>
+    protected TransitionType TransitionType { get; private set; }
     
     void IPage.SignalRecalculationPending() => _recalculationNeeded = true;
 
