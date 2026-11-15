@@ -45,6 +45,16 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
         /// Save slot the game is played in.
         /// </summary>
         public int Slot { get; set; }
+
+        /// <summary>
+        /// Store a JPEG preview of the screen in each checkpoint (<see cref="CheckpointData.PreviewImage"/>).
+        /// </summary>
+        public bool StoreCheckpointPreview { get; set; }
+
+        /// <summary>
+        /// How many times the checkpoint preview is smaller than the rendered frame.
+        /// </summary>
+        public int CheckpointPreviewDownSize { get; set; } = 4;
     }
     
     IIoCContainer IGameInstance.Services => Container;
@@ -154,7 +164,12 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
                     .WithInstance(_contentCache)
                     .WithSingleton<ICamera, Camera>().As<ISoundListener>()
                     .WithSingleton<GameObjectsServices, GameObjectsServices>();
-                b.WithSingleton<ICheckpointService, CheckpointService>(new CheckpointService.Parameters { MapPath = parameters.MapPath });
+                b.WithSingleton<ICheckpointService, CheckpointService>(new CheckpointService.Parameters
+                {
+                    MapPath = parameters.MapPath,
+                    StorePreview = parameters.StoreCheckpointPreview,
+                    PreviewDownSize = parameters.CheckpointPreviewDownSize
+                });
             })
             .WithGameTemplate(gameTemplate);
         

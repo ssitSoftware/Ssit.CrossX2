@@ -9,6 +9,9 @@ public class ContainerHandler<TContainer>(
     IHandlerMapper handlerMapper) :
     ChildrenContainerHandler<TContainer>(parameters, handlerMapper) where TContainer: ChildrenContainer
 {
+    private float _lastAutoWidth = -1f;
+    private float _lastAutoHeight = -1f;
+
     protected override void RecalculateChildrenLayouts()
     {
         if (RecalculateChildren.Count == 0)
@@ -19,6 +22,62 @@ public class ContainerHandler<TContainer>(
             CalculateChildPosition(child);
         }
         RecalculateChildren.Clear();
+
+        // Propagate a size change upward only when the size is auto and actually changed.
+        if (View.Width is { IsAuto: true } || View.Height is { IsAuto: true })
+        {
+            CalculateSize(out var width, out var height);
+            var w = width.IsAuto ? 0 : width.Calculate(CurrentScale, 0);
+            var h = height.IsAuto ? 0 : height.Calculate(CurrentScale, 0);
+
+            if (MathF.Abs(w - _lastAutoWidth) > 0.5f || MathF.Abs(h - _lastAutoHeight) > 0.5f)
+            {
+                _lastAutoWidth = w;
+                _lastAutoHeight = h;
+                Parent?.RecalculateLayout(AttachedView);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Width / height set to <see cref="Length.Auto"/>: the size of the largest child plus padding.
+    /// Children sized relative to the container (percent, fill) don't count - their size depends on the container.
+    /// Without explicit Auto the container keeps the default size (<see cref="Length.Fill"/> when not set).
+    /// </summary>
+    public override void CalculateSize(out Length width, out Length height)
+    {
+        base.CalculateSize(out width, out height);
+
+        if (!width.IsAuto && !height.IsAuto)
+            return;
+
+        float maxWidth = 0;
+        float maxHeight = 0;
+
+        foreach (var child in AttachedView.Children)
+        {
+            ((IHandlerView)child).Handler.CalculateSize(out var childWidth, out var childHeight);
+
+            if (!childWidth.IsAuto)
+            {
+                maxWidth = MathF.Max(maxWidth, childWidth.Calculate(CurrentScale, 0));
+            }
+
+            if (!childHeight.IsAuto)
+            {
+                maxHeight = MathF.Max(maxHeight, childHeight.Calculate(CurrentScale, 0));
+            }
+        }
+
+        if (width.IsAuto)
+        {
+            width = CalculateLengthWithPadding(new Length(pixels: maxWidth), AttachedView.Padding?.Left, AttachedView.Padding?.Right);
+        }
+
+        if (height.IsAuto)
+        {
+            height = CalculateLengthWithPadding(new Length(pixels: maxHeight), AttachedView.Padding?.Top, AttachedView.Padding?.Bottom);
+        }
     }
     
     private void CalculateChildPosition(View child)

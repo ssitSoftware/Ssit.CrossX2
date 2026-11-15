@@ -19,6 +19,12 @@ public class CheckpointData
     public DateTime SavedAtUtc { get; set; }
 
     /// <summary>
+    /// JPEG preview of the screen at the moment the checkpoint was saved, Base64 encoded.
+    /// Null if previews are disabled (<c>AabbGameInstance.Parameters.StoreCheckpointPreview</c>) or it couldn't be taken.
+    /// </summary>
+    public string PreviewImage { get; set; }
+
+    /// <summary>
     /// Game state flags (<see cref="IGameState"/>).
     /// </summary>
     public List<string> Flags { get; set; } = new();

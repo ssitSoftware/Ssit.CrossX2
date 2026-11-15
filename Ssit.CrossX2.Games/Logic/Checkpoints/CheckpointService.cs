@@ -1,7 +1,9 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Ssit.CrossX2.Framework.Core;
 using Ssit.CrossX2.Framework.Games.Physics;
 using Ssit.CrossX2.Framework.Games.Platformer.Builders;
+using Ssit.CrossX2.Framework.Graphics;
 using Ssit.CrossX2.Framework.IoC;
 
 namespace Ssit.CrossX2.Framework.Games.Logic.Checkpoints;
@@ -11,6 +13,16 @@ public class CheckpointService : ICheckpointService
     public class Parameters
     {
         public string MapPath { get; init; }
+
+        /// <summary>
+        /// Store a JPEG preview of the last rendered frame in each checkpoint (<see cref="CheckpointData.PreviewImage"/>).
+        /// </summary>
+        public bool StorePreview { get; init; }
+
+        /// <summary>
+        /// How many times the preview is smaller than the rendered frame.
+        /// </summary>
+        public int PreviewDownSize { get; init; } = 4;
     }
 
     private static readonly JsonSerializer Serializer = JsonSerializer.CreateDefault();
@@ -21,14 +33,24 @@ public class CheckpointService : ICheckpointService
     private readonly ICamera _camera;
     private readonly IGameState _gameState;
     private readonly IIoCContainer _container;
+    private readonly IRenderHost _renderHost;
+    private readonly ISnapshotService _snapshotService;
+    private readonly bool _storePreview;
+    private readonly int _previewDownSize;
 
     public string MapPath { get; }
     
     public CheckpointData LastCheckpoint { get; private set; }
 
     public CheckpointService(IMapObjects mapObjects, ISimulation simulation, CheckpointStorage storage, ICamera camera,
-        IIoCContainer container, Parameters parameters, IGameState gameState = null)
+        IIoCContainer container, Parameters parameters, IGameState gameState = null,
+        IRenderHost renderHost = null, ISnapshotService snapshotService = null)
     {
+        _renderHost = renderHost;
+        _snapshotService = snapshotService;
+        _storePreview = parameters.StorePreview;
+        _previewDownSize = Math.Max(1, parameters.PreviewDownSize);
+
         _container = container;
         _mapObjects = mapObjects;
         _simulation = simulation;
@@ -45,7 +67,8 @@ public class CheckpointService : ICheckpointService
         {
             MapPath = MapPath,
             SavedAtUtc = DateTime.UtcNow,
-            Flags = _gameState?.Flags.ToList() ?? new List<string>()
+            Flags = _gameState?.Flags.ToList() ?? new List<string>(),
+            PreviewImage = CapturePreview()
         };
 
         var bodies = _simulation.Bodies.ToHashSet();
@@ -76,6 +99,28 @@ public class CheckpointService : ICheckpointService
 
         LastCheckpoint = data;
         return data;
+    }
+
+    /// <summary>
+    /// Takes a JPEG snapshot of the last rendered frame (before CRT simulation and post rendering), Base64 encoded.
+    /// Returns null if previews are disabled or the snapshot fails - the checkpoint is saved without it.
+    /// </summary>
+    private string CapturePreview()
+    {
+        if (!_storePreview || _snapshotService is null || _renderHost?.SceneTexture is not { } texture)
+            return null;
+
+        try
+        {
+            using var stream = new MemoryStream();
+            _snapshotService.GetSnapshot(stream, texture, _previewDownSize);
+            return Convert.ToBase64String(stream.GetBuffer(), 0, (int)stream.Length);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Failed to take checkpoint preview: {e}");
+            return null;
+        }
     }
 
     /// <summary>

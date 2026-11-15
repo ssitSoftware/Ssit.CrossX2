@@ -1,4 +1,5 @@
 using System.Numerics;
+using Ssit.CrossX2.Framework.Graphics;
 
 namespace Ssit.CrossX2.Framework.Core;
 
@@ -13,4 +14,10 @@ public interface IRenderHost : IDisposable
     Size LogicalSize => TargetSize / Scale;
     int Scale { get; }
     void Apply();
+
+    /// <summary>
+    /// Texture with the last rendered frame, before CRT simulation and post rendering (glow pass already applied).
+    /// Null until the first frame is rendered. Owned by the render host - don't dispose it.
+    /// </summary>
+    ITexture SceneTexture { get; }
 }

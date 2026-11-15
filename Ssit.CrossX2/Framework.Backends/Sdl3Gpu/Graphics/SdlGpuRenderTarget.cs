@@ -17,6 +17,8 @@ internal unsafe class SdlGpuRenderTarget : IRenderTarget, ISdlGpuTexture
     public TextureMaps Maps => TextureMaps.Diffuse;
 
     public Size Size { get; }
+
+    public SDL_GPUTextureFormat Format { get; }
     
     public SDL_GPUTexture* GetMap(TextureMaps maps)
     {
@@ -36,11 +38,12 @@ internal unsafe class SdlGpuRenderTarget : IRenderTarget, ISdlGpuTexture
 
         _device = renderer.Device;
         Size = parameters.Size;
+        Format = SDL_GetGPUSwapchainTextureFormat(renderer.Device, renderer.Window);
 
         var createInfo = new SDL_GPUTextureCreateInfo
         {
             type = SDL_GPUTextureType.SDL_GPU_TEXTURETYPE_2D,
-            format = SDL_GetGPUSwapchainTextureFormat(renderer.Device, renderer.Window),
+            format = Format,
             usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER,
             width = (uint)Size.Width,
             height = (uint)Size.Height,

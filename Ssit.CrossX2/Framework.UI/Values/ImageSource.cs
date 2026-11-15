@@ -13,6 +13,8 @@ public sealed class ImageSource<TTexture> : IImageSource<TTexture> where TTextur
     
     private string _resourcePath;
     private Uri _resourceUri;
+    private Stream _resourceStream;
+    private string _streamName;
     
     private Task<ResourceHandle<TTexture>> _loadTextureTask;
     private CancellationTokenSource _cancellationTokenSource;
@@ -129,12 +131,28 @@ public sealed class ImageSource<TTexture> : IImageSource<TTexture> where TTextur
         _resourceUri = uri;
     }
 
+    /// <summary>
+    /// Image loaded from encoded image data (e.g. PNG or JPEG) in <paramref name="stream"/>.
+    /// The source takes ownership of the stream and disposes it after the texture is created.
+    /// </summary>
+    /// <param name="name">Resource name of the created texture (for diagnostics).</param>
+    public ImageSource(Stream stream, string name = null)
+    {
+        _resourceStream = stream;
+        _streamName = name;
+    }
+
     private async Task<ResourceHandle<TTexture>> LoadTextureFromParameters(IIoCContainer container, CancellationToken cancellationToken)
     {
         ResourceHandle<TTexture> result = null;
         if (_resourcePath is not null)
         {
             result = await LoadContent(container, cancellationToken);
+        }
+
+        if (_resourceStream is not null)
+        {
+            result = await LoadFromStream(container, cancellationToken);
         }
 
         if (_resourceUri is not null)
@@ -180,6 +198,37 @@ public sealed class ImageSource<TTexture> : IImageSource<TTexture> where TTextur
         return Task.FromException<ResourceHandle<TTexture>>(new InvalidProgramException("Cannot load image from resource path."));
     }
     
+    /// <summary>
+    /// Creates the texture from the stream on the calling thread, like <see cref="LoadContent"/>.
+    /// </summary>
+    private Task<ResourceHandle<TTexture>> LoadFromStream(IIoCContainer container, CancellationToken _)
+    {
+        Stream stream;
+        string name;
+        
+        lock (_lock)
+        {
+            stream = _resourceStream;
+            name = _streamName;
+            _resourceStream = null;
+        }
+
+        if (stream is null)
+        {
+            return Task.FromException<ResourceHandle<TTexture>>(new InvalidOperationException("Cannot load image from stream."));
+        }
+
+        using (stream)
+        {
+            var texture = container.IoCConstruct<TTexture>(new LoadTextureParameters
+            {
+                DiffuseMapStream = stream
+            });
+
+            return Task.FromResult<ResourceHandle<TTexture>>(new ResourceHandleUnmanaged<TTexture>(texture, name ?? "stream"));
+        }
+    }
+
     private async Task<ResourceHandle<TTexture>> LoadFromUri(IIoCContainer container,
         CancellationToken cancellationToken)
     {
@@ -232,14 +281,18 @@ public sealed class ImageSource<TTexture> : IImageSource<TTexture> where TTextur
     {
         var tokenSrc = _cancellationTokenSource;
         var disposable = _texture;
+        Stream stream;
         
         lock (_lock)
         {
+            stream = _resourceStream;
+            _resourceStream = null;
             _texture = null;
             _cancellationTokenSource = null;
         }
 
         tokenSrc?.Cancel();
         disposable?.Dispose();
+        stream?.Dispose();
     }
 }

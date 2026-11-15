@@ -12,6 +12,11 @@ public readonly struct ColorWrapper
     private readonly float _opacity;
 
     public readonly string ColorId;
+
+    /// <summary>
+    /// True when an explicit glow color is set, so the glow pass draws it instead of black.
+    /// </summary>
+    public bool HasGlow => _glowColor.HasValue;
     
     private ColorWrapper(RgbaColor? color, int? colorIndex = null, float opacity = 1, string colorId = null, RgbaColor? glowColor = null)
     {

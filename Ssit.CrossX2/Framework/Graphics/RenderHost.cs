@@ -224,6 +224,9 @@ internal class RenderHost : IRenderHost
              _glowEffect?.Render(_glowRenderIntermediateTarget, _renderTarget, _glowRenderTarget, Scale);
              sourceTexture = _glowEffect != null ? _glowRenderIntermediateTarget : _renderTarget;
         }
+
+        // The frame as rendered, before CRT simulation and post rendering.
+        SceneTexture = sourceTexture;
         
         if (_endRenderTarget != null)
         {
@@ -294,12 +297,14 @@ internal class RenderHost : IRenderHost
         _endRenderTarget = null;
         _glowRenderIntermediateTarget = null;
         _glowRenderTarget = null;
+        SceneTexture = null;
     }
 
     public Matrix3x2 Transform { get; private set; }
     public Matrix3x2 TransformInv { get; private set; }
     public Size TargetSize { get; private set; }
     public int Scale { get; private set; }
+    public ITexture SceneTexture { get; private set; }
 }
 
 internal class SkipFrameException : Exception

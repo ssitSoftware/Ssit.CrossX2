@@ -223,6 +223,9 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
 
     public TextureMaps Maps { get; }
     public Size Size { get; }
+
+    // All maps are loaded as R8G8B8A8 (see LoadTextureFromStream).
+    public SDL_GPUTextureFormat Format => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
     
     public SDL_GPUTexture* GetMap(TextureMaps maps)
     {

@@ -122,6 +122,7 @@ internal static class AppRunnerSdl
         builder
             .WithSingleton<IRenderer, SdlGpuRenderer>().As<SdlGpuRenderer>()
             .WithSingleton<ISdlGpuPipelineManager, SdlGpuPipelineManager>()
+            .WithSingleton<ISnapshotService, SdlGpuSnapshotService>()
             .WithInstance<IAppWindowManager>(appWindowManager).As<IInternalWindowProvider>()
             .WithInstance<IPointingDevices>(pointingDevices).As<IInputHandler>()
             .WithInstance(handles)
