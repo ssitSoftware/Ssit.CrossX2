@@ -20,6 +20,17 @@ public class FilesStorage(string appName) : IFileStorage
         File.Delete(Path.Combine(StorageDirectory(appName), path));
     }
 
+    public bool Exists(string path)
+    {
+        return File.Exists(Path.Combine(StorageDirectory(appName), path));
+    }
+
+    public void Move(string sourcePath, string destinationPath)
+    {
+        var directory = StorageDirectory(appName);
+        File.Move(Path.Combine(directory, sourcePath), Path.Combine(directory, destinationPath));
+    }
+
     public void WriteData(string path, byte[] data)
     {
         File.WriteAllBytes(Path.Combine(StorageDirectory(appName), path), data);

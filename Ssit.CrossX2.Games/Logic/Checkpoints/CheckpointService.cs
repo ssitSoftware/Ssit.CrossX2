@@ -39,12 +39,11 @@ public class CheckpointService : ICheckpointService
         MapPath = parameters.MapPath;
     }
 
-    public CheckpointData Capture(int checkpointId)
+    public CheckpointData Capture()
     {
         var data = new CheckpointData
         {
             MapPath = MapPath,
-            CheckpointId = checkpointId,
             SavedAtUtc = DateTime.UtcNow,
             Flags = _gameState?.Flags.ToList() ?? new List<string>()
         };
@@ -104,9 +103,9 @@ public class CheckpointService : ICheckpointService
         }
     }
 
-    public CheckpointData Save(string fileName, int checkpointId)
+    public CheckpointData Save(string fileName)
     {
-        var data = Capture(checkpointId);
+        var data = Capture();
 
         Task.Run(() =>
         {

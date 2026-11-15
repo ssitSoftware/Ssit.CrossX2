@@ -18,14 +18,13 @@ public interface ICheckpointService
     /// <summary>
     /// Captures the current state of the map objects. Must be called from the game update.
     /// </summary>
-    /// <param name="checkpointId">Map id of the checkpoint object that was reached.</param>
-    CheckpointData Capture(int checkpointId);
+    CheckpointData Capture();
     
     /// <summary>
     /// Captures the current state and writes it to <paramref name="fileName"/> in the application storage.
     /// The file is written in the background.
     /// </summary>
-    CheckpointData Save(string fileName, int checkpointId);
+    CheckpointData Save(string fileName);
     
     /// <summary>
     /// Restores the state of the map objects. Called by the game instance right after the map is loaded,

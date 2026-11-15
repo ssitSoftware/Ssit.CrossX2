@@ -92,6 +92,31 @@ public class CheckpointStorage
     }
 
     /// <summary>
+    /// Moves the checkpoint stored in <paramref name="fileName"/> (without extension) aside to
+    /// "{fileName}_arch{M}" with the first free M from 0, keeping the extension. Does nothing if there is no checkpoint.
+    /// </summary>
+    /// <returns>Name of the archived file (with extension), or null if there was nothing to archive.</returns>
+    public string Archive(string fileName)
+    {
+        lock (_lock)
+        {
+            var source = fileName + FileExtension;
+            if (!_storage.Exists(source))
+                return null;
+
+            for (var index = 0; ; index++)
+            {
+                var destination = $"{fileName}_arch{index}{FileExtension}";
+                if (_storage.Exists(destination))
+                    continue;
+
+                _storage.Move(source, destination);
+                return destination;
+            }
+        }
+    }
+
+    /// <summary>
     /// Deletes the checkpoint stored in <paramref name="fileName"/> (without extension), if any.
     /// </summary>
     public void Delete(string fileName)

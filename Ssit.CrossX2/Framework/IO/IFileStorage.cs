@@ -13,6 +13,16 @@ public interface IFileStorage
     /// </summary>
     void Delete(string path);
 
+    /// <summary>
+    /// Returns true if the file exists.
+    /// </summary>
+    bool Exists(string path);
+
+    /// <summary>
+    /// Moves (renames) the file. Fails if the destination already exists.
+    /// </summary>
+    void Move(string sourcePath, string destinationPath);
+
     void WriteData(string path, byte[] data);
     byte[] ReadData(string path);
     

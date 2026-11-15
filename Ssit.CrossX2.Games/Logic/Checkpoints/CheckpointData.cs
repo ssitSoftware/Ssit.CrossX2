@@ -16,11 +16,6 @@ public class CheckpointData
     /// </summary>
     public string MapPath { get; set; }
     
-    /// <summary>
-    /// Map id of the checkpoint object that was reached (0 if the checkpoint was not saved by an object).
-    /// </summary>
-    public int CheckpointId { get; set; }
-    
     public DateTime SavedAtUtc { get; set; }
 
     /// <summary>
