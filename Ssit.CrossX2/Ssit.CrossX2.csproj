@@ -1,7 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net10.0;net10.0-android;net10.0-ios</TargetFrameworks>
+        <!-- Mobile targets need the Android/iOS workloads, so they are built by default only on macOS.
+             Elsewhere (e.g. Windows) pass -p:CrossXMobileTargets=true to include them. -->
+        <TargetFrameworks>net10.0</TargetFrameworks>
+        <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('OSX')) Or '$(CrossXMobileTargets)' == 'true'">net10.0;net10.0-android;net10.0-ios</TargetFrameworks>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>disable</Nullable>
     </PropertyGroup>
@@ -24,7 +27,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Docs\" />
       <Folder Include="Framework\" />
     </ItemGroup>
 
@@ -45,6 +47,11 @@
     </ItemGroup>
 
     <ItemGroup>
+      <!-- Direct3D 12 (Windows) shaders, compiled at runtime to DXBC SM 5.1 by D3DShaderCompiler. -->
+      <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\HLSL\**\*.hlsl" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$([MSBuild]::GetTargetPlatformIdentifier($(TargetFramework)))' == 'android'">
       <Reference Include="Mono.Android">
         <HintPath>..\..\..\..\..\..\..\usr\local\share\dotnet\packs\Microsoft.Android.Ref.36\36.1.53\ref\net10.0\Mono.Android.dll</HintPath>
       </Reference>

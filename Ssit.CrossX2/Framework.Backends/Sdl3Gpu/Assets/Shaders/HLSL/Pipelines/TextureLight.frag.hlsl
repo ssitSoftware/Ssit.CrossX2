@@ -1,0 +1,153 @@
+// Direct3D 12 port of Metal/Pipelines/TextureLight.frag.metal (ps_5_1).
+// Keep the lighting math in sync with ColorLight.frag.hlsl and the Metal shaders.
+
+struct VertexOut
+{
+    float4 position         : SV_Position;
+    float2 uv               : TEXCOORD0;
+    float4 color            : TEXCOORD1;
+    float3 originalPosition : TEXCOORD2; // xy = original untransformed position, z = height above the observer-facing plane
+};
+
+// SDL GPU binding model: fragment sampler N binds to tN/sN in space2.
+Texture2D<float4> tex      : register(t0, space2);
+SamplerState samp          : register(s0, space2);
+Texture2D<float4> lightTex : register(t1, space2);
+SamplerState lightSamp     : register(s1, space2);
+
+struct LightingUniforms
+{
+    float4 ambient;                    // rgb ambient color, a unused
+    float4 lightPositionRadius[8];     // xyz = position, w = radius
+    float4 lightColorIntensity[8];     // rgb = color, a = intensity
+    float4 spotPositionRadius[8];      // xyz = position, w = radius
+    float4 spotDirectionAngle[8];      // xy = normalized 2D direction (screen plane), z = cos(outerAngle), w = cos(innerAngle)
+    float4 spotColorIntensity[8];      // rgb = color, a = intensity
+    float4 spotBulbRadius[8];          // x = bulb radius (world units), yzw unused
+    float4 lightCount;                 // x = point light count, y = position quantization resolution in pixels, z = spot light count, w unused
+    float4 globalColorIntensity[4];    // rgb = color, a = intensity
+    float4 globalCount;                // x = global light count, yzw unused
+};
+
+// SDL GPU binding model: fragment uniform buffers live in space3.
+cbuffer LightingBuffer : register(b0, space3)
+{
+    LightingUniforms lights;
+};
+
+float3 ComputeLighting(float3 originalPosition)
+{
+    // Every vertex is assumed to face the observer directly (left-hand rule, N = -Z).
+    const float3 N = float3(0.0, 0.0, -1.0);
+
+    float3 lighting = lights.ambient.rgb;
+    int count = (int)lights.lightCount.x;
+    float resolution = lights.lightCount.y;
+
+    float3 fragPosition = resolution > 0.0
+        ? floor(originalPosition / resolution) * resolution
+        : originalPosition;
+
+    [loop]
+    for (int i = 0; i < 8; i++)
+    {
+        if (i >= count)
+        {
+            break;
+        }
+
+        float3 lightPosition = lights.lightPositionRadius[i].xyz;
+        float radius = lights.lightPositionRadius[i].w;
+        float3 lightColor = lights.lightColorIntensity[i].rgb;
+        float intensity = lights.lightColorIntensity[i].a;
+
+        float3 toLight = lightPosition - fragPosition;
+        float dist2D = length(toLight.xy);
+        float dist3D = length(toLight);
+        float3 lightDir = dist3D > 0.0001 ? toLight / dist3D : N;
+
+        float diffuse = max(dot(N, lightDir), 0.0);
+
+        float attenuation = clamp(1.0 - dist2D / max(radius, 0.0001), 0.0, 1.0);
+        attenuation *= attenuation;
+        attenuation *= diffuse;
+
+        intensity *= attenuation;
+        lighting += lightColor * intensity;
+    }
+
+    int spotCount = (int)lights.lightCount.z;
+
+    [loop]
+    for (int s = 0; s < 8; s++)
+    {
+        if (s >= spotCount)
+        {
+            break;
+        }
+
+        float3 spotPosition = lights.spotPositionRadius[s].xyz;
+        float radius = lights.spotPositionRadius[s].w;
+        float2 spotDirection = normalize(lights.spotDirectionAngle[s].xy);
+        float cosOuter = lights.spotDirectionAngle[s].z;
+        float cosInner = lights.spotDirectionAngle[s].w;
+        float3 lightColor = lights.spotColorIntensity[s].rgb;
+        float intensity = lights.spotColorIntensity[s].a;
+        float bulbRadius = lights.spotBulbRadius[s].x;
+
+        // The 3D position/distance only feeds the diffuse and distance falloff below;
+        // the cone itself is a 2D test in the screen plane.
+        float3 toFragment = fragPosition - spotPosition;
+        float dist2D = length(toFragment.xy);
+        float dist3D = length(toFragment);
+
+        float2 toFragmentDirection2D = dist2D > 0.0001 ? toFragment.xy / dist2D : spotDirection;
+        float cosAngle = dot(toFragmentDirection2D, spotDirection);
+        float spotFactor = smoothstep(cosOuter, cosInner, cosAngle);
+
+        float3 lightDir = dist3D > 0.0001 ? -toFragment / dist3D : N;
+        float diffuse = max(dot(N, lightDir), 0.0);
+
+        float attenuation = clamp(1.0 - dist2D / max(radius, 0.0001), 0.0, 1.0);
+        attenuation *= attenuation;
+        attenuation *= spotFactor;
+        attenuation *= diffuse;
+        // Inside the physical bulb the fixture occludes its own light.
+        attenuation *= step(bulbRadius, dist2D);
+
+        intensity *= attenuation;
+        lighting += lightColor * intensity;
+    }
+
+    int globalLightCount = (int)lights.globalCount.x;
+
+    // Global lights have no position or direction; they contribute uniformly,
+    // like ambient light, but each carries its own intensity.
+    [loop]
+    for (int g = 0; g < 4; g++)
+    {
+        if (g >= globalLightCount)
+        {
+            break;
+        }
+
+        float3 lightColor = lights.globalColorIntensity[g].rgb;
+        float intensity = lights.globalColorIntensity[g].a;
+
+        lighting += lightColor * intensity;
+    }
+
+    return lighting;
+}
+
+float4 fragmentMain(VertexOut input) : SV_Target0
+{
+    // Both samples sit outside flow control so implicit-derivative sampling stays valid.
+    float4 texColor = tex.Sample(samp, input.uv) * input.color;
+    float3 lightMapColor = lightTex.Sample(lightSamp, input.uv).rgb;
+
+    float3 lighting = ComputeLighting(input.originalPosition);
+    float3 finalColor = max(texColor.rgb * lighting, lightMapColor);
+
+    return float4(finalColor, texColor.a);
+}

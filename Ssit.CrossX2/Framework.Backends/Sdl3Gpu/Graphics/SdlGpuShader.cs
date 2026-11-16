@@ -9,31 +9,37 @@ internal static unsafe class GpuShader
 {
     public static SDL_GPUShader* CreateFromEmbeddedResource(SdlGpuRenderer renderer, string resourceName, string entrypoint, SDL_GPUShaderStage stage, int numSamplers = 0, int numUniformBuffers = 0)
     {
+        const string resourcePrefix = "Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Assets.Shaders.";
+
         SDL_GPUShaderFormat format;
-        
+        byte[] code;
+
         switch (renderer.BackendType)
         {
             case SdlGpuBackendType.Metal:
                 format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_MSL;
-                resourceName = "Metal." +  resourceName + ".metal";
+                code = Encoding.UTF8.GetBytes(LoadEmbeddedSource(resourcePrefix + "Metal." + resourceName + ".metal"));
                 break;
-            
+
+            case SdlGpuBackendType.DirectX:
+            {
+                // HLSL is compiled at runtime to DXBC (SM 5.1), which SDL's Direct3D 12 backend accepts.
+                format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXBC;
+                var hlslResource = resourcePrefix + "HLSL." + resourceName + ".hlsl";
+                var target = stage == SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX ? "vs_5_1" : "ps_5_1";
+                code = D3DShaderCompiler.Compile(LoadEmbeddedSource(hlslResource), hlslResource, entrypoint, target);
+                break;
+            }
+
             case SdlGpuBackendType.Vulkan:
                 format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV;
+                code = LoadEmbeddedBytes(resourcePrefix + "SPIRV." + resourceName + ".spv");
                 break;
-            
-            case SdlGpuBackendType.DirectX:
-                format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXIL;
-                resourceName += ".hlsl";
-                break;
-            
+
             default:
                 throw new NotSupportedException($"Shader creation is not supported for backend type {renderer.BackendType}");
         }
-        
-        resourceName = $"Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Assets.Shaders." + resourceName;
-        
-        byte[] code = Encoding.UTF8.GetBytes(LoadEmbeddedSource(resourceName));
+
         byte[] entrypointBytes = Encoding.UTF8.GetBytes(entrypoint + "\0");
 
         fixed (byte* codePtr = code)
@@ -63,6 +69,15 @@ internal static unsafe class GpuShader
             
             return shader;
         }
+    }
+
+    private static byte[] LoadEmbeddedBytes(string resourceName)
+    {
+        using Stream stream = typeof(GpuShader).Assembly.GetManifestResourceStream(resourceName)
+                              ?? throw new FileNotFoundException($"Embedded shader resource '{resourceName}' not found.");
+        using var memory = new MemoryStream();
+        stream.CopyTo(memory);
+        return memory.ToArray();
     }
 
     private static string LoadEmbeddedSource(string resourceName)

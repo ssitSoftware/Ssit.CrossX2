@@ -13,6 +13,7 @@ This is the first version of the project documentation. It focuses on the framew
 - [Input](Guides/Input.md)
 - [UI](Guides/UI.md)
 - [Custom views and handlers](Guides/CustomViews.md)
+- [Platforms and shaders](Guides/Platforms.md)
 
 ## Main Concepts
 

@@ -100,7 +100,15 @@ internal static class AppRunnerSdl
             return;
         }
         
-        SDL_GPUDevice* device = SDL_CreateGPUDevice(SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_MSL, true, (byte*)null);
+        var shaderFormats = GetSupportedShaderFormats();
+        SDL_GPUDevice* device = SDL_CreateGPUDevice(shaderFormats, true, (byte*)null);
+
+        if (device == null)
+        {
+            // Debug layers (e.g. the D3D12 debug layer from Windows "Graphics Tools") may be missing.
+            Console.Error.WriteLine($"SDL_CreateGPUDevice with debug mode failed: {SDL_GetError()}. Retrying without debug mode.");
+            device = SDL_CreateGPUDevice(shaderFormats, false, (byte*)null);
+        }
         
         if (device == null)
         {
@@ -482,5 +490,19 @@ internal static class AppRunnerSdl
         sdlGpuRenderer.SubmitCommandBuffer();
         
         //DebugScreenshot.MaybeCapture(sdlGpuRenderer.Device, window, swapchainTexture, swapchainWidth, swapchainHeight);
+    }
+
+    /// <summary>
+    /// Shader formats this platform ships shaders for. SDL picks the GPU driver from these:
+    /// Metal (MSL) on Apple platforms, Direct3D 12 (DXBC compiled at runtime from HLSL) on Windows.
+    /// </summary>
+    private static SDL_GPUShaderFormat GetSupportedShaderFormats()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXBC;
+        }
+
+        return SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_MSL;
     }
 }
