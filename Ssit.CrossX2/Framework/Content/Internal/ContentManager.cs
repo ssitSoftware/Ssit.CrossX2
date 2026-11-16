@@ -25,6 +25,9 @@ internal class ContentManager: IContentManager, IDisposable
     
     private readonly Dictionary<string, ResourceInstance> _resources = new();
     private readonly Dictionary<Type, LoadResourceDelegate> _resourceLoaders = new();
+
+    // Content can be requested from worker threads (UI commands, await continuations).
+    private readonly object _sync = new();
     
     public ContentManager(IIoCContainer iocContainer, IFilesProvider filesProvider, IActionScheduler scheduler)
     {
@@ -45,14 +48,18 @@ internal class ContentManager: IContentManager, IDisposable
     public void RemoveCache<TResource>(string path) where TResource : class, IDisposable
     {
         var key = GetKey<TResource>(path);
-        if (!_resources.TryGetValue(key, out var resource)) return;
 
-        resource.Users.Remove(Guid.Empty);
+        lock (_sync)
+        {
+            if (!_resources.TryGetValue(key, out var resource)) return;
 
-        if (resource.Users.Count > 0) return;
+            resource.Users.Remove(Guid.Empty);
 
-        _resources.Remove(key);
-        _scheduler.Schedule(resource.Object.Dispose);
+            if (resource.Users.Count > 0) return;
+
+            _resources.Remove(key);
+            _scheduler.Schedule(resource.Object.Dispose);
+        }
     }
     
     public ResourceHandle<TResource> Get<TResource>(string path) where TResource : class, IDisposable
@@ -66,36 +73,48 @@ internal class ContentManager: IContentManager, IDisposable
         path = PathHelper.NormalizePath(path);
         
         var key = GetKey<TResource>(path);
-        
-        if (!_resources.TryGetValue(key, out var resource))
+
+        lock (_sync)
         {
-            var obj = LoadResource<TResource>(path);
-            
-            resource = new ResourceInstance(obj);
-            _resources.Add(key, resource);
+            if (!_resources.TryGetValue(key, out var resource))
+            {
+                var obj = LoadResource<TResource>(path);
 
-            if (cache)
-            {
-                resource.Users.Add(Guid.Empty);
-            }
-            
-            if (obj is IInstanceCountingResource icr)
-            {
-                icr.AddUser = g => resource.Users.Add(g);
-                icr.RemoveUser = g =>
+                resource = new ResourceInstance(obj);
+                _resources.Add(key, resource);
+
+                if (cache)
                 {
-                    resource.Users.Remove(g);
-                    
-                    if (resource.Users.Count == 0)
-                    {
-                        _resources.Remove(key);
-                        _scheduler.Schedule(resource.Object.Dispose);
-                    }
-                };
-            }
-        }
+                    resource.Users.Add(Guid.Empty);
+                }
 
-        return FromResourceInstance<TResource>(key, resource);
+                if (obj is IInstanceCountingResource icr)
+                {
+                    icr.AddUser = g =>
+                    {
+                        lock (_sync)
+                        {
+                            resource.Users.Add(g);
+                        }
+                    };
+                    icr.RemoveUser = g =>
+                    {
+                        lock (_sync)
+                        {
+                            resource.Users.Remove(g);
+
+                            if (resource.Users.Count == 0)
+                            {
+                                _resources.Remove(key);
+                                _scheduler.Schedule(resource.Object.Dispose);
+                            }
+                        }
+                    };
+                }
+            }
+
+            return FromResourceInstance<TResource>(key, resource);
+        }
     }
 
     private ResourceHandleManaged<TResource> FromResourceInstance<TResource>(string key, ResourceInstance resource)
@@ -103,15 +122,21 @@ internal class ContentManager: IContentManager, IDisposable
     {
         var handle = new ResourceHandleManaged<TResource>((TResource)resource.Object, key, g =>
         {
-            resource.Users.Remove(g);
-            if (resource.Users.Count == 0)
+            lock (_sync)
             {
-                resource.Object.Dispose();
-                _resources.Remove(key);
+                resource.Users.Remove(g);
+                if (resource.Users.Count == 0)
+                {
+                    _resources.Remove(key);
+                    _scheduler.Schedule(resource.Object.Dispose);
+                }
             }
         }, () => FromResourceInstance<TResource>(key, resource));
 
-        resource.Users.Add(handle.Guid);
+        lock (_sync)
+        {
+            resource.Users.Add(handle.Guid);
+        }
         return handle;
     }
 

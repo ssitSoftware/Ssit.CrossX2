@@ -177,6 +177,11 @@ internal static class AppRunnerSdl
         services.TryGet<IInternalTextInputService>(out var internalTextInputService);
 
         Size previousWindowSize = Size.Zero;
+
+        // The first frame after start is rendered before the render host has created its
+        // render targets (Begin() only schedules the initial Resize), so drawing it shows
+        // uninitialized (magenta) output. Present it as plain black instead.
+        bool isFirstFrame = true;
         
         while (appWindowManager.ShouldContinue)
         {
@@ -296,18 +301,20 @@ internal static class AppRunnerSdl
                     case SDL_EventType.SDL_EVENT_WINDOW_RESIZED:
                     case SDL_EventType.SDL_EVENT_WINDOW_RESTORED:
                     {
-                        // Make sure the OS-driven transition (e.g. the window's own
-                        // fullscreen button) has fully settled before touching swapchain-sized
-                        // resources below, otherwise we can race the animation on macOS.
-                        SDL_SyncWindow(window);
-
+                        // No SDL_SyncWindow here: macOS also sends RESIZED mid fullscreen
+                        // transition, and syncing then can trip SDL's stuck pending-operation
+                        // state (each later sync blocks ~2.5s). Defer the rebuild instead.
                         int w, h;
                         SDL_GetWindowSizeInPixels(window, &w, &h);
+                        var newSize = new Size(w, h);
 
-                        appWindowManager.UpdateSize(new Size(w, h));
+                        appWindowManager.UpdateSize(newSize);
 
-                        renderHost.Resize(new Size(w, h));
-                        component.Resize();
+                        actionScheduler.Schedule(() =>
+                        {
+                            renderHost.Resize(newSize);
+                            component.Resize();
+                        });
 
                         SDL_SetWindowMouseGrab(window, false);
                         SDL_SetWindowMouseGrab(window, pointingDevices.LockMouseInWindow);
@@ -384,7 +391,10 @@ internal static class AppRunnerSdl
 
             try
             {
-                Render(component, renderHost, sdlRenderer);
+                if (Render(component, renderHost, sdlRenderer, skipDraw: isFirstFrame))
+                {
+                    isFirstFrame = false;
+                }
             }
             catch
             {
@@ -430,7 +440,8 @@ internal static class AppRunnerSdl
         }
     }
 
-    private static unsafe void Render(IAppComponent component, RenderHost renderHost, SdlGpuRenderer sdlGpuRenderer)
+    /// <returns>True when a swapchain frame was presented.</returns>
+    private static unsafe bool Render(IAppComponent component, RenderHost renderHost, SdlGpuRenderer sdlGpuRenderer, bool skipDraw = false)
     {
         sdlGpuRenderer.SubmitCommandBuffer();
         sdlGpuRenderer.StateManager.Reset();
@@ -446,7 +457,7 @@ internal static class AppRunnerSdl
         {
             Console.Error.WriteLine($"SDL_WaitAndAcquireGPUSwapchainTexture failed: {SDL_GetError()}");
             sdlGpuRenderer.SubmitCommandBuffer();
-            return;
+            return false;
         }
 
         if (swapchainTexture != null)
@@ -459,6 +470,16 @@ internal static class AppRunnerSdl
                 if (renderHost.Begin())
                 {
                     component.Resize();
+                }
+
+                if (skipDraw)
+                {
+                    // Present a black frame; the scheduled Resize runs before the next one.
+                    sdlGpuRenderer.SetRenderTarget(null);
+                    sdlGpuRenderer.Clear(RgbaColor.Black);
+                    sdlGpuRenderer.EndCurrentGpuRenderPass();
+                    sdlGpuRenderer.SubmitCommandBuffer();
+                    return true;
                 }
 
                 component.Draw();
@@ -488,6 +509,8 @@ internal static class AppRunnerSdl
 
         sdlGpuRenderer.EndCurrentGpuRenderPass();
         sdlGpuRenderer.SubmitCommandBuffer();
+
+        return swapchainTexture != null;
         
         //DebugScreenshot.MaybeCapture(sdlGpuRenderer.Device, window, swapchainTexture, swapchainWidth, swapchainHeight);
     }

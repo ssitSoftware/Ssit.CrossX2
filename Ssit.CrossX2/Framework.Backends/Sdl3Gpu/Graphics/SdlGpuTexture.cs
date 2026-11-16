@@ -1,6 +1,7 @@
 using SDL;
 using Ssit.CrossX2.Framework.Graphics;
 using Ssit.CrossX2.Framework.Graphics.Misc;
+using Ssit.CrossX2.Framework.Services;
 using static SDL.SDL3;
 using static SDL.SDL3_image;
 
@@ -11,6 +12,7 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
     public static int Count { get; private set; }
     
     private readonly SDL_GPUDevice* _device;
+    private readonly IActionScheduler _actionScheduler;
     private bool _disposed;
     
     private SDL_GPUTexture* _diffuse = null;
@@ -20,9 +22,10 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
     private readonly bool _glowFromDiffuse;
     private readonly bool _glowFromLight;
     
-    public SdlGpuTexture(SdlHandles handles, LoadTextureParameters parameters)
+    public SdlGpuTexture(SdlHandles handles, IActionScheduler actionScheduler, LoadTextureParameters parameters)
     {
         _device = handles.GpuDevice;
+        _actionScheduler = actionScheduler;
         TextureMaps maps = 0; 
         
         Size? size = null;
@@ -152,6 +155,14 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
         }
 
         byte* mapped = (byte*)SDL_MapGPUTransferBuffer(_device, transferBuffer, false);
+        if (mapped == null)
+        {
+            SDL_ReleaseGPUTransferBuffer(_device, transferBuffer);
+            SDL_ReleaseGPUTexture(_device, texture);
+            SDL_DestroySurface(surface);
+            throw new InvalidOperationException($"SDL_MapGPUTransferBuffer failed: {SDL_GetError()}");
+        }
+
         byte* srcBase = (byte*)surface->pixels;
 
         for (int row = 0; row < height; row++)
@@ -160,16 +171,36 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
         }
 
         SDL_UnmapGPUTransferBuffer(_device, transferBuffer);
+        SDL_DestroySurface(surface);
 
-        SDL_GPUCommandBuffer* commandBuffer = SDL_AcquireGPUCommandBuffer(_device);
+        // Content may be loaded from worker threads (button commands / await continuations).
+        // Recording + submitting a copy pass there races the main thread's frame while it
+        // holds a swapchain drawable (e.g. during a fullscreen transition) and can hang the GPU.
+        // Queue order guarantees this runs before the next Render and before any scheduled release.
+        var device = _device;
+        _actionScheduler.ExecuteOnMainThread(() => Upload(device, texture, transferBuffer, (uint)width, (uint)height));
+
+        return (new(texture), new Size(width, height));
+    }
+
+    private static void Upload(SDL_GPUDevice* device, SDL_GPUTexture* texture, SDL_GPUTransferBuffer* transferBuffer, uint width, uint height)
+    {
+        SDL_GPUCommandBuffer* commandBuffer = SDL_AcquireGPUCommandBuffer(device);
+        if (commandBuffer == null)
+        {
+            Console.Error.WriteLine($"Texture upload skipped, SDL_AcquireGPUCommandBuffer failed: {SDL_GetError()}");
+            SDL_ReleaseGPUTransferBuffer(device, transferBuffer);
+            return;
+        }
+
         SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(commandBuffer);
 
         var transferInfo = new SDL_GPUTextureTransferInfo
         {
             transfer_buffer = transferBuffer,
             offset = 0,
-            pixels_per_row = (uint)width,
-            rows_per_layer = (uint)height,
+            pixels_per_row = width,
+            rows_per_layer = height,
         };
         var region = new SDL_GPUTextureRegion
         {
@@ -179,8 +210,8 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
             x = 0,
             y = 0,
             z = 0,
-            w = (uint)width,
-            h = (uint)height,
+            w = width,
+            h = height,
             d = 1,
         };
         SDL_UploadToGPUTexture(copyPass, &transferInfo, &region, false);
@@ -188,10 +219,7 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
         SDL_EndGPUCopyPass(copyPass);
         SDL_SubmitGPUCommandBuffer(commandBuffer);
 
-        SDL_ReleaseGPUTransferBuffer(_device, transferBuffer);
-        SDL_DestroySurface(surface);
-
-        return (new(texture), new Size(width, height));
+        SDL_ReleaseGPUTransferBuffer(device, transferBuffer);
     }
     
     public void Dispose()
@@ -199,23 +227,21 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
         if (_disposed)
             return;
 
-        if (_diffuse != null)
+        var device = _device;
+        var diffuse = _diffuse;
+        var glow = _glow;
+        var light = _light;
+        _diffuse = null;
+        _glow = null;
+        _light = null;
+
+        // Release on the main thread, after any pending Upload queued by the constructor.
+        _actionScheduler.Schedule(() =>
         {
-            SDL_ReleaseGPUTexture(_device, _diffuse);
-            _diffuse = null;
-        }
-        
-        if (_glow != null)
-        {
-            SDL_ReleaseGPUTexture(_device, _glow);
-            _glow = null;
-        }
-        
-        if (_light != null)
-        {
-            SDL_ReleaseGPUTexture(_device, _light);
-            _light = null;
-        }
+            if (diffuse != null) SDL_ReleaseGPUTexture(device, diffuse);
+            if (glow != null) SDL_ReleaseGPUTexture(device, glow);
+            if (light != null) SDL_ReleaseGPUTexture(device, light);
+        });
 
         _disposed = true;
         Count--;
