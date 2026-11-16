@@ -12,6 +12,8 @@ public class ElevatorBehavior : Behavior<Elevator>
         public float SpeedFactor;
     }
 
+    private const int MaxTargetSwitchesPerUpdate = 16;
+
     protected override void OnEnterState(Elevator elevator)
     {
         elevator.Sprite.Advance(DateTime.Now.Millisecond % 100 / 1000f);
@@ -34,6 +36,9 @@ public class ElevatorBehavior : Behavior<Elevator>
         parameters.SpeedFactor += dt * (elevator.IsOn ? 1 : -1) * 2;
         parameters.SpeedFactor = MathF.Min(MathF.Max(parameters.SpeedFactor, 0), 1);
 
+        // Guards against an endless loop when every target in the chain sits at the elevator's position.
+        var targetSwitches = 0;
+
         while (true)
         {
             var diff = elevator.CurrentTarget.Position - elevator.Body.Position;
@@ -44,7 +49,12 @@ public class ElevatorBehavior : Behavior<Elevator>
                 moveDir = Vector2.Normalize(diff);
             }
 
-            if (parameters.LastMoveDirection.Length() != 0 && (Vector2.Dot(moveDir, parameters.LastMoveDirection) < 0 || moveDir.Length() < 0.01f))
+            // Arrival must not depend on LastMoveDirection: it is not part of the saved state, so after
+            // a checkpoint restore with the elevator sitting exactly on its current target it would stay zero forever.
+            var arrived = diff.LengthSquared() < 0.0001f;
+            var overshot = parameters.LastMoveDirection.Length() != 0 && Vector2.Dot(moveDir, parameters.LastMoveDirection) < 0;
+
+            if ((arrived || overshot) && targetSwitches++ < MaxTargetSwitchesPerUpdate)
             {
                 parameters.LastTargetPoint = elevator.CurrentTarget.Position;
                 var nextTarget = elevator.CurrentTarget.Next ?? elevator;

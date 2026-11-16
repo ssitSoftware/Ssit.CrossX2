@@ -13,7 +13,11 @@ public static class ServiceRegistrar
     {
         builder
             .WithServiceRegistrar(s => s.WithSingleton<IGameDebugService, GameDebugService>())
-            .WithHandlersMapping(m => m.AddMapping<GameView, GameViewHandler>());
+            .WithHandlersMapping(m => m
+                .AddMapping<GameView, GameViewHandler>()
+                .AddMapping<BossHealthView, BossHealthViewHandler>()
+                .AddMapping<PointMeterView, PointMeterViewHandler>()
+                .AddMapping<CoinMeterView, CoinMeterViewHandler>());
         
         return builder;
     }

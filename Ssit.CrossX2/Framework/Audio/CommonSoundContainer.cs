@@ -48,7 +48,7 @@ internal class CommonSoundContainer(IContentManager contentManager, IActionSched
             instance.Parameters = new SoundParameters
             {
                 Volume = volume * sound.Item2,
-                Pitch = sound.Item2 * pitch
+                Pitch = pitch
             };
             
             instance.Play();

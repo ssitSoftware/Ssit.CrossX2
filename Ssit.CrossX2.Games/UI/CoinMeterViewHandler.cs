@@ -1,0 +1,177 @@
+using System.Globalization;
+using System.Numerics;
+using Ssit.CrossX2.Framework;
+using Ssit.CrossX2.Framework.Content;
+using Ssit.CrossX2.Framework.Graphics;
+using Ssit.CrossX2.Framework.Graphics.Font;
+using Ssit.CrossX2.Framework.UI.Handlers;
+using Ssit.CrossX2.Framework.UI.Parameters;
+using Ssit.CrossX2.Framework.UI.Views;
+
+namespace Ssit.CrossX2.Framework.Games.UI;
+
+internal class CoinMeterViewHandler: BackgroundHandler<CoinMeterView>
+{
+    private readonly ResourceHandle<ITexture> _texture;
+    private readonly IFontsManager _fontsManager;
+    private readonly IColorSource _colorSource;
+
+    private string _text = "0";
+
+    public CoinMeterViewHandler(CreateHandlerParameters parameters, IContentManager contentManager, IFontsManager fontsManager) : base(parameters)
+    {
+        if (string.IsNullOrEmpty(AttachedView.IconTexturePath))
+        {
+            throw new InvalidOperationException("CoinMeterView is missing IconTexturePath.");
+        }
+
+        if (string.IsNullOrEmpty(AttachedView.Font?.FontFamily))
+        {
+            throw new InvalidOperationException("CoinMeterView is missing Font.");
+        }
+
+        _fontsManager = fontsManager;
+        _colorSource = parameters.Parent?.GetParent<IColorSource>(true);
+        _texture = contentManager.Get<ITexture>(AttachedView.IconTexturePath);
+
+        UpdateText(AttachedView.Value?.Value ?? 0);
+
+        if (AttachedView.Value != null)
+        {
+            AttachedView.Value.ValueChanged += OnValueChanged;
+        }
+    }
+
+    private float Opacity => Math.Clamp(AttachedView.Opacity?.Value ?? 1, 0, 1);
+
+    private RgbaColor? TextColor(IRenderer renderer) => AttachedView.TextColor?.GetColor(renderer, _colorSource);
+    private RgbaColor? TextOutlineColor(IRenderer renderer) => AttachedView.TextOutlineColor?.GetColor(renderer, _colorSource);
+
+    private Size IconSize => _texture.Resource.Size;
+
+    // Pixel font - it is scaled by CurrentScale when drawn, like Label with TextScaling.Pixel.
+    // FontSize 0 picks the font's native size.
+    private IFont Font => _fontsManager.GetFont(
+        AttachedView.Font.Value.FontFamily,
+        AttachedView.Font.Value.FontSize);
+
+    private Size TextSize => Font.TextSize(_text);
+
+    private void UpdateText(int value)
+    {
+        _text = value.ToString(CultureInfo.InvariantCulture);
+    }
+
+    private void OnValueChanged(int value)
+    {
+        var oldLength = _text.Length;
+        UpdateText(value);
+
+        // Monospace pixel font: the size changes only when the number of digits changes.
+        if (oldLength != _text.Length)
+        {
+            Parent?.RecalculateLayout(AttachedView);
+        }
+    }
+
+    public override void CalculateAlign(out Align horizontalAlign, out Align verticalAlign)
+    {
+        horizontalAlign = AttachedView.HorizontalAlign ?? Align.Start;
+        verticalAlign = AttachedView.VerticalAlign ?? Align.Start;
+    }
+
+    public override void CalculateSize(out Length width, out Length height)
+    {
+        CalculateAlign(out var horizontalAlign, out var verticalAlign);
+
+        width = AttachedView.Width ?? Length.Auto;
+        height = AttachedView.Height ?? Length.Auto;
+
+        var iconSize = IconSize;
+        var textSize = TextSize;
+
+        if (width.IsAuto)
+        {
+            width = horizontalAlign == Align.Fill
+                ? Length.Fill
+                : (Length)(iconSize.Width + textSize.Width) + AttachedView.Spacing;
+        }
+
+        if (height.IsAuto)
+        {
+            height = verticalAlign == Align.Fill
+                ? Length.Fill
+                : (Length)Math.Max(iconSize.Height, textSize.Height);
+        }
+    }
+
+    protected override void OnDraw(IRenderer renderer)
+    {
+        // UI must never be affected by scene lighting.
+        renderer.LightingManager.EnableLighting(false);
+
+        base.OnDraw(renderer);
+
+        var opacity = Opacity;
+        if (opacity <= 0) return;
+
+        var scale = CurrentScale;
+        var font = Font;
+        var iconSize = IconSize;
+        var textSize = font.TextSize(_text);
+
+        var iconWidth = iconSize.Width * scale;
+        var iconHeight = iconSize.Height * scale;
+        var textWidth = textSize.Width * scale;
+        var spacing = AttachedView.Spacing.Calculate(scale, ScreenBounds.Width);
+
+        var contentHeight = Math.Max(iconSize.Height, textSize.Height) * scale;
+        var top = ScreenBounds.Y + (ScreenBounds.Height - contentHeight) / 2;
+
+        // Icon and text centered to each other, snapped to whole design pixels.
+        var iconY = top + MathF.Floor((contentHeight / scale - iconSize.Height) / 2) * scale;
+        var textY = top + MathF.Floor((contentHeight / scale - textSize.Height) / 2) * scale;
+
+        float iconX, textX;
+        if (AttachedView.TextOnRight)
+        {
+            iconX = ScreenBounds.X;
+            textX = iconX + iconWidth + spacing;
+        }
+        else
+        {
+            textX = ScreenBounds.X;
+            iconX = textX + textWidth + spacing;
+        }
+
+        renderer.StateManager.SetTextureFilter(TextureFilter.Point);
+
+        renderer.SpriteRenderer.Draw(_texture.Resource,
+            new RectangleF(iconX, iconY, iconWidth, iconHeight),
+            new RectangleF(0, 0, iconSize.Width, iconSize.Height),
+            nullableColor: RgbaColor.White * opacity);
+
+        renderer.TextRenderer.DrawText(
+            font: font,
+            text: _text,
+            position: new Vector2(textX, textY),
+            align: ContentAlign.Left,
+            scale: scale,
+            color: (TextColor(renderer) ?? RgbaColor.Transparent) * opacity,
+            outlineColor: (TextOutlineColor(renderer) ?? RgbaColor.Transparent) * opacity);
+    }
+
+    protected override void OnDispose(bool disposing)
+    {
+        base.OnDispose(disposing);
+
+        if (!disposing) return;
+
+        if (AttachedView.Value != null)
+        {
+            AttachedView.Value.ValueChanged -= OnValueChanged;
+        }
+
+        _texture?.Dispose();
+    }
+}
