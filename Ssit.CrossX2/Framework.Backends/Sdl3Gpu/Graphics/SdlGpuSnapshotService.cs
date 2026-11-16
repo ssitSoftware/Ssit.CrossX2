@@ -13,10 +13,10 @@ internal unsafe class SdlGpuSnapshotService(SdlGpuRenderer renderer, IActionSche
 {
     private const int JpegQuality = 90;
 
-    public void GetSnapshot(Stream outStream, ITexture tex, int downSizeTimes)
+    public void GetSnapshot(Stream outStream, ITexture tex, float downSizeTimes)
     {
         ArgumentNullException.ThrowIfNull(outStream);
-        ArgumentOutOfRangeException.ThrowIfLessThan(downSizeTimes, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(downSizeTimes, 1f);
 
         if (tex is not ISdlGpuTexture gpuTexture)
             throw new ArgumentException("Texture was not created by the SDL GPU backend.", nameof(tex));
@@ -143,15 +143,16 @@ internal unsafe class SdlGpuSnapshotService(SdlGpuRenderer renderer, IActionSche
     /// <summary>
     /// Shrinks the bitmap <paramref name="times"/> times with the best quality: halves it with linear filtering
     /// while it is still at least twice too big (at exactly half size that averages 2x2 pixels, so no pixel is skipped),
-    /// then resamples the rest with the Mitchell cubic filter. Returns <paramref name="source"/> for times = 1.
+    /// then resamples the rest with the Mitchell cubic filter. Returns <paramref name="source"/> when the size doesn't change.
+    /// <paramref name="times"/> may be fractional (e.g. 2.5): the target size is rounded to whole pixels.
     /// </summary>
-    private static SKBitmap Downscale(SKBitmap source, int times)
+    private static SKBitmap Downscale(SKBitmap source, float times)
     {
-        if (times == 1)
-            return source;
+        var targetWidth = Math.Max(1, (int)MathF.Round(source.Width / times));
+        var targetHeight = Math.Max(1, (int)MathF.Round(source.Height / times));
 
-        var targetWidth = Math.Max(1, source.Width / times);
-        var targetHeight = Math.Max(1, source.Height / times);
+        if (targetWidth == source.Width && targetHeight == source.Height)
+            return source;
 
         var current = source;
 

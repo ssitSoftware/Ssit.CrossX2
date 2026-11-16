@@ -11,6 +11,6 @@ public interface ISnapshotService
     /// </summary>
     /// <param name="outStream">Stream the JPEG data is written to.</param>
     /// <param name="tex">Texture or render target to capture (e.g. <see cref="Core.IRenderHost.SceneTexture"/>).</param>
-    /// <param name="downSizeTimes">How many times the image is shrunk in each dimension (1 = original size).</param>
-    void GetSnapshot(Stream outStream, ITexture tex, int downSizeTimes);
+    /// <param name="downSizeTimes">How many times the image is shrunk in each dimension (1 = original size, fractions allowed, e.g. 2.5).</param>
+    void GetSnapshot(Stream outStream, ITexture tex, float downSizeTimes);
 }

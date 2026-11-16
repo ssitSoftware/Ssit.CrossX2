@@ -22,7 +22,7 @@ public class CheckpointService : ICheckpointService
         /// <summary>
         /// How many times the preview is smaller than the rendered frame.
         /// </summary>
-        public int PreviewDownSize { get; init; } = 4;
+        public float PreviewDownSize { get; init; } = 4;
     }
 
     private static readonly JsonSerializer Serializer = JsonSerializer.CreateDefault();
@@ -36,7 +36,7 @@ public class CheckpointService : ICheckpointService
     private readonly IRenderHost _renderHost;
     private readonly ISnapshotService _snapshotService;
     private readonly bool _storePreview;
-    private readonly int _previewDownSize;
+    private readonly float _previewDownSize;
 
     public string MapPath { get; }
     
@@ -49,7 +49,7 @@ public class CheckpointService : ICheckpointService
         _renderHost = renderHost;
         _snapshotService = snapshotService;
         _storePreview = parameters.StorePreview;
-        _previewDownSize = Math.Max(1, parameters.PreviewDownSize);
+        _previewDownSize = Math.Max(1f, parameters.PreviewDownSize);
 
         _container = container;
         _mapObjects = mapObjects;

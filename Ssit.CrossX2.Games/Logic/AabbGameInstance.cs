@@ -54,7 +54,7 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
         /// <summary>
         /// How many times the checkpoint preview is smaller than the rendered frame.
         /// </summary>
-        public int CheckpointPreviewDownSize { get; set; } = 4;
+        public float CheckpointPreviewDownSize { get; set; } = 4;
     }
     
     IIoCContainer IGameInstance.Services => Container;

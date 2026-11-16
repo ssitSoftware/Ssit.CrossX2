@@ -28,5 +28,17 @@ internal class RenderHostParameters: BindableModel, IRenderHostParameters
         set => SetField(ref field, value);
     } = 32;
 
+    public float? MinAspect
+    {
+        get;
+        set => SetField(ref field, value);
+    }
+
+    public float? MaxAspect
+    {
+        get;
+        set => SetField(ref field, value);
+    }
+
     public IPostRenderer PostRenderer { get; set; }
 }

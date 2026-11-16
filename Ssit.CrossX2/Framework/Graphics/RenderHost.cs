@@ -15,10 +15,13 @@ internal class RenderHost : IRenderHost
     private IRenderTarget _glowRenderIntermediateTarget;
     private IRenderTarget _endRenderTarget;
     
+    // Created lazily in End() the first time CRT simulation is enabled.
     private ICrtSimEffect _crtSimEffect;
     private IGlowEffect _glowEffect;
     
     private Size _minMaxScale = Size.Zero;
+    private float? _minAspect;
+    private float? _maxAspect;
     private bool _pixelPerfect;
     private readonly IRenderHostParameters _parameters;
     private readonly IRenderer _renderer;
@@ -31,8 +34,6 @@ internal class RenderHost : IRenderHost
         _renderer = renderer;
         _container = container;
         _actionScheduler = actionScheduler;
-
-        _crtSimEffect = _container.IoCConstruct<ICrtSimEffect>();
     }
 
     public bool Begin()
@@ -68,6 +69,7 @@ internal class RenderHost : IRenderHost
     {
         return _targetSize != _renderer.TargetSize ||
                _minMaxScale.Width != _parameters.MinScale || _minMaxScale.Height != _parameters.MaxScale
+               || _minAspect != _parameters.MinAspect || _maxAspect != _parameters.MaxAspect
                || _pixelPerfect != ((_parameters.Flags & RenderHostFlags.PixelPerfect) != 0);
     }
 
@@ -75,10 +77,34 @@ internal class RenderHost : IRenderHost
     {
         _targetSize = targetSize ?? _renderer.TargetSize;
         _minMaxScale = new Size(_parameters.MinScale, _parameters.MaxScale);
+        _minAspect = _parameters.MinAspect;
+        _maxAspect = _parameters.MaxAspect;
         _pixelPerfect = (_parameters.Flags & RenderHostFlags.PixelPerfect) != 0;
         
-        var scaleWidth = _targetSize.Width / (float)_parameters.DesignSize.Width;
-        var scaleHeight = _targetSize.Height / (float)_parameters.DesignSize.Height;
+        var aspect = _targetSize.Width / (float)_targetSize.Height;
+        var fitSize = _targetSize.ToVector();
+
+        // MatchWidth / MatchHeight derive the other side from the window aspect - keep it in the allowed range.
+        // The scale is then taken from the largest area of that aspect that fits the window,
+        // and End letterboxes the render target (scales it uniformly to fit the window).
+        var matchMode = _parameters.Flags & RenderHostFlags.ExactSize;
+        if (matchMode is RenderHostFlags.MatchWidth or RenderHostFlags.MatchHeight)
+        {
+            if (_parameters.MaxAspect is { } maxAspect && aspect > maxAspect)
+            {
+                aspect = maxAspect;
+            }
+
+            if (_parameters.MinAspect is { } minAspect && aspect < minAspect)
+            {
+                aspect = minAspect;
+            }
+
+            fitSize = new Vector2(MathF.Min(fitSize.X, fitSize.Y * aspect), MathF.Min(fitSize.Y, fitSize.X / aspect));
+        }
+        
+        var scaleWidth = fitSize.X / _parameters.DesignSize.Width;
+        var scaleHeight = fitSize.Y / _parameters.DesignSize.Height;
         var pixelPerfect = (_parameters.Flags & RenderHostFlags.PixelPerfect) != 0;
         
         if (pixelPerfect)
@@ -98,7 +124,6 @@ internal class RenderHost : IRenderHost
         }
         
         int scale = 1;
-        var aspect = _targetSize.Width / (float)_targetSize.Height;
         Vector2 size = Vector2.One;
 
         switch (_parameters.Flags & RenderHostFlags.ExactSize)
@@ -230,8 +255,10 @@ internal class RenderHost : IRenderHost
         
         if (_endRenderTarget != null)
         {
-            if (_crtSimEffect != null && (_parameters.Flags & RenderHostFlags.EnableCrtSimulation) != 0)
+            if ((_parameters.Flags & RenderHostFlags.EnableCrtSimulation) != 0)
             {
+                // Created on first use, so apps that never enable CRT simulation don't pay for its shaders and pipeline.
+                _crtSimEffect ??= _container.IoCConstruct<ICrtSimEffect>();
                 _crtSimEffect.Render(_endRenderTarget, sourceTexture, Scale);
             }
             else

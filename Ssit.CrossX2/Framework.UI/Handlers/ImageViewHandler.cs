@@ -78,6 +78,30 @@ public class ImageViewHandler : BackgroundHandler<ImageView>
         {
             var texture = AttachedView.Source?.GetImage(_container);
             var size = AttachedView.Source?.SourceRect?.Size ?? texture?.Resource.Size;
+
+            // One side is set: derive the other one from the image's aspect ratio.
+            // Note: a percentage on the set side is carried over as is, so it refers to the other axis' reference.
+            if (ScalingMode == ImageScalingMode.AspectRatio && width.IsAuto != height.IsAuto)
+            {
+                if (size is not { Width: > 0, Height: > 0 } imageSize)
+                {
+                    // Image not loaded yet - OnImageChanged recalculates the layout once it is.
+                    if (width.IsAuto) width = 0;
+                    if (height.IsAuto) height = 0;
+                    return;
+                }
+
+                if (height.IsAuto)
+                {
+                    height = width * (imageSize.Height / (float)imageSize.Width);
+                }
+                else
+                {
+                    width = height * (imageSize.Width / (float)imageSize.Height);
+                }
+
+                return;
+            }
             
             if (width.IsAuto)
             {
@@ -127,6 +151,7 @@ public class ImageViewHandler : BackgroundHandler<ImageView>
         switch (AttachedView.Scaling)
         {
             case ImageScalingMode.AspectFit:
+            case ImageScalingMode.AspectRatio:
             {
                 var sb = ScreenBounds;
                 var scale = MathF.Min(sb.Width / size.Width, sb.Height / size.Height);
