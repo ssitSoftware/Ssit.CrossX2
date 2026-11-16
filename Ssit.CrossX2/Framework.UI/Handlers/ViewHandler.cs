@@ -92,18 +92,25 @@ public abstract class ViewHandler: IDisposable
     {
         if (View.Visible.Value)
         {
-            if (View.Transitions?.Length > 0)
+            var applyTransitions = View.Transitions?.Length > 0;
+            
+            if (applyTransitions)
             {
                 var page = Parent?.GetParent<IPage>();
-                for (var idx = 0; idx < View.Transitions.Length; ++idx)
+                applyTransitions = !IsSharedWithOtherPage(page);
+
+                if (applyTransitions)
                 {
-                    View.Transitions[idx].Apply(View.Handler, renderer, CurrentScale, page?.TransitionType ?? 0, page?.TransitionProgress ?? 0);
+                    for (var idx = 0; idx < View.Transitions.Length; ++idx)
+                    {
+                        View.Transitions[idx].Apply(View.Handler, renderer, CurrentScale, page?.TransitionType ?? 0, page?.TransitionProgress ?? 0);
+                    }
                 }
             }
             
             OnDraw(renderer);
             
-            if (View.Transitions?.Length > 0)
+            if (applyTransitions)
             {
                 for (var idx = View.Transitions.Length - 1; idx >=0 ; --idx)
                 {
@@ -111,6 +118,15 @@ public abstract class ViewHandler: IDisposable
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// True when the other page of the current navigation contains a view with the same shared instance name.
+    /// </summary>
+    private bool IsSharedWithOtherPage(IPage page)
+    {
+        return !string.IsNullOrEmpty(View.SharedInstance) &&
+               page?.SharedInstancesInTransition.Contains(View.SharedInstance) == true;
     }
 
     public virtual void Update(float dt)

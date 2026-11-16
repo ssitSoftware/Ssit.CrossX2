@@ -21,6 +21,7 @@ internal interface IPage: IViewParent, IDisposable
     float TransitionProgress { get; set; }
     float Scale { get; }
     TransitionType TransitionType { get; set; }
+    IReadOnlySet<string> SharedInstancesInTransition { get; set; }
     void SignalRecalculationPending();
     void InvalidateRendering();
     void OnTransitionToFinished();

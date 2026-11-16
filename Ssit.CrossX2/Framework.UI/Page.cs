@@ -29,6 +29,7 @@ public abstract class Page<TViewModel>: View, IPage where TViewModel: class
     
     private RectangleF _bounds;
     private float _transitionProgress;
+    private IReadOnlySet<string> _sharedInstancesInTransition = new HashSet<string>();
 
     private int _nextId = 1;
     
@@ -73,6 +74,12 @@ public abstract class Page<TViewModel>: View, IPage where TViewModel: class
 
     float IPage.Scale => Scale;
     TransitionType IPage.TransitionType { get => TransitionType; set => TransitionType = value; }
+
+    IReadOnlySet<string> IPage.SharedInstancesInTransition
+    {
+        get => _sharedInstancesInTransition;
+        set => _sharedInstancesInTransition = value ?? new HashSet<string>();
+    }
 
     /// <summary>
     /// Type of the transition the page is currently in (set by the navigation). 0 when there is no transition.

@@ -22,6 +22,12 @@ public abstract class View: IHandlerView
     public SharedBool Visible { get; set; } = true;
 
     public ITransition[] Transitions { get; set; }
+
+    /// <summary>
+    /// Name of the instance shared between pages. When both pages of a navigation contain a view with the same
+    /// shared instance name, the view doesn't use its transitions - it stays still while the pages are switched.
+    /// </summary>
+    public string SharedInstance { get; set; }
     
     public string Style { get; set; } = "";
     

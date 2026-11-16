@@ -1,5 +1,6 @@
 using System.Reflection;
 using Ssit.CrossX2.Framework.IoC;
+using Ssit.CrossX2.Framework.UI.Handlers;
 using Ssit.CrossX2.Framework.UI.Transitions;
 
 namespace Ssit.CrossX2.Framework.UI.Services;
@@ -133,6 +134,7 @@ internal class Navigation: INavigation, IDisposable
         CurrentPage.TransitionType = TransitionType.NavigateTo;
         
         PreviousPageOnTop = false;
+        UpdateSharedInstances();
 
         if (skipTransition)
         {
@@ -197,6 +199,7 @@ internal class Navigation: INavigation, IDisposable
         }
         CurrentPage.TransitionProgress = 1;
         CurrentPage.TransitionType = TransitionType.NavigateBackTo;
+        UpdateSharedInstances();
 
         if (data.ViewModel is INavigationEventHandler handler)
         {
@@ -248,8 +251,57 @@ internal class Navigation: INavigation, IDisposable
         }
         CurrentPage.TransitionProgress = 1;
         CurrentPage.TransitionType = TransitionType.NavigateBackTo;
+        UpdateSharedInstances();
         
         _sounds[UiSounds.NavigateBackSound].PlayOnce();
+    }
+
+    /// <summary>
+    /// Stores in both pages of the navigation the shared instance names which are present on both of them.
+    /// Views with these names don't use their transitions.
+    /// </summary>
+    private void UpdateSharedInstances()
+    {
+        var shared = CollectSharedInstances(CurrentPage);
+        shared.IntersectWith(CollectSharedInstances(PreviousPage));
+
+        if (CurrentPage != null)
+        {
+            CurrentPage.SharedInstancesInTransition = shared;
+        }
+
+        if (PreviousPage != null)
+        {
+            PreviousPage.SharedInstancesInTransition = shared;
+        }
+    }
+
+    private static HashSet<string> CollectSharedInstances(IPage page)
+    {
+        var result = new HashSet<string>();
+
+        if (page?.RootHandler != null)
+        {
+            CollectSharedInstances(page.RootHandler, result);
+        }
+
+        return result;
+    }
+
+    private static void CollectSharedInstances(ViewHandler handler, HashSet<string> result)
+    {
+        if (!string.IsNullOrEmpty(handler.View.SharedInstance))
+        {
+            result.Add(handler.View.SharedInstance);
+        }
+
+        if (handler is IChildrenContainer container)
+        {
+            foreach (var child in container.Children)
+            {
+                CollectSharedInstances(child, result);
+            }
+        }
     }
 
     private IPage InitializePage(object vm, string focusedId)
