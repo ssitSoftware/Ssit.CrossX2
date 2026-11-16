@@ -20,6 +20,11 @@ public interface IStateManager
     /// Clears the stack and returns to the default state.
     /// </summary>
     void Reset();
+    /// <summary>
+    /// Returns the current state to the default one (identity transform, white tint, no clipping, default blend mode
+    /// and texture filter) without touching the saved states. Wrap it in <see cref="SaveState"/> / <see cref="RestoreState"/>.
+    /// </summary>
+    void ResetCurrentState();
 
     /// <summary>
     /// Multiplies the current transform by a uniform scale.

@@ -14,7 +14,9 @@ internal unsafe class SdlGpuRenderTarget : IRenderTarget, ISdlGpuTexture
     private readonly SDL_GPUDevice* _device;
     private bool _disposed;
 
-    public TextureMaps Maps => TextureMaps.Diffuse;
+    // The content rendered into the target is used as-is in every pass: in the glow pass it is the glow content
+    // (e.g. an offscreen container rendered in the glow pass), so it's the glow map as well.
+    public TextureMaps Maps => TextureMaps.Diffuse | TextureMaps.Glow;
 
     public Size Size { get; }
 
@@ -22,7 +24,7 @@ internal unsafe class SdlGpuRenderTarget : IRenderTarget, ISdlGpuTexture
     
     public SDL_GPUTexture* GetMap(TextureMaps maps)
     {
-        if(maps == TextureMaps.Diffuse)
+        if(maps is TextureMaps.Diffuse or TextureMaps.Glow)
             return Handle;
 
         return null;

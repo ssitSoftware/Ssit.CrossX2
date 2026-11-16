@@ -21,8 +21,11 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
 
     public RenderPass CurrentPass { get; internal set; }
     
+    public IRenderTarget CurrentRenderTarget { get; private set; }
+
     public void SetRenderTarget(IRenderTarget renderTarget)
     { 
+        CurrentRenderTarget = renderTarget;
         var newRt = renderTarget is SdlGpuRenderTarget rt ? new(rt.Handle, rt.Size) : DefaultOutputTarget;
 
         if (newRt.Handle == CurrentOutputTarget.Handle)

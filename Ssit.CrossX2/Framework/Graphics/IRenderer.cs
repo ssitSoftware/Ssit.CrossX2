@@ -55,4 +55,8 @@ public interface IRenderer
     /// Redirects drawing into renderTarget; null draws to the window.
     /// </summary>
     void SetRenderTarget(IRenderTarget renderTarget);
+    /// <summary>
+    /// Render target set by the last <see cref="SetRenderTarget"/> call; null when drawing to the window.
+    /// </summary>
+    IRenderTarget CurrentRenderTarget { get; }
 }

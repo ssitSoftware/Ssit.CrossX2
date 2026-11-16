@@ -1,4 +1,5 @@
 using System.Collections.Specialized;
+using System.Numerics;
 using Ssit.CrossX2.Framework.Graphics;
 using Ssit.CrossX2.Framework.UI.Services;
 using Ssit.CrossX2.Framework.UI.Views;
@@ -16,6 +17,11 @@ public abstract class ChildrenContainerHandler<TContainer>
     
     private bool _hasUnprocessedRemovedChildren;
     private bool _hasUnprocessedAddedChildren;
+
+    /// <summary>
+    /// Offscreen target used when the container is drawn with opacity (created on first need, recreated when the size changes).
+    /// </summary>
+    private IRenderTarget _offscreenTarget;
 
     IReadOnlyList<ViewHandler> IChildrenContainer.Children => _childrenHandlersList;
 
@@ -66,12 +72,86 @@ public abstract class ChildrenContainerHandler<TContainer>
         UpdateCollection(true, false);
     }
 
+    /// <summary>
+    /// When the effective tint is semi-transparent, the container (background and children) is first rendered with full
+    /// opacity into an offscreen target and then the target is drawn with the tint. So overlapping children don't show
+    /// through each other - the whole container fades as one layer.
+    /// </summary>
     protected override void OnDraw(IRenderer renderer)
+    {
+        var tint = renderer.RenderStateProvider.TintColor;
+
+        if (tint.A is 255 or 0)
+        {
+            DrawContent(renderer);
+            return;
+        }
+
+        var bounds = ScreenBounds;
+        var left = (int)MathF.Floor(bounds.X);
+        var top = (int)MathF.Floor(bounds.Y);
+        var width = (int)MathF.Ceiling(bounds.Right) - left;
+        var height = (int)MathF.Ceiling(bounds.Bottom) - top;
+
+        if (width <= 0 || height <= 0)
+        {
+            DrawContent(renderer);
+            return;
+        }
+
+        var offscreenTarget = GetOffscreenTarget(new Size(width, height));
+        var previousTarget = renderer.CurrentRenderTarget;
+
+        renderer.StateManager.SaveState();
+        try
+        {
+            renderer.SetRenderTarget(offscreenTarget);
+            
+            // Full opacity, no parent transform and clipping - the target has the container's top-left at (0, 0).
+            renderer.StateManager.ResetCurrentState();
+            renderer.StateManager.Translate(new Vector2(-left, -top));
+            renderer.Clear(RgbaColor.Transparent);
+
+            DrawContent(renderer);
+        }
+        finally
+        {
+            renderer.SetRenderTarget(previousTarget);
+            renderer.StateManager.RestoreState();
+        }
+
+        // Back in the parent state (transform, clipping and the tint with opacity).
+        renderer.StateManager.SaveState();
+        renderer.StateManager.SetTextureFilter(TextureFilter.Point);
+        renderer.SpriteRenderer.Draw(offscreenTarget, new RectangleF(left, top, width, height), null, Vector2.Zero);
+        renderer.StateManager.RestoreState();
+    }
+
+    /// <summary>
+    /// Draws the background and the children with the current render state.
+    /// </summary>
+    private void DrawContent(IRenderer renderer)
     {
         base.OnDraw(renderer);
         RecalculateChildrenLayouts();
 
         DrawChildren(renderer);
+    }
+
+    private IRenderTarget GetOffscreenTarget(Size size)
+    {
+        if (_offscreenTarget?.Size != size)
+        {
+            _offscreenTarget?.Dispose();
+            
+            var services = Parent.GetParent<IPage>().Services;
+            _offscreenTarget = services.IoCConstruct<IRenderTarget>(new CreateRenderTargetParameters
+            {
+                Size = size
+            });
+        }
+
+        return _offscreenTarget;
     }
     
     protected virtual void DrawChildren(IRenderer renderer)
@@ -110,6 +190,12 @@ public abstract class ChildrenContainerHandler<TContainer>
         foreach (var child in _childrenHandlersList)
         {
             child.Dispose();
+        }
+
+        if (disposing)
+        {
+            _offscreenTarget?.Dispose();
+            _offscreenTarget = null;
         }
         
         if (AttachedView.Children is INotifyCollectionChanged collection)

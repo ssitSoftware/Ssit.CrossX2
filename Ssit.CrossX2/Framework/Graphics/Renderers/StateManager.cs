@@ -40,6 +40,12 @@ public class StateManager : IStateManager
         OnStateUpdated();
     }
 
+    public void ResetCurrentState()
+    {
+        _state = new();
+        OnStateUpdated();
+    }
+
     public void Scale(float scale)
     {
         if (Math.Abs(scale - 1) < float.Epsilon) return;
