@@ -34,9 +34,9 @@ public class AirJumpBehavior : SteeringBehavior<ISteeringCharacter>
         var charAabb = obj.Body.Colliders[0].Aabb;
         // Small box around the feet, slightly inset horizontally, used to find pads the character is touching
         var feetProbe = new Aabb(
-            charAabb.Left + 0.1f,
-            charAabb.Bottom - 0.2f,
-            charAabb.Right - 0.1f,
+            charAabb.Center.X - 0.1f,
+            charAabb.Bottom - 0.1f,
+            charAabb.Center.X + 0.1f,
             charAabb.Bottom + 0.1f);
 
         var colliders = obj.Body.Simulation.GetColliders(feetProbe, obj.Body, collidesWith, colliderType: ColliderType.Trigger);

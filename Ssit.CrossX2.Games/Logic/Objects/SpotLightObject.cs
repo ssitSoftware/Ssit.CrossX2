@@ -28,6 +28,8 @@ public abstract class SpotLightObject: SpriteGameObject, ILightProvider, IGameOb
     
     private SpotLight _spotLight;
 
+    protected float AboveLampSize { get; set; } = 1;
+    
     protected SpotLightObject(GameObjectsServices services, ObjectCreationParameters<Parameters> parameters,
         AdditionalParameters additional): base(services, parameters)
     {
@@ -126,7 +128,7 @@ public abstract class SpotLightObject: SpriteGameObject, ILightProvider, IGameOb
         UpdateBounds();
     }
 
-    private void UpdateBounds()
+    protected void UpdateBounds()
     {
         var minX = float.MaxValue;
         var minY = float.MaxValue;
@@ -144,8 +146,10 @@ public abstract class SpotLightObject: SpriteGameObject, ILightProvider, IGameOb
                 maxY = MathF.Max(maxY, point.Y);
             }
         }
-
+        
         minX /= _tileSize; minY /= _tileSize; maxX /= _tileSize; maxY /= _tileSize;
+        
+        minY -= AboveLampSize;
         
         minX -= Body.Position.X;
         minY -= Body.Position.Y;

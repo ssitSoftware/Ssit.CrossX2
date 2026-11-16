@@ -144,7 +144,8 @@ float4 fragmentMain(VertexOut input) : SV_Target0
 {
     // Both samples sit outside flow control so implicit-derivative sampling stays valid.
     float4 texColor = tex.Sample(samp, input.uv) * input.color;
-    float3 lightMapColor = lightTex.Sample(lightSamp, input.uv).rgb;
+    // Premultiplied alpha: the light map fades with the vertex opacity, like the diffuse color does.
+    float3 lightMapColor = lightTex.Sample(lightSamp, input.uv).rgb * input.color.a;
 
     float3 lighting = ComputeLighting(input.originalPosition);
     float3 finalColor = max(texColor.rgb * lighting, lightMapColor);

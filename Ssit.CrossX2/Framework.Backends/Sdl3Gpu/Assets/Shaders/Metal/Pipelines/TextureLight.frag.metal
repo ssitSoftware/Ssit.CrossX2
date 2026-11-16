@@ -129,7 +129,8 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
         lighting += lightColor * intensity;
     }
 
-    float3 lightMapColor = lightTex.sample(lightSamp, in.uv).rgb;
+    // Premultiplied alpha: the light map fades with the vertex opacity, like the diffuse color does.
+    float3 lightMapColor = lightTex.sample(lightSamp, in.uv).rgb * in.color.a;
     float3 finalColor = max(texColor.rgb * lighting, lightMapColor);
 
     return float4(finalColor, texColor.a);
