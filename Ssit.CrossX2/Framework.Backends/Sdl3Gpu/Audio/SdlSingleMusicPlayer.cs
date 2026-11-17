@@ -7,6 +7,10 @@ namespace Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Audio;
 
 internal unsafe class SdlSingleMusicPlayer : ISingleMusicPlayer
 {
+    // Number of buffers kept queued ahead of playback (~100 ms each at 44.1 kHz stereo).
+    // A larger lead survives main-thread stalls (e.g. macOS handling a gamepad connection).
+    private const int QueuedBuffersTarget = 5;
+
     private readonly SdlSoundManagerImpl _soundManager;
 
     private SdlHandle<MIX_Track> _track = SdlHandle<MIX_Track>.Empty;
@@ -54,8 +58,7 @@ internal unsafe class SdlSingleMusicPlayer : ISingleMusicPlayer
         MIX_SetTrackGain(_track.Pointer, _soundManager.MusicVolume);
         MIX_SetTrackAudioStream(_track.Pointer, _audioStream);
 
-        AppendBuffer();
-        AppendBuffer();
+        FillQueue();
 
         var properties = SDL_CreateProperties();
         if (fadeInMilliseconds > 0)
@@ -100,10 +103,21 @@ internal unsafe class SdlSingleMusicPlayer : ISingleMusicPlayer
             return;
         }
 
-        var queuedBytes = SDL_GetAudioStreamQueued(_audioStream);
+        FillQueue();
+
+        // If the stream ran dry (main thread stalled), the mixer treats it as end of input
+        // and stops the track. Restart it so music doesn't stay silent forever.
+        if (!MIX_TrackPlaying(_track.Pointer))
+        {
+            MIX_PlayTrack(_track.Pointer, 0);
+        }
+    }
+
+    private void FillQueue()
+    {
         var bytesPerBuffer = _bufferLength * sizeof(short);
 
-        if (queuedBytes <= bytesPerBuffer)
+        while (!_sourceExhausted && SDL_GetAudioStreamQueued(_audioStream) < bytesPerBuffer * QueuedBuffersTarget)
         {
             AppendBuffer();
         }

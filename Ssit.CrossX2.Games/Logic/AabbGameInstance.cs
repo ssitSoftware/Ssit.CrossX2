@@ -112,7 +112,8 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
     private float _lastDeltaTime = 0;
 
     private readonly MapLightsContainer _lightsContainer;
-    
+    private bool _isActive;
+
     void IGameInstance.Render(IRenderer renderer, RectangleF target, int renderPass, float scale)
     {
         if (renderPass != 0)
@@ -256,6 +257,11 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
     
     public void Activate(bool active)
     {
+        if (active == _isActive)
+            return;
+        
+        _isActive = active;
+        
         foreach (var body in Simulation.Bodies)
         {
             if (body.Owner is IActivationHandler handler)

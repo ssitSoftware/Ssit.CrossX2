@@ -20,7 +20,18 @@ public abstract class SpriteGameObject : IGameObjectRenderer, IBodyOwner, ISound
     /// </summary>
     public int MapId { get; }
     public event Action FixedUpdate;
-    public int ZOrder { get; protected set; }
+    public int ZOrder
+    {
+        get;
+        protected set
+        {
+            field = value;
+            _renderZOrder = RenderZOrder.FromInt(value);
+        }
+    }
+
+    private float _renderZOrder;
+    float IGameObjectRenderer.ZOrder => _renderZOrder;
     
     public SpriteInstance Sprite { get; private set; }
     private ResourceHandle<SpriteEx> _spriteObject;

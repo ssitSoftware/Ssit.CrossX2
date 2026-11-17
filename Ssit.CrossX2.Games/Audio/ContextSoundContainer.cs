@@ -14,6 +14,7 @@ public class ContextSoundContainer(IContentManager contentManager,  ContextSound
 
     private readonly Dictionary<(string, int), (ISoundEffectInstance, float, float)> _instances = new();
     private readonly List<ResourceHandle<ISoundEffect>> _sounds = new();
+    private readonly HashSet<string> _activeLoops = new();
 
     public ContextSoundContainer RegisterSound(string name, string path, float volume = 1, float pitch = 1)
     {
@@ -45,6 +46,8 @@ public class ContextSoundContainer(IContentManager contentManager,  ContextSound
             return;
         }
 
+        _activeLoops.Add(name);
+
         if (!instance.Item1.IsPlaying)
         {
             instance.Item1.Play(true);
@@ -57,6 +60,8 @@ public class ContextSoundContainer(IContentManager contentManager,  ContextSound
         {
             return;
         }
+
+        _activeLoops.Remove(name);
         instance.Item1.Stop();
     }
 
@@ -95,6 +100,7 @@ public class ContextSoundContainer(IContentManager contentManager,  ContextSound
             instance.Value.Item1.Dispose();
         }
         _instances.Clear();
+        _activeLoops.Clear();
         
         foreach (var sound in _sounds)
         {
@@ -108,6 +114,33 @@ public class ContextSoundContainer(IContentManager contentManager,  ContextSound
         foreach (var instance in _instances)
         {
             instance.Value.Item1.Stop();
+        }
+
+        _activeLoops.Clear();
+    }
+
+    /// <summary>
+    /// Stops all sounds but remembers which loops were playing, so <see cref="ResumeLoops"/> can restart them.
+    /// </summary>
+    public void Suspend()
+    {
+        foreach (var instance in _instances)
+        {
+            instance.Value.Item1.Stop();
+        }
+    }
+
+    /// <summary>
+    /// Restarts the loops that were playing when <see cref="Suspend"/> was called.
+    /// </summary>
+    public void ResumeLoops()
+    {
+        foreach (var name in _activeLoops)
+        {
+            if (_instances.TryGetValue((name, -1), out var instance) && !instance.Item1.IsPlaying)
+            {
+                instance.Item1.Play(true);
+            }
         }
     }
 }

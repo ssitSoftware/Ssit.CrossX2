@@ -45,7 +45,18 @@ public abstract class RopeObjectBase : IBodyOwner, IGameObjectRenderer, IPendulu
     
     protected GameObjectsServices Services { get; }
 
-    public int ZOrder { get; }
+    public int ZOrder
+    {
+        get;
+        private set
+        {
+            field = value;
+            _renderZOrder = RenderZOrder.FromInt(value);
+        }
+    }
+
+    private float _renderZOrder;
+    float IGameObjectRenderer.ZOrder => _renderZOrder;
     public virtual RectangleF Bounds { get; protected set; }
     public IBody Body { get; }
     

@@ -22,7 +22,18 @@ public class PointLightObject: IBodyOwner, ILightProvider, IGameObjectRenderer
     private const int GlowCircleSegments = 12;
 
     public IBody Body { get; }
-    public int ZOrder { get; }
+    public int ZOrder
+    {
+        get;
+        private set
+        {
+            field = value;
+            _renderZOrder = RenderZOrder.FromInt(value);
+        }
+    }
+
+    private float _renderZOrder;
+    float IGameObjectRenderer.ZOrder => _renderZOrder;
     private readonly float _tileSize;
     private readonly float _afterGlow;
     private readonly Vector2[] _glowCircle = new Vector2[GlowCircleSegments + 1];

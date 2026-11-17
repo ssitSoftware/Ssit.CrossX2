@@ -12,7 +12,7 @@ public static class MapRenderer
     {
         public readonly MapDisplayObject DisplayObject;
         public readonly IGameObjectRenderer ObjectRenderer;
-        public int ZOrder => DisplayObject?.Zorder ?? ObjectRenderer?.ZOrder ?? 0;
+        public float ZOrder => DisplayObject?.Zorder ?? ObjectRenderer?.ZOrder ?? 0;
         
         public ObjectRenderInfo(MapDisplayObject displayObject)
         {
@@ -232,7 +232,7 @@ public static class MapRenderer
             }
         }
         
-        GameObjects.Sort((o1,o2) => o1.ZOrder - o2.ZOrder);
+        GameObjects.Sort((o1,o2) => o1.ZOrder.CompareTo(o2.ZOrder));
         foreach (var gameObj in GameObjects)
         {
             if (gameObj.DisplayObject != null)

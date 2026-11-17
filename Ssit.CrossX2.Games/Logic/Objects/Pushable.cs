@@ -16,7 +16,7 @@ public class Pushable(GameObjectsServices services, ObjectCreationParameters par
     
     void IGameObjectRenderer.Render(IRenderer renderer, RgbaColor color, float depth) => Render(renderer, color, depth);
     RectangleF IGameObjectRenderer.Bounds => BoundsRect.Offset(Body.Position);
-    int IGameObjectRenderer.ZOrder { get; } = parameters.ZOrder;
+    float IGameObjectRenderer.ZOrder { get; } = RenderZOrder.FromInt(parameters.ZOrder);
     
     void IBodyOwner.OnFixedUpdate(out bool cancelUpdate)
     {

@@ -78,9 +78,16 @@ public abstract class CharacterObject<TCharacter> : SpriteGameObject, IBodyEvent
 
     void IActivationHandler.Activate(bool active)
     {
-        if (!active && SoundContainer is not null)
+        if (SoundContainer is null)
+            return;
+
+        if (active)
         {
-            SoundContainer.StopAll();
+            SoundContainer.ResumeLoops();
+        }
+        else
+        {
+            SoundContainer.Suspend();
         }
     }
 }

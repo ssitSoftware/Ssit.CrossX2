@@ -65,7 +65,7 @@ public class ObjectParticles<TParent> : IGameObjectRenderer, IBodyOwner where  T
     
     RectangleF IGameObjectRenderer.Bounds => _bounds;
     IBody IBodyOwner.Body => _body;
-    int IGameObjectRenderer.ZOrder => _parent.ZOrder + 1;
+    float IGameObjectRenderer.ZOrder => _parent.ZOrder + 1;
     
     public int Count { get; }
     public int FilterMode { get; set; }
