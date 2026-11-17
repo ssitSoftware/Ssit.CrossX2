@@ -1,6 +1,8 @@
 using System.Numerics;
 using Ssit.CrossX2.Framework.Graphics;
 using Ssit.CrossX2.Framework.Graphics.Font;
+using Ssit.CrossX2.Framework.Graphics.Internal;
+using Ssit.CrossX2.Framework.Text;
 using Ssit.CrossX2.Framework.UI.Parameters;
 using Ssit.CrossX2.Framework.UI.Views;
 
@@ -18,6 +20,15 @@ public class TextHandler(ViewHandler.CreateHandlerParameters parameters, IFontsM
 
     // Height the last page layout request asked for - not asked again if the parent can't give it (no layout loop).
     private float _requestedHeight = -1;
+
+    /// <summary>
+    /// Word of a justified line: its text and its x offset from the line start (font units).
+    /// </summary>
+    private readonly record struct JustifiedWord(TextSource Text, float X);
+
+    // Words of the justified lines, and per laid-out line the range of its words (Count 0 = drawn as a whole line).
+    private readonly List<JustifiedWord> _justifiedWords = [];
+    private readonly List<(int First, int Count)> _justifiedLines = [];
 
     protected override void OnTextChanged()
     {
@@ -113,6 +124,61 @@ public class TextHandler(ViewHandler.CreateHandlerParameters parameters, IFontsM
                 lines[idx] = line;
             }
         }
+
+        CalculateJustification(font, spacing, wrapWidth);
+    }
+
+    /// <summary>
+    /// With <see cref="Views.Text.Justify"/>, splits every wrapped line (not the last line of a paragraph, nor a line
+    /// without spaces) into words and places them so the stretched spaces fill <paramref name="wrapWidth"/>.
+    /// No-break spaces stay inside the words with their normal width.
+    /// </summary>
+    private void CalculateJustification(IFont font, TextSpacing spacing, int wrapWidth)
+    {
+        _justifiedWords.Clear();
+        _justifiedLines.Clear();
+
+        if (!AttachedView.Justify || wrapWidth <= 0 || font is not IGlyphFont glyphFont)
+            return;
+
+        var additionalSpacing = (int)(spacing - 50) * glyphFont.Metrics.WhitespaceWidth / 50f;
+        var whitespaceWidth = glyphFont.Metrics.WhitespaceWidth + additionalSpacing;
+
+        foreach (var line in TextRenderingContext.Lines)
+        {
+            if (line.EndOfParagraph || line.Whitespaces == 0)
+            {
+                _justifiedLines.Add((0, 0));
+                continue;
+            }
+
+            // Never narrower than a normal space (a line wider than the wrap width just keeps its spaces).
+            var widthWithoutSpaces = line.Width - line.Whitespaces * whitespaceWidth;
+            var stretchedWidth = MathF.Max(whitespaceWidth, (wrapWidth - widthWithoutSpaces) / line.Whitespaces);
+
+            var first = _justifiedWords.Count;
+            var text = line.Text;
+            var x = 0f;
+            var wordStart = 0;
+
+            for (var idx = 0; idx <= text.Length; idx++)
+            {
+                if (idx < text.Length && !GlyphFontRenderer.IsBreakingSpace(glyphFont, text[idx]))
+                    continue;
+
+                if (idx > wordStart)
+                {
+                    var word = new TextSource(text, wordStart, idx - wordStart);
+                    _justifiedWords.Add(new JustifiedWord(word, x));
+                    x += GlyphFontRenderer.MeasureWidth(glyphFont, word, spacing);
+                }
+
+                x += stretchedWidth;
+                wordStart = idx + 1;
+            }
+
+            _justifiedLines.Add((first, _justifiedWords.Count - first));
+        }
     }
 
     protected override void OnDraw(IRenderer renderer)
@@ -158,21 +224,49 @@ public class TextHandler(ViewHandler.CreateHandlerParameters parameters, IFontsM
             x = rect.Right;
         }
 
+        var lines = TextRenderingContext.Lines;
+
         // Each line as a single-line text, top aligned - the same placement as the multiline text renderer.
-        foreach (var line in TextRenderingContext.Lines)
+        for (var lineIdx = 0; lineIdx < lines.Count; lineIdx++)
         {
+            var line = lines[lineIdx];
             y += line.Spacing * scale;
 
-            renderer.TextRenderer.DrawText(
-                font: font,
-                text: line.Text,
-                position: new Vector2(x, y),
-                align: horizontalAlign | ContentAlign.Top,
-                scale: scale,
-                color: color,
-                spacing: spacing,
-                outlineColor: outlineColor,
-                lineSpacing: 0);
+            var (firstWord, wordCount) = lineIdx < _justifiedLines.Count ? _justifiedLines[lineIdx] : (0, 0);
+
+            if (wordCount > 0)
+            {
+                // Justified line - fills the whole width, word by word from the left edge.
+                for (var wordIdx = firstWord; wordIdx < firstWord + wordCount; wordIdx++)
+                {
+                    var word = _justifiedWords[wordIdx];
+
+                    renderer.TextRenderer.DrawText(
+                        font: font,
+                        text: word.Text,
+                        // Whole pixels - the stretched spaces would put the glyphs between pixels.
+                        position: new Vector2(MathF.Round(rect.X + word.X * scale), y),
+                        align: ContentAlign.Left | ContentAlign.Top,
+                        scale: scale,
+                        color: color,
+                        spacing: spacing,
+                        outlineColor: outlineColor,
+                        lineSpacing: 0);
+                }
+            }
+            else
+            {
+                renderer.TextRenderer.DrawText(
+                    font: font,
+                    text: line.Text,
+                    position: new Vector2(x, y),
+                    align: horizontalAlign | ContentAlign.Top,
+                    scale: scale,
+                    color: color,
+                    spacing: spacing,
+                    outlineColor: outlineColor,
+                    lineSpacing: 0);
+            }
 
             y += font.Metrics.LineHeight * scale;
         }
