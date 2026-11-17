@@ -53,4 +53,34 @@ public static class PathHelper
         
         return Path.Combine(dir!, $"{name}.{extension}");
     }
+
+    public static string GetReadableFromPath(string path)
+    {
+        var text = Path.GetFileNameWithoutExtension(path);
+        
+        var startIndex = 0;
+        var output = "";
+        
+        for (var idx = 1; idx < text.Length; ++idx)
+        {
+            var ch = text[idx];
+            if (Char.IsUpper(ch))
+            {
+                if (output.Length > 0)
+                {
+                    output += " ";
+                }
+                output += text.Substring(startIndex, idx - startIndex);
+                startIndex = idx;
+            }
+        }
+        
+        if (output.Length > 0)
+        {
+            output += " ";
+        }
+        output += text.Substring(startIndex, text.Length - startIndex);
+
+        return output;
+    }
 }
