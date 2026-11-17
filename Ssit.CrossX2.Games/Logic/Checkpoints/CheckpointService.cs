@@ -15,7 +15,12 @@ public class CheckpointService : ICheckpointService
         public string MapPath { get; init; }
 
         /// <summary>
-        /// Store a JPEG preview of the last rendered frame in each checkpoint (<see cref="CheckpointData.PreviewImage"/>).
+        /// Id of the map naming its state file in the slot directory (<see cref="Map.MapPathHelper.MapId"/>).
+        /// </summary>
+        public string MapId { get; init; }
+
+        /// <summary>
+        /// Store a JPEG preview of the last rendered frame in each checkpoint (<see cref="CheckpointData.Preview"/>).
         /// </summary>
         public bool StorePreview { get; init; }
 
@@ -32,6 +37,7 @@ public class CheckpointService : ICheckpointService
     private readonly CheckpointStorage _storage;
     private readonly ICamera _camera;
     private readonly IGameState _gameState;
+    private readonly IGameClock _clock;
     private readonly IIoCContainer _container;
     private readonly IRenderHost _renderHost;
     private readonly ISnapshotService _snapshotService;
@@ -40,12 +46,15 @@ public class CheckpointService : ICheckpointService
 
     public string MapPath { get; }
     
+    public string MapId { get; }
+    
     public CheckpointData LastCheckpoint { get; private set; }
 
     public CheckpointService(IMapObjects mapObjects, ISimulation simulation, CheckpointStorage storage, ICamera camera,
-        IIoCContainer container, Parameters parameters, IGameState gameState = null,
+        IIoCContainer container, Parameters parameters, IGameState gameState = null, IGameClock clock = null,
         IRenderHost renderHost = null, ISnapshotService snapshotService = null)
     {
+        _clock = clock;
         _renderHost = renderHost;
         _snapshotService = snapshotService;
         _storePreview = parameters.StorePreview;
@@ -59,16 +68,17 @@ public class CheckpointService : ICheckpointService
         _gameState = gameState;
         
         MapPath = parameters.MapPath;
+        MapId = parameters.MapId;
     }
 
-    public CheckpointData Capture()
+    public CheckpointData Capture(object playerState)
     {
-        var data = new CheckpointData
+        var savedAtUtc = DateTime.UtcNow;
+        
+        var mapState = new MapStateData
         {
             MapPath = MapPath,
-            SavedAtUtc = DateTime.UtcNow,
-            Flags = _gameState?.Flags.ToList() ?? new List<string>(),
-            PreviewImage = CapturePreview()
+            SavedAtUtc = savedAtUtc
         };
 
         var bodies = _simulation.Bodies.ToHashSet();
@@ -77,7 +87,7 @@ public class CheckpointService : ICheckpointService
         {
             if (entry.Instance is IBodyOwner owner && !bodies.Contains(owner.Body))
             {
-                data.Objects[entry.MapId] = new ObjectSnapshot { TypeId = entry.TypeId, Removed = true };
+                mapState.Objects[entry.MapId] = new ObjectSnapshot { TypeId = entry.TypeId, Removed = true };
                 continue;
             }
 
@@ -88,24 +98,36 @@ public class CheckpointService : ICheckpointService
             if (state is null)
                 continue;
 
-            data.Objects[entry.MapId] = new ObjectSnapshot
+            mapState.Objects[entry.MapId] = new ObjectSnapshot
             {
                 TypeId = entry.TypeId,
                 State = JToken.FromObject(state, Serializer)
             };
         }
 
-        CaptureSpawnedObjects(data);
+        CaptureSpawnedObjects(mapState);
 
+        var gameState = new GameStateData
+        {
+            MapPath = MapPath,
+            MapId = MapId,
+            SavedAtUtc = savedAtUtc,
+            Time = _clock?.Time ?? 0,
+            Flags = _gameState?.Flags.ToList() ?? new List<string>(),
+            PlayerState = playerState is null ? null : JToken.FromObject(playerState, Serializer)
+        };
+
+        var data = new CheckpointData(gameState, mapState, CapturePreview());
+        
         LastCheckpoint = data;
         return data;
     }
 
     /// <summary>
-    /// Takes a JPEG snapshot of the last rendered frame (before CRT simulation and post rendering), Base64 encoded.
+    /// Takes a JPEG snapshot of the last rendered frame (before CRT simulation and post rendering).
     /// Returns null if previews are disabled or the snapshot fails - the checkpoint is saved without it.
     /// </summary>
-    private string CapturePreview()
+    private byte[] CapturePreview()
     {
         if (!_storePreview || _snapshotService is null || _renderHost?.SceneTexture is not { } texture)
             return null;
@@ -114,7 +136,7 @@ public class CheckpointService : ICheckpointService
         {
             using var stream = new MemoryStream();
             _snapshotService.GetSnapshot(stream, texture, _previewDownSize);
-            return Convert.ToBase64String(stream.GetBuffer(), 0, (int)stream.Length);
+            return stream.ToArray();
         }
         catch (Exception e)
         {
@@ -126,7 +148,7 @@ public class CheckpointService : ICheckpointService
     /// <summary>
     /// Stores stateful objects that are in the simulation but weren't created from the map.
     /// </summary>
-    private void CaptureSpawnedObjects(CheckpointData data)
+    private void CaptureSpawnedObjects(MapStateData data)
     {
         var mapInstances = _mapObjects.All.Select(o => o.Instance).ToHashSet(ReferenceEqualityComparer.Instance);
 
@@ -148,15 +170,15 @@ public class CheckpointService : ICheckpointService
         }
     }
 
-    public CheckpointData Save(string fileName)
+    public CheckpointData Save(int slot, object playerState)
     {
-        var data = Capture();
+        var data = Capture(playerState);
 
         Task.Run(() =>
         {
             try
             {
-                _storage.Write(fileName, data);
+                _storage.Write(slot, data);
             }
             catch (Exception e)
             {
@@ -179,8 +201,49 @@ public class CheckpointService : ICheckpointService
         }
 
         var removed = new HashSet<int>();
+        var spawned = new List<IStatefulObject>();
+
+        // 0. Game time first - objects may store times relative to it (e.g. time of death).
+        _clock?.Set(data.GameState.Time);
+
+        // 1. + 2. Map objects - only if the map has a stored state.
+        if (data.MapState is { } mapState && string.Equals(mapState.MapPath, MapPath, StringComparison.Ordinal))
+        {
+            RestoreMapObjects(mapState, removed);
+            spawned = RestoreSpawnedObjects(mapState.SpawnedObjects);
+        }
+
+        // 3. Global game state.
+        _gameState?.RestoreFlags(data.GameState.Flags ?? Enumerable.Empty<string>());
+
+        // 4. Player state - kept in the game state, not in the map state.
+        RestorePlayerState(data.GameState.PlayerState);
+
+        // 5. Everything is restored - let objects re-sync with their linked objects.
+        foreach (var entry in _mapObjects.All)
+        {
+            if (!removed.Contains(entry.MapId) && entry.Instance is IStateRestoredHandler handler)
+            {
+                handler.OnStateRestored();
+            }
+        }
+
+        foreach (var obj in spawned)
+        {
+            (obj as IStateRestoredHandler)?.OnStateRestored();
+        }
+
+        _camera.SnapToPrimaryTarget();
         
-        // 1. Remove objects that no longer existed and restore states of the others.
+        LastCheckpoint = data;
+    }
+
+    /// <summary>
+    /// Removes map objects that no longer existed and restores states of the others.
+    /// </summary>
+    /// <param name="removed">Filled with map ids of the removed objects.</param>
+    private void RestoreMapObjects(MapStateData data, HashSet<int> removed)
+    {
         foreach (var entry in _mapObjects.All)
         {
             if (!data.Objects.TryGetValue(entry.MapId, out var snapshot))
@@ -212,30 +275,31 @@ public class CheckpointService : ICheckpointService
                 Console.WriteLine($"Failed to restore state of map object {entry.MapId} ({entry.TypeId}): {e}");
             }
         }
+    }
 
-        // 2. Objects created at runtime.
-        var spawned = RestoreSpawnedObjects(data.SpawnedObjects);
+    /// <summary>
+    /// Passes the stored player state to the <see cref="IPlayerStateProvider"/> in the simulation.
+    /// </summary>
+    private void RestorePlayerState(JToken playerState)
+    {
+        if (playerState is null || playerState.Type == JTokenType.Null)
+            return;
 
-        // 3. Global game state.
-        _gameState?.RestoreFlags(data.Flags ?? Enumerable.Empty<string>());
-
-        // 4. Let objects re-sync with their linked objects.
-        foreach (var entry in _mapObjects.All)
+        var provider = _simulation.Bodies.Select(body => body.Owner).OfType<IPlayerStateProvider>().FirstOrDefault();
+        if (provider is null)
         {
-            if (!removed.Contains(entry.MapId) && entry.Instance is IStateRestoredHandler handler)
-            {
-                handler.OnStateRestored();
-            }
+            Console.WriteLine("No player state provider in the simulation - player state not restored.");
+            return;
         }
 
-        foreach (var obj in spawned)
+        try
         {
-            (obj as IStateRestoredHandler)?.OnStateRestored();
+            provider.RestorePlayerState(playerState.ToObject(provider.PlayerStateType, Serializer));
         }
-
-        _camera.SnapToPrimaryTarget();
-        
-        LastCheckpoint = data;
+        catch (Exception e)
+        {
+            Console.WriteLine($"Failed to restore player state: {e}");
+        }
     }
 
     /// <summary>

@@ -29,6 +29,13 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
     public class Parameters
     {
         public string MapPath { get; set; }
+
+        /// <summary>
+        /// Common prefix of the map paths (e.g. "assets:/Game/Maps/"). It is cut off the map path to get the map id
+        /// (<see cref="MapPathHelper.MapId"/>) naming the map files in the application storage: cache and checkpoint state.
+        /// </summary>
+        public string MapPathPrefix { get; set; }
+        
         public Action<IIoCContainerBuilder> RegisterServices { get; set; }
         public IMaterial[] Materials { get; set; }
         public int BackgroundColorIndex { get; set; }
@@ -37,7 +44,8 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
         public IBackgroundRenderer BackgroundRenderer { get; set; }
         
         /// <summary>
-        /// Checkpoint restored right after the map is loaded. Its <see cref="CheckpointData.MapPath"/> must match <see cref="MapPath"/>.
+        /// Checkpoint restored right after the map is loaded (map objects, game state and player state).
+        /// Its <see cref="CheckpointData.MapPath"/> must match <see cref="MapPath"/>.
         /// </summary>
         public CheckpointData RestoreFrom { get; set; }
         
@@ -47,7 +55,7 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
         public int Slot { get; set; }
 
         /// <summary>
-        /// Store a JPEG preview of the screen in each checkpoint (<see cref="CheckpointData.PreviewImage"/>).
+        /// Store a JPEG preview of the screen in each checkpoint (<see cref="CheckpointData.Preview"/>, "Preview.jpg" in the slot directory).
         /// </summary>
         public bool StoreCheckpointPreview { get; set; }
 
@@ -56,6 +64,16 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
         /// </summary>
         public float CheckpointPreviewDownSize { get; set; } = 4;
     }
+    
+    /// <summary>
+    /// Directory of the map caches (static colliders) in the application storage.
+    /// </summary>
+    public const string CacheDirectory = "Cache";
+
+    /// <summary>
+    /// Suffix of the map cache file name, added to the map id: "Map01" → "Cache/Map01Cache.bin". The cache is binary.
+    /// </summary>
+    public const string CacheFileSuffix = "Cache.bin";
     
     IIoCContainer IGameInstance.Services => Container;
     private readonly IContentCache _contentCache;
@@ -66,6 +84,7 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
     public IMessenger Messenger => this;
     
     private readonly IGameTimer _timer;
+    private readonly IGameClock _clock = new GameClock();
 
     private readonly IActionScheduler _scheduler;
     private readonly IGameTemplate _gameTemplate;
@@ -128,6 +147,8 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
         _gameTemplate = gameTemplate;
         _backgroundRenderer = parameters.BackgroundRenderer;
         
+        var mapId = MapPathHelper.MapId(parameters.MapPath, parameters.MapPathPrefix);
+        
         using var stream = contentManager.FilesProvider.Open(parameters.MapPath);
         var map = MapFile.FromStream(stream, gameTemplate);
 
@@ -162,18 +183,20 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
                 b
                     .WithInstance<IGameInstance>(this).As<IGameRendererFilter>().As<IMessenger>()
                     .WithInstance(_contentCache)
+                    .WithInstance(_clock)
                     .WithSingleton<ICamera, Camera>().As<ISoundListener>()
                     .WithSingleton<GameObjectsServices, GameObjectsServices>();
                 b.WithSingleton<ICheckpointService, CheckpointService>(new CheckpointService.Parameters
                 {
                     MapPath = parameters.MapPath,
+                    MapId = mapId,
                     StorePreview = parameters.StoreCheckpointPreview,
                     PreviewDownSize = parameters.CheckpointPreviewDownSize
                 });
             })
             .WithGameTemplate(gameTemplate);
         
-        var cacheFilePath = parameters.MapPath.Replace('\\', '_').Replace('/', '_').Replace(':', '_');
+        var cacheFilePath = Path.Combine(CacheDirectory, mapId + CacheFileSuffix);
         try
         {
             var fileTime = storage.GetLastModificationTime(cacheFilePath);
@@ -328,6 +351,7 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
             return;
 
         _timer.Update(deltaTime);
+        _clock.Update(deltaTime);
         
         Simulation.SimulationParameters.TimeDelta = _timer.TimeDelta;
         Simulation.Update(deltaTime, FixedUpdate);

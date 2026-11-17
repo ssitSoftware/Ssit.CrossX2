@@ -12,7 +12,7 @@ public class FilesStorage(string appName) : IFileStorage
 
     public void WriteText(string path, string text)
     {
-        File.WriteAllText(Path.Combine(StorageDirectory(appName), path), text);
+        File.WriteAllText(PrepareWritePath(path), text);
     }
 
     public void Delete(string path)
@@ -31,9 +31,30 @@ public class FilesStorage(string appName) : IFileStorage
         File.Move(Path.Combine(directory, sourcePath), Path.Combine(directory, destinationPath));
     }
 
+    public bool DirectoryExists(string path)
+    {
+        return Directory.Exists(Path.Combine(StorageDirectory(appName), path));
+    }
+
+    public void MoveDirectory(string sourcePath, string destinationPath)
+    {
+        var directory = StorageDirectory(appName);
+        Directory.Move(Path.Combine(directory, sourcePath), Path.Combine(directory, destinationPath));
+    }
+
+    public void DeleteDirectory(string path)
+    {
+        var fullPath = Path.Combine(StorageDirectory(appName), path);
+        
+        if (Directory.Exists(fullPath))
+        {
+            Directory.Delete(fullPath, true);
+        }
+    }
+
     public void WriteData(string path, byte[] data)
     {
-        File.WriteAllBytes(Path.Combine(StorageDirectory(appName), path), data);
+        File.WriteAllBytes(PrepareWritePath(path), data);
     }
 
     public byte[] ReadData(string path)
@@ -44,6 +65,22 @@ public class FilesStorage(string appName) : IFileStorage
     public DateTime GetLastModificationTime(string path)
     {
         return File.GetLastWriteTime(Path.Combine(StorageDirectory(appName), path));
+    }
+
+    /// <summary>
+    /// Returns the full path of the file and creates its directory (files can be stored in subdirectories).
+    /// </summary>
+    private string PrepareWritePath(string path)
+    {
+        var fullPath = Path.Combine(StorageDirectory(appName), path);
+        var directory = Path.GetDirectoryName(fullPath);
+
+        if (!string.IsNullOrEmpty(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        return fullPath;
     }
 
     private static string StorageDirectory(string appName)

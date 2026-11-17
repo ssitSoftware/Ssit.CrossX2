@@ -1,7 +1,8 @@
 namespace Ssit.CrossX2.Framework.Games.Logic.Checkpoints;
 
 /// <summary>
-/// Captures and restores the state of the map objects. Registered in the services of every game instance.
+/// Captures and restores the state of the map objects, the game state and the player state.
+/// Registered in the services of every game instance.
 /// </summary>
 public interface ICheckpointService
 {
@@ -9,6 +10,12 @@ public interface ICheckpointService
     /// Path of the map of the current game instance.
     /// </summary>
     string MapPath { get; }
+
+    /// <summary>
+    /// Id of the map of the current game instance - names its state file in the slot directory
+    /// (<see cref="Map.MapPathHelper.MapId"/>).
+    /// </summary>
+    string MapId { get; }
     
     /// <summary>
     /// The last checkpoint captured or restored in the current game instance (null if none).
@@ -16,19 +23,26 @@ public interface ICheckpointService
     CheckpointData LastCheckpoint { get; }
     
     /// <summary>
-    /// Captures the current state of the map objects. Must be called from the game update.
+    /// Captures the current state of the map objects and the game state. Must be called from the game update.
     /// </summary>
-    CheckpointData Capture();
+    /// <param name="playerState">
+    /// Player state stored in the game state (see <see cref="IPlayerStateProvider{TState}"/>), null if none.
+    /// It is serialized immediately, so the caller may keep changing the object.
+    /// </param>
+    CheckpointData Capture(object playerState);
     
     /// <summary>
-    /// Captures the current state and writes it to <paramref name="fileName"/> in the application storage.
-    /// The file is written in the background.
+    /// Captures the current state and writes it to the directory of the save <paramref name="slot"/> in the application
+    /// storage: the map state into the file of the current map, the game state with <paramref name="playerState"/>
+    /// into the GameState file (see <see cref="CheckpointStorage"/>). The files are written in the background.
     /// </summary>
-    CheckpointData Save(string fileName);
+    CheckpointData Save(int slot, object playerState);
     
     /// <summary>
-    /// Restores the state of the map objects. Called by the game instance right after the map is loaded,
-    /// when the instance was created with a checkpoint.
+    /// Restores the game time (<see cref="IGameClock.Set"/>, first - map objects can rely on it), the state of
+    /// the map objects, the game state flags and the player state
+    /// (<see cref="IPlayerStateProvider{TState}"/>), then calls <see cref="IStateRestoredHandler.OnStateRestored"/>.
+    /// Called by the game instance right after the map is loaded, when the instance was created with a checkpoint.
     /// </summary>
     void Restore(CheckpointData data);
 }

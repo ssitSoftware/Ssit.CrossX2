@@ -7,8 +7,15 @@ using Ssit.CrossX2.Framework.IO;
 namespace Ssit.CrossX2.Framework.Games.Logic.Checkpoints;
 
 /// <summary>
-/// Reads and writes the last checkpoint in the application storage, as BSON or JSON (<see cref="Parameters.Binary"/>).
-/// The checkpoint is signed with HMAC-SHA256 (<see cref="Parameters.SigningKey"/>), so a file edited by hand is detected:
+/// Reads and writes checkpoints in the application storage. Each save slot has its own directory
+/// <c>Slot{N}</c> (<see cref="SlotDirectory"/>) containing:
+/// <list type="bullet">
+/// <item><c>GameState</c> - <see cref="GameStateData"/>: map the game continues on, game state flags, player state;</item>
+/// <item>one file per map, "{MapId}State" (<see cref="MapStateFileName"/>) - <see cref="MapStateData"/>;</item>
+/// <item><c>Preview.jpg</c> - screen preview of the last checkpoint (<see cref="CheckpointData.Preview"/>).</item>
+/// </list>
+/// State files are stored as BSON or JSON (<see cref="Parameters.Binary"/>) with the matching extension.
+/// Each state file is signed with HMAC-SHA256 (<see cref="Parameters.SigningKey"/>), so a file edited by hand is detected:
 /// it is treated as non-existing and deleted.
 /// Registered in the application services (one instance per game, with the game's own signing key).
 /// </summary>
@@ -56,6 +63,16 @@ public class CheckpointStorage
 
     private static readonly JsonSerializer Serializer = JsonSerializer.CreateDefault();
 
+    /// <summary>
+    /// Name of the game state file in the slot directory (without extension).
+    /// </summary>
+    public const string GameStateFileName = "GameState";
+
+    /// <summary>
+    /// Name of the preview file in the slot directory. Plain JPEG, not signed - it is only displayed.
+    /// </summary>
+    public const string PreviewFileName = "Preview.jpg";
+
     private enum ReadResult
     {
         Valid,
@@ -74,67 +91,156 @@ public class CheckpointStorage
     }
 
     /// <summary>
-    /// Extension matching the stored format: ".bson" or ".json". Added to the file names given to the methods.
+    /// Extension matching the stored format: ".bson" or ".json". Added to the file names.
     /// </summary>
     private string FileExtension => _useBinary ? ".bson" : ".json";
+
+    /// <summary>
+    /// Directory of the save slot in the application storage.
+    /// </summary>
+    public static string SlotDirectory(int slot) => $"Slot{slot}";
+
+    /// <summary>
+    /// Name of the map state file in the slot directory (without extension), e.g. "Map01" → "Map01State".
+    /// </summary>
+    /// <param name="mapId">Map id (<see cref="Map.MapPathHelper.MapId"/>).</param>
+    public static string MapStateFileName(string mapId) => $"{mapId}State";
+
+    private string FilePath(int slot, string fileName) => Path.Combine(SlotDirectory(slot), fileName + FileExtension);
     
     /// <summary>
-    /// Writes the checkpoint to <paramref name="fileName"/> (without extension) in the application storage.
+    /// Writes the checkpoint into the slot directory: the map state into the file of its map (if the checkpoint has one),
+    /// then the game state and the preview. States of other maps stored in the slot are kept.
+    /// A checkpoint without a preview removes the previous one, so it never shows an older save.
     /// </summary>
-    public void Write(string fileName, CheckpointData data)
+    public void Write(int slot, CheckpointData data)
     {
-        var bytes = _useBinary ? SerializeBson(data) : SerializeJson(data);
+        if (data.MapState is not null && string.IsNullOrEmpty(data.MapId))
+            throw new ArgumentException("Checkpoint with a map state needs the map id.", nameof(data));
+        
+        var mapStateBytes = data.MapState is null ? null : Serialize(data.MapState);
+        var gameStateBytes = Serialize(data.GameState);
 
         lock (_lock)
         {
-            _storage.WriteData(fileName + FileExtension, bytes);
+            if (mapStateBytes is not null)
+            {
+                _storage.WriteData(FilePath(slot, MapStateFileName(data.MapId)), mapStateBytes);
+            }
+            
+            _storage.WriteData(FilePath(slot, GameStateFileName), gameStateBytes);
+
+            var previewPath = Path.Combine(SlotDirectory(slot), PreviewFileName);
+            
+            if (data.Preview is { Length: > 0 })
+            {
+                _storage.WriteData(previewPath, data.Preview);
+            }
+            else if (_storage.Exists(previewPath))
+            {
+                _storage.Delete(previewPath);
+            }
         }
     }
 
     /// <summary>
-    /// Moves the checkpoint stored in <paramref name="fileName"/> (without extension) aside to
-    /// "{fileName}_arch{M}" with the first free M from 0, keeping the extension. Does nothing if there is no checkpoint.
+    /// Moves the slot directory aside to "Slot{N}_arch{M}" with the first free M from 0.
+    /// Does nothing if the slot has no directory.
     /// </summary>
-    /// <returns>Name of the archived file (with extension), or null if there was nothing to archive.</returns>
-    public string Archive(string fileName)
+    /// <returns>Name of the archived directory, or null if there was nothing to archive.</returns>
+    public string Archive(int slot)
     {
         lock (_lock)
         {
-            var source = fileName + FileExtension;
-            if (!_storage.Exists(source))
+            var source = SlotDirectory(slot);
+            if (!_storage.DirectoryExists(source))
                 return null;
 
             for (var index = 0; ; index++)
             {
-                var destination = $"{fileName}_arch{index}{FileExtension}";
-                if (_storage.Exists(destination))
+                var destination = $"{source}_arch{index}";
+                if (_storage.DirectoryExists(destination))
                     continue;
 
-                _storage.Move(source, destination);
+                _storage.MoveDirectory(source, destination);
                 return destination;
             }
         }
     }
 
     /// <summary>
-    /// Deletes the checkpoint stored in <paramref name="fileName"/> (without extension), if any.
+    /// Deletes the slot directory with all its checkpoint files, if any.
     /// </summary>
-    public void Delete(string fileName)
+    public void Delete(int slot)
     {
         lock (_lock)
         {
-            _storage.Delete(fileName + FileExtension);
+            _storage.DeleteDirectory(SlotDirectory(slot));
         }
     }
 
     /// <summary>
-    /// Reads the checkpoint stored in <paramref name="fileName"/> (without extension). Returns null if there is no checkpoint or it can't be used.
-    /// A corrupted checkpoint (changed by hand, wrong signature, unreadable content) is deleted.
+    /// Reads the game state of the slot and the state of the map it was saved on.
+    /// Returns null if the slot has no usable game state. <see cref="CheckpointData.MapState"/> is null
+    /// if the map has no usable state.
     /// </summary>
-    public CheckpointData Read(string fileName)
+    public CheckpointData Read(int slot)
     {
-        fileName += FileExtension;
+        var gameState = ReadGameState(slot);
+        if (gameState is null)
+            return null;
         
+        var mapState = string.IsNullOrEmpty(gameState.MapId) ? null : ReadMapState(slot, gameState.MapId, gameState.MapPath);
+        return new CheckpointData(gameState, mapState);
+    }
+
+    /// <summary>
+    /// Reads the game state of the slot. Returns null if there is none or it can't be used.
+    /// </summary>
+    public GameStateData ReadGameState(int slot) =>
+        ReadFile<GameStateData>(FilePath(slot, GameStateFileName), GameStateData.CurrentVersion);
+
+    /// <summary>
+    /// Reads the JPEG preview of the last checkpoint stored in the slot. Returns null if there is none.
+    /// </summary>
+    public byte[] ReadPreview(int slot)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                return _storage.ReadData(Path.Combine(SlotDirectory(slot), PreviewFileName));
+            }
+            catch
+            {
+                // No preview saved (or can't be read at the moment).
+                return null;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Reads the state of the map stored in the slot. Returns null if there is none or it can't be used.
+    /// </summary>
+    /// <param name="slot">Save slot.</param>
+    /// <param name="mapId">Map id (<see cref="Map.MapPathHelper.MapId"/>) naming the state file.</param>
+    /// <param name="mapPath">Path of the map - the stored state is used only if it belongs to this map.</param>
+    public MapStateData ReadMapState(int slot, string mapId, string mapPath)
+    {
+        var data = ReadFile<MapStateData>(FilePath(slot, MapStateFileName(mapId)), MapStateData.CurrentVersion);
+        
+        // Different map paths can give the same map id - use only the state of the requested map.
+        return data is not null && string.Equals(data.MapPath, mapPath, StringComparison.Ordinal) ? data : null;
+    }
+
+    /// <summary>
+    /// Reads a checkpoint file. Returns null if it doesn't exist or can't be used.
+    /// A corrupted file (changed by hand, wrong signature, unreadable content) is deleted.
+    /// </summary>
+    /// <param name="fileName">Path in the application storage, with extension.</param>
+    /// <param name="supportedVersion">Newest file version this game can read.</param>
+    private T ReadFile<T>(string fileName, int supportedVersion) where T : class, ICheckpointFile
+    {
         lock (_lock)
         {
             byte[] bytes;
@@ -153,11 +259,11 @@ public class CheckpointStorage
                 return null;
             }
 
-            var result = Verify(bytes, out var data);
+            var result = Verify<T>(bytes, supportedVersion, out var data);
 
             if (result == ReadResult.Corrupted)
             {
-                Console.WriteLine("Checkpoint is corrupted - deleting it.");
+                Console.WriteLine($"Checkpoint file '{fileName}' is corrupted - deleting it.");
 
                 try
                 {
@@ -173,7 +279,7 @@ public class CheckpointStorage
         }
     }
 
-    private ReadResult Verify(byte[] bytes, out CheckpointData data)
+    private ReadResult Verify<T>(byte[] bytes, int supportedVersion, out T data) where T : class, ICheckpointFile
     {
         data = null;
         
@@ -188,13 +294,13 @@ public class CheckpointStorage
                 return ReadResult.Corrupted;
 
             data = _useBinary
-                ? FromBson<CheckpointData>(payload)
-                : JsonConvert.DeserializeObject<CheckpointData>(Encoding.UTF8.GetString(payload));
+                ? FromBson<T>(payload)
+                : JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(payload));
             if (data is null || string.IsNullOrEmpty(data.MapPath))
                 return ReadResult.Corrupted;
 
             // Saved by a newer version of the game - valid, but can't be used by this one. Don't delete it.
-            if (data.Version > CheckpointData.CurrentVersion)
+            if (data.Version > supportedVersion)
                 return ReadResult.Unsupported;
 
             return ReadResult.Valid;
@@ -208,7 +314,9 @@ public class CheckpointStorage
 
     private byte[] Sign(byte[] payload) => HMACSHA256.HashData(_signingKey, payload);
 
-    private byte[] SerializeBson(CheckpointData data)
+    private byte[] Serialize(object data) => _useBinary ? SerializeBson(data) : SerializeJson(data);
+
+    private byte[] SerializeBson(object data)
     {
         var payload = ToBson(data);
         
@@ -219,7 +327,7 @@ public class CheckpointStorage
         });
     }
 
-    private byte[] SerializeJson(CheckpointData data)
+    private byte[] SerializeJson(object data)
     {
         var payload = JsonConvert.SerializeObject(data);
         

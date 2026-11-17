@@ -6,6 +6,10 @@ namespace Ssit.CrossX2.Framework.IO;
 public interface IFileStorage
 {
     string ReadText(string path);
+    
+    /// <summary>
+    /// Writes the text file. Missing parent directories are created.
+    /// </summary>
     void WriteText(string path, string text);
 
     /// <summary>
@@ -23,6 +27,24 @@ public interface IFileStorage
     /// </summary>
     void Move(string sourcePath, string destinationPath);
 
+    /// <summary>
+    /// Returns true if the directory exists.
+    /// </summary>
+    bool DirectoryExists(string path);
+
+    /// <summary>
+    /// Moves (renames) the directory with all its content. Fails if the destination already exists.
+    /// </summary>
+    void MoveDirectory(string sourcePath, string destinationPath);
+
+    /// <summary>
+    /// Deletes the directory with all its content. Does nothing if the directory doesn't exist.
+    /// </summary>
+    void DeleteDirectory(string path);
+
+    /// <summary>
+    /// Writes the binary file. Missing parent directories are created.
+    /// </summary>
     void WriteData(string path, byte[] data);
     byte[] ReadData(string path);
     
