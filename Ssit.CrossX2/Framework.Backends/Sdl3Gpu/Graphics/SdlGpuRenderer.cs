@@ -51,22 +51,131 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
 
     public SdlGpuRenderTargetStruct DefaultOutputTarget { get; set; }
 
+    private SDL_GPUCommandBuffer* _commandBuffer;
+
+    // Offscreen texture the frame is drawn into instead of the swapchain texture (see Present).
+    private SDL_GPUTexture* _backBuffer;
+    private Size _backBufferSize;
+
+    /// <summary>
+    /// The shared per-frame command buffer, acquired on first use. It never holds a swapchain texture
+    /// until <see cref="Present"/>, so it can be submitted at any point mid-frame.
+    /// </summary>
     public SDL_GPUCommandBuffer* CommandBuffer
     {
         get
         {
             if(!_actionScheduler.IsMainThread)
                 throw new InvalidOperationException("Only use Sdl3GpuRenderer in main thread!");
-            
-            if (field is null)
+
+            if (_commandBuffer is null)
             {
-                field = SDL_AcquireGPUCommandBuffer(Device);
+                _commandBuffer = SDL_AcquireGPUCommandBuffer(Device);
+
+                if (_commandBuffer is null)
+                    throw new InvalidOperationException($"SDL_AcquireGPUCommandBuffer failed: {SDL_GetError()}");
             }
 
-            return field;
+            return _commandBuffer;
+        }
+    }
+
+    /// <summary>
+    /// Makes the offscreen back buffer (recreated when the size changes) the default output target.
+    /// </summary>
+    /// <returns>False when there is nothing to draw into (e.g. a zero-sized, minimized window).</returns>
+    public bool PrepareBackBuffer(Size size)
+    {
+        if (size.Width <= 0 || size.Height <= 0)
+            return false;
+
+        if (_backBuffer is null || _backBufferSize != size)
+        {
+            ReleaseBackBuffer();
+
+            var createInfo = new SDL_GPUTextureCreateInfo
+            {
+                type = SDL_GPUTextureType.SDL_GPU_TEXTURETYPE_2D,
+                format = SDL_GetGPUSwapchainTextureFormat(Device, Window),
+                usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER,
+                width = (uint)size.Width,
+                height = (uint)size.Height,
+                layer_count_or_depth = 1,
+                num_levels = 1,
+                sample_count = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1,
+            };
+
+            _backBuffer = SDL_CreateGPUTexture(Device, &createInfo);
+
+            if (_backBuffer is null)
+                throw new InvalidOperationException($"SDL_CreateGPUTexture (back buffer) failed: {SDL_GetError()}");
+
+            _backBufferSize = size;
         }
 
-        private set;
+        DefaultOutputTarget = new SdlGpuRenderTargetStruct(_backBuffer, _backBufferSize);
+        return true;
+    }
+
+    /// <summary>
+    /// Acquires the swapchain texture on the final command buffer of the frame, copies the back buffer
+    /// into it and submits, which presents. Earlier mid-frame submits never touch the swapchain.
+    /// </summary>
+    /// <returns>True when a swapchain frame was presented.</returns>
+    public bool Present()
+    {
+        EndCurrentGpuRenderPass();
+
+        var commandBuffer = CommandBuffer;
+
+        SDL_GPUTexture* swapchainTexture;
+        uint swapchainWidth, swapchainHeight;
+
+        if (!SDL_WaitAndAcquireGPUSwapchainTexture(commandBuffer, Window, &swapchainTexture, &swapchainWidth, &swapchainHeight))
+        {
+            Console.Error.WriteLine($"SDL_WaitAndAcquireGPUSwapchainTexture failed: {SDL_GetError()}");
+            SubmitCommandBuffer();
+            return false;
+        }
+
+        // Null when the window is minimized/occluded: submit the recorded work and skip presenting.
+        if (swapchainTexture != null && _backBuffer != null)
+        {
+            var blitInfo = new SDL_GPUBlitInfo
+            {
+                source = new SDL_GPUBlitRegion
+                {
+                    texture = _backBuffer,
+                    w = (uint)_backBufferSize.Width,
+                    h = (uint)_backBufferSize.Height,
+                },
+                destination = new SDL_GPUBlitRegion
+                {
+                    texture = swapchainTexture,
+                    w = swapchainWidth,
+                    h = swapchainHeight,
+                },
+                load_op = SDL_GPULoadOp.SDL_GPU_LOADOP_DONT_CARE,
+                filter = SDL_GPUFilter.SDL_GPU_FILTER_LINEAR,
+            };
+
+            SDL_BlitGPUTexture(commandBuffer, &blitInfo);
+        }
+
+        SubmitCommandBuffer();
+        return swapchainTexture != null;
+    }
+
+    public void ReleaseBackBuffer()
+    {
+        if (_backBuffer is null)
+            return;
+
+        // SDL defers the actual release until command buffers using it have completed.
+        SDL_ReleaseGPUTexture(Device, _backBuffer);
+        _backBuffer = null;
+        _backBufferSize = Size.Zero;
+        DefaultOutputTarget = SdlGpuRenderTargetStruct.Null;
     }
 
     public SdlGpuRenderTargetStruct CurrentOutputTarget
@@ -194,12 +303,17 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
             return;
         }
         
-        if (CommandBuffer is null)
-            return;
-        
+        // Flushing queued draws may acquire the command buffer, so do it before checking.
         EndCurrentGpuRenderPass();
-        
-        SDL_SubmitGPUCommandBuffer(CommandBuffer);
-        CommandBuffer = null;
+
+        // Check the field, not the property: reading CommandBuffer would acquire a buffer just to submit it empty.
+        if (_commandBuffer is null)
+            return;
+
+        var commandBuffer = _commandBuffer;
+        _commandBuffer = null;
+
+        if (!SDL_SubmitGPUCommandBuffer(commandBuffer))
+            Console.Error.WriteLine($"SDL_SubmitGPUCommandBuffer failed: {SDL_GetError()}");
     }
 }

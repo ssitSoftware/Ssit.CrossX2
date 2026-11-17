@@ -71,6 +71,10 @@ internal sealed unsafe class CrtSimEffect : ICrtSimEffect
         ];
 
         SDL_GPUCommandBuffer* uploadCommandBuffer = SDL_AcquireGPUCommandBuffer(_device);
+
+        if (uploadCommandBuffer == null)
+            throw new InvalidOperationException($"SDL_AcquireGPUCommandBuffer failed: {SDL_GetError()}");
+
         SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(uploadCommandBuffer);
         _vertexBuffer = CreateAndUploadVertexBuffer(_device, copyPass, quadVertices);
         SDL_EndGPUCopyPass(copyPass);

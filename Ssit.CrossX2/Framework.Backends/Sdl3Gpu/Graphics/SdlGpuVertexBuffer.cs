@@ -65,6 +65,14 @@ internal sealed unsafe class SdlGpuVertexBuffer : IVertexBuffer
         SDL_UnmapGPUTransferBuffer(_device, transferBuffer);
 
         SDL_GPUCommandBuffer* commandBuffer = SDL_AcquireGPUCommandBuffer(_device);
+
+        if (commandBuffer == null)
+        {
+            var error = SDL_GetError();
+            SDL_ReleaseGPUTransferBuffer(_device, transferBuffer);
+            throw new InvalidOperationException($"SDL_AcquireGPUCommandBuffer failed: {error}");
+        }
+
         SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(commandBuffer);
 
         var transferBufferLocation = new SDL_GPUTransferBufferLocation
