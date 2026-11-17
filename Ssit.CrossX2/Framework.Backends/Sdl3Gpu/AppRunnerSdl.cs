@@ -416,6 +416,7 @@ internal static class AppRunnerSdl
 
         WriteMemoryLeakReport();
 
+        sdlRenderer.ReleaseBackBuffer();
         SDL_ReleaseWindowFromGPUDevice(device, window);
         SDL_DestroyGPUDevice(device);
         SDL_DestroyWindow(window);
@@ -445,73 +446,70 @@ internal static class AppRunnerSdl
     {
         sdlGpuRenderer.SubmitCommandBuffer();
         sdlGpuRenderer.StateManager.Reset();
-        
+
         var window = sdlGpuRenderer.Window;
-        
-        SDL_GPUCommandBuffer* commandBuffer = sdlGpuRenderer.CommandBuffer;
-        
-        SDL_GPUTexture* swapchainTexture;
-        uint swapchainWidth, swapchainHeight;
-        
-        if (!SDL_WaitAndAcquireGPUSwapchainTexture(commandBuffer, window, &swapchainTexture, &swapchainWidth, &swapchainHeight))
+
+        // The frame is drawn into an offscreen back buffer and only copied to the swapchain in Present().
+        // The swapchain texture is presented when the command buffer that acquired it is submitted, and
+        // the frame submits mid-way (glow/CRT effects, render queue overflow, snapshots), so acquiring it
+        // up front would present early and keep drawing into a retired back buffer, which D3D12 rejects.
+        int windowWidth, windowHeight;
+        SDL_GetWindowSizeInPixels(window, &windowWidth, &windowHeight);
+
+        if (!sdlGpuRenderer.PrepareBackBuffer(new Size(windowWidth, windowHeight)))
         {
-            Console.Error.WriteLine($"SDL_WaitAndAcquireGPUSwapchainTexture failed: {SDL_GetError()}");
-            sdlGpuRenderer.SubmitCommandBuffer();
             return false;
         }
 
-        if (swapchainTexture != null)
+        try
         {
-            sdlGpuRenderer.DefaultOutputTarget = new SdlGpuRenderTargetStruct(swapchainTexture, new Size((int)swapchainWidth, (int)swapchainHeight));
+            sdlGpuRenderer.CurrentPass = RenderPass.Normal;
+            if (renderHost.Begin())
+            {
+                component.Resize();
+            }
+
+            if (skipDraw)
+            {
+                // Present a black frame; the scheduled Resize runs before the next one.
+                sdlGpuRenderer.SetRenderTarget(null);
+                sdlGpuRenderer.Clear(RgbaColor.Black);
+                return sdlGpuRenderer.Present();
+            }
+
+            component.Draw();
+
+            if (renderHost.BeginGlowPass())
+            {
+                sdlGpuRenderer.CurrentPass = RenderPass.Glow;
+                component.Draw();
+                sdlGpuRenderer.EndCurrentGpuRenderPass();
+
+                sdlGpuRenderer.CurrentPass = RenderPass.Normal;
+            }
+
+            renderHost.End();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("ERROR: " + ex.Message);
 
             try
             {
-                sdlGpuRenderer.CurrentPass = RenderPass.Normal;
-                if (renderHost.Begin())
-                {
-                    component.Resize();
-                }
-
-                if (skipDraw)
-                {
-                    // Present a black frame; the scheduled Resize runs before the next one.
-                    sdlGpuRenderer.SetRenderTarget(null);
-                    sdlGpuRenderer.Clear(RgbaColor.Black);
-                    sdlGpuRenderer.EndCurrentGpuRenderPass();
-                    sdlGpuRenderer.SubmitCommandBuffer();
-                    return true;
-                }
-
-                component.Draw();
-
-                if (renderHost.BeginGlowPass())
-                {
-                    sdlGpuRenderer.CurrentPass = RenderPass.Glow;
-                    component.Draw();
-                    sdlGpuRenderer.EndCurrentGpuRenderPass();
-                    sdlGpuRenderer.SubmitCommandBuffer();
-
-                    sdlGpuRenderer.CurrentPass = RenderPass.Normal;
-                }
-
-                renderHost.End();
-            }
-            catch (Exception ex)
-            {
+                sdlGpuRenderer.SetRenderTarget(null);
                 sdlGpuRenderer.Clear(RgbaColor.Black);
-                sdlGpuRenderer.EndCurrentGpuRenderPass();
-                sdlGpuRenderer.SubmitCommandBuffer();
-                
-                Console.WriteLine("ERROR: " + ex.Message);
-                throw;
+                sdlGpuRenderer.Present();
             }
+            catch (Exception presentEx)
+            {
+                Console.WriteLine("ERROR: " + presentEx.Message);
+            }
+
+            throw;
         }
 
-        sdlGpuRenderer.EndCurrentGpuRenderPass();
-        sdlGpuRenderer.SubmitCommandBuffer();
+        return sdlGpuRenderer.Present();
 
-        return swapchainTexture != null;
-        
         //DebugScreenshot.MaybeCapture(sdlGpuRenderer.Device, window, swapchainTexture, swapchainWidth, swapchainHeight);
     }
 

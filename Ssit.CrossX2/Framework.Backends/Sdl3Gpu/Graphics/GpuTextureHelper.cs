@@ -47,6 +47,15 @@ internal static unsafe class GpuTextureHelper
         SDL_UnmapGPUTransferBuffer(device, transferBuffer);
 
         SDL_GPUCommandBuffer* commandBuffer = SDL_AcquireGPUCommandBuffer(device);
+
+        if (commandBuffer == null)
+        {
+            var error = SDL_GetError();
+            SDL_ReleaseGPUTransferBuffer(device, transferBuffer);
+            SDL_ReleaseGPUTexture(device, texture);
+            throw new InvalidOperationException($"SDL_AcquireGPUCommandBuffer failed: {error}");
+        }
+
         SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(commandBuffer);
 
         var transferInfo = new SDL_GPUTextureTransferInfo

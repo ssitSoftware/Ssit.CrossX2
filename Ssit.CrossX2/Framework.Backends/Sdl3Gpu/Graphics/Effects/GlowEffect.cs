@@ -146,6 +146,10 @@ internal sealed unsafe class GlowEffect : IGlowEffect
         // texture bound by the time we're reconstructed mid-resize. Submitting it here would
         // present an empty frame and leave the renderer holding a retired swapchain texture.
         SDL_GPUCommandBuffer* uploadCommandBuffer = SDL_AcquireGPUCommandBuffer(_device);
+
+        if (uploadCommandBuffer == null)
+            throw new InvalidOperationException($"SDL_AcquireGPUCommandBuffer failed: {SDL_GetError()}");
+
         SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(uploadCommandBuffer);
 
         _fullscreenVertexBuffer = CreateAndUploadVertexBuffer(_device, copyPass, fullscreenVertices);
