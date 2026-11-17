@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Fonts>
+    <Font Name="PxPlus_HP_100LX_6x8" Family="PxPlus HP 100LX 6x8"
+          Sizes="8"
+          Antialiasing="false"
+          CharSets="Ascii, Dos, Polish, German, French, Spanish, Special"
+          Outline="2"
+          Spacing="2"
+          SheetWidthFactor="16.0"/>
+    
     <Font Name="PxPlus_IBM_EGA_8x8" Family="PxPlus IBM EGA 8x8"
           Sizes="8"
           Antialiasing="false"

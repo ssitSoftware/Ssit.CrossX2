@@ -10,7 +10,7 @@ public class GameDialogs : GameDialogsBase, IGameDialogsUi
 {
     private readonly IActionScheduler _actionScheduler;
     private readonly ITranslator _translator;
-    public event Action<int> FocusElement;    
+    public event Action<int> FocusElement;
     public SharedBool Visible => _visible;
     public SharedString CurrentText => _currentText;
     public IReadOnlyList<SharedBool> ReplyOptionVisible => _replyOptionVisible;

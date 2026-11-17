@@ -144,10 +144,23 @@ internal static class GlyphFontRenderer
                     idx = start;
                     context.Lines.Add(line);
                 }
+                else
+                {
+                    // Nowhere to break (one word wider than maxWidth) - keep it as an overflowing line rather than
+                    // dropping the text.
+                    var line = GetLine(text, start, idx - start, font, spacing);
+                    line.Spacing = newLineSpacing;
+                    line.EndOfParagraph = true;
+                    newLineSpacing = paragraphSpacing;
+                    start = idx + 1;
+                    lastSmaller = start;
+                    context.Lines.Add(line);
+                }
                 continue;
             }
 
-            if (font.GetGlyph(text[idx]) == null)
+            // A line can break at a space (fonts may have a glyph for it) or at any character without a glyph.
+            if (text[idx] == ' ' || font.GetGlyph(text[idx]) == null)
             {
                 var width = MeasureWidth(font, new TextSource(text, start, idx - start), spacing);
                 if (width < maxWidth)

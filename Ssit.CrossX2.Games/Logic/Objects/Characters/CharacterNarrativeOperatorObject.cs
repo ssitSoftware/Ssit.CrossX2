@@ -38,6 +38,7 @@ public abstract class CharacterNarrativeOperatorObject<TCharacter> : CharacterOb
         if (npc is null)
         {
             TalkToSelf(conversationId);
+            return true;
         }
         
         ExecuteStoryConversation(npc, conversationId);
@@ -86,8 +87,11 @@ public abstract class CharacterNarrativeOperatorObject<TCharacter> : CharacterOb
         
         if (conversationId is null)
         {
-            var shouldTalk = true;
+            var shouldWalk = true;
             var changedDir = false;
+
+            // Only what this body really collides with blocks the walk - not the NPC's own body, enemies or pickups.
+            var collidesWith = Body.Colliders[0].Material.CollidesWith;
 
             var dist = npc.TalkingDistance;
             float targetPosX;
@@ -100,11 +104,11 @@ public abstract class CharacterNarrativeOperatorObject<TCharacter> : CharacterOb
                     .Union(Body.Colliders[0].GetAabb(Body.Position with { X = targetPosX }));
                 aabb.Inflate(0.1f, -0.1f);
 
-                if (Services.Simulation.CheckCollision(aabb, Body))
+                if (Services.Simulation.CheckCollision(aabb, Body, collidesWith))
                 {
                     if (changedDir)
                     {
-                        shouldTalk = false;
+                        shouldWalk = false;
                         break;
                     }
 
@@ -116,13 +120,17 @@ public abstract class CharacterNarrativeOperatorObject<TCharacter> : CharacterOb
                 break;
             }
 
-            if (!shouldTalk)
+            if (shouldWalk)
             {
-                return;
+                SteeringStateMachine.SetSteeringState("WalkTo");
+                await WalkTo(targetPosX);
             }
-
-            SteeringStateMachine.SetSteeringState("WalkTo");
-            await WalkTo(targetPosX);
+            else
+            {
+                // No room to walk to the talking spot - talk from here, facing the NPC. Returning would leave the
+                // camera on the NPC (PrepareCameraForTalking) without any conversation.
+                faceLeft = Body.Position.X > npc.Body.Position.X;
+            }
         }
         
         _actionScheduler.Schedule(() =>

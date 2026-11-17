@@ -19,6 +19,7 @@ public static class RetroPixelFonts
     public const string PxPlus_ToshibaSat_9x16 = nameof(PxPlus_ToshibaSat_9x16);
     public const string PxPlus_HP_100LX_16x12 = nameof(PxPlus_HP_100LX_16x12);
     public const string PxPlus_AST_PremiumExec = nameof(PxPlus_AST_PremiumExec);
+    public const string PxPlus_HP_100LX_6x8 = nameof(PxPlus_HP_100LX_6x8);
 
     public static readonly IAssetsSource Source = new SourceClass();
 }

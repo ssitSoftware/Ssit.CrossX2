@@ -22,4 +22,5 @@ public static class SteeringControlNames
     
     // Hold to save a checkpoint (see CreateCheckpointBehavior)
     public const string Save = nameof(Save);
+    public const string Operate = nameof(Operate);
 }

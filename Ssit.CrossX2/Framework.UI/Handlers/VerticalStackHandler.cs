@@ -39,6 +39,7 @@ public class VerticalStackHandler<TVerticalStack>(ViewHandler.CreateHandlerParam
         {
             float h = 0;
             float maxW = 0;
+            var visibleCount = 0;
 
             foreach (var child in AttachedView.Children)
             {
@@ -47,11 +48,17 @@ public class VerticalStackHandler<TVerticalStack>(ViewHandler.CreateHandlerParam
 
                 h += h1.Calculate(CurrentScale, 0);
                 maxW = MathF.Max(maxW, w.Calculate(CurrentScale, 0));
+
+                if (child.Visible.Value)
+                {
+                    visibleCount++;
+                }
             }
 
             if (height.IsAuto)
             {
-                var spaces = AttachedView.Children.Count - 1;
+                // Spacing only between the visible children - hidden ones take no space.
+                var spaces = Math.Max(visibleCount - 1, 0);
                 h += AttachedView?.Spacing?.Calculate(CurrentScale, 0) * spaces ?? 0;
                 
                 height = new Length(pixels: h);
@@ -120,7 +127,12 @@ public class VerticalStackHandler<TVerticalStack>(ViewHandler.CreateHandlerParam
         
         handlerView.Handler.SetBounds(new RectangleF(xx, yy, ww, hh));
         offsetY += hh;
-        offsetY += AttachedView?.Spacing?.Calculate(CurrentScale, 0) ?? 0;
+
+        // A hidden child takes no space - no spacing after it either.
+        if (child.Visible.Value)
+        {
+            offsetY += AttachedView?.Spacing?.Calculate(CurrentScale, 0) ?? 0;
+        }
     }
     
     public override void RecalculateLayout(View view = null)

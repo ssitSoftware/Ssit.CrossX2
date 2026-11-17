@@ -34,7 +34,7 @@ namespace Ssit.CrossX2.Editor.ViewModels
         public MenuItemModel[] Menu { get; }
         public IEditorInstances Instances => _instances;
 
-        public bool IsModified => MapFile.IsModified;
+        public bool IsModified => MapFile?.IsModified ?? false;
 
         public ICommand NewCommand { get; }
         public ICommand OpenCommand { get; }

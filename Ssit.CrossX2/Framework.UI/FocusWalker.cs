@@ -21,9 +21,13 @@ internal class FocusWalker(IPage page)
 
     private Vector2 _focusCursorPosition = Vector2.Zero;
 
+    /// <summary>
+    /// Focuses the element, or clears the focus when <paramref name="focusable"/> is null.
+    /// Elements without a unique id can't be focused - the call is ignored.
+    /// </summary>
     public void SetFocus(IFocusable focusable)
     {
-        if (string.IsNullOrWhiteSpace(focusable.UniqueId))
+        if (focusable is not null && string.IsNullOrWhiteSpace(focusable.UniqueId))
             return;
         
         FocusedElement = focusable;
@@ -109,17 +113,26 @@ internal class FocusWalker(IPage page)
 
         IFocusable result = null;
         var minDistance = float.MaxValue;
+        var minCenterDistance = float.MaxValue;
 
         foreach (var focusable in _buffer)
         {
             if (!IsNavigable(focusable))
                 continue;
 
-            var dist = (focusable.ScreenBounds.Center - _focusCursorPosition).Length();
+            // Distance to the nearest point of the element, not to its center - otherwise a wide element right next
+            // to the cursor loses to a narrow one further away (its center is far to the side).
+            var elementBounds = focusable.ScreenBounds;
+            var nearest = Vector2.Clamp(_focusCursorPosition, elementBounds.TopLeft, elementBounds.BottomRight);
+            var dist = (nearest - _focusCursorPosition).Length();
 
-            if (dist < minDistance)
+            // Equally near (e.g. both overlap the cursor's column) - the closer center wins.
+            var centerDist = (elementBounds.Center - _focusCursorPosition).Length();
+
+            if (dist < minDistance || (dist == minDistance && centerDist < minCenterDistance))
             {
                 minDistance = dist;
+                minCenterDistance = centerDist;
                 result = focusable;
             }
         }
@@ -164,12 +177,21 @@ internal class FocusWalker(IPage page)
     private static bool IsNavigable(IFocusable focusable) =>
         focusable.Enabled && !focusable.SkipNavigation && !string.IsNullOrWhiteSpace(focusable.UniqueId);
 
+    /// <summary>
+    /// Whether <paramref name="rect"/> lies within <paramref name="bounds"/>, edges included.
+    /// RectangleF.Contains excludes the right and bottom edge, so an element touching the current one from above
+    /// (or from the left) - its bottom (right) equal to the search bounds' bottom (right) - would never be found.
+    /// </summary>
+    private static bool ContainsInclusive(RectangleF bounds, RectangleF rect) =>
+        rect.X >= bounds.X && rect.Right <= bounds.Right &&
+        rect.Y >= bounds.Y && rect.Bottom <= bounds.Bottom;
+
     private void FillWithFocusables(ViewHandler handler, List<IFocusable> buffer, RectangleF bounds)
     {
         if (!handler.View.Visible.Value)
             return;
 
-        if (handler is IFocusable focusable && bounds.Contains(focusable.ScreenBounds.TopLeft) && bounds.Contains(focusable.ScreenBounds.BottomRight))
+        if (handler is IFocusable focusable && ContainsInclusive(bounds, focusable.ScreenBounds))
         {
             buffer.Add(focusable);
         }
