@@ -23,6 +23,7 @@ internal class RenderHost : IRenderHost
     private float? _minAspect;
     private float? _maxAspect;
     private bool _pixelPerfect;
+    private bool _crtSimulation;
     private readonly IRenderHostParameters _parameters;
     private readonly IRenderer _renderer;
     private readonly IIoCContainer _container;
@@ -70,7 +71,8 @@ internal class RenderHost : IRenderHost
         return _targetSize != _renderer.TargetSize ||
                _minMaxScale.Width != _parameters.MinScale || _minMaxScale.Height != _parameters.MaxScale
                || _minAspect != _parameters.MinAspect || _maxAspect != _parameters.MaxAspect
-               || _pixelPerfect != ((_parameters.Flags & RenderHostFlags.PixelPerfect) != 0);
+               || _pixelPerfect != ((_parameters.Flags & RenderHostFlags.PixelPerfect) != 0)
+               || _crtSimulation != ((_parameters.Flags & RenderHostFlags.EnableCrtSimulation) != 0);
     }
 
     public void Resize(Size? targetSize = null)
@@ -80,7 +82,8 @@ internal class RenderHost : IRenderHost
         _minAspect = _parameters.MinAspect;
         _maxAspect = _parameters.MaxAspect;
         _pixelPerfect = (_parameters.Flags & RenderHostFlags.PixelPerfect) != 0;
-        
+        _crtSimulation = (_parameters.Flags & RenderHostFlags.EnableCrtSimulation) != 0;
+
         var aspect = _targetSize.Width / (float)_targetSize.Height;
         var fitSize = _targetSize.ToVector();
 
@@ -176,30 +179,25 @@ internal class RenderHost : IRenderHost
         
         var endRenderTargetScale = (int)MathF.Ceiling(MathF.Max(_targetSize.Width / (float)TargetSize.Width, _targetSize.Height / (float)TargetSize.Height));
         
+        var endRenderTargetSize = TargetSize * endRenderTargetScale;
+
         if ((_parameters.Flags & RenderHostFlags.EnableCrtSimulation) != 0)
         {
             useEndRenderTarget = true;
-            var scale = 2;
-
-            while (scale < endRenderTargetScale)
-            {
-                scale *= 2;
-            }
-            endRenderTargetScale = scale;
+            endRenderTargetSize = GetCrtTargetSize();
         }
-        
-        var endRenderTargetSize = TargetSize * endRenderTargetScale;
 
         if (endRenderTargetSize != _endRenderTarget?.Size || !useEndRenderTarget)
         {
             _endRenderTarget?.Dispose();
             _endRenderTarget = null;
-            
-            if (endRenderTargetScale > 1 && useEndRenderTarget)
+
+            // An end target of the scene's own size would be a plain copy, except for CRT, which needs its own output.
+            if (useEndRenderTarget && (endRenderTargetSize != TargetSize || (_parameters.Flags & RenderHostFlags.EnableCrtSimulation) != 0))
             {
                 _endRenderTarget = _container.IoCConstruct<IRenderTarget>(new CreateRenderTargetParameters
                 {
-                    Size = TargetSize * endRenderTargetScale
+                    Size = endRenderTargetSize
                 });
             }
         }
@@ -234,6 +232,29 @@ internal class RenderHost : IRenderHost
                 });
             }
         }
+    }
+
+    /// <summary>
+    /// Size of the CRT pass output. When the window is at least the scene size, this is exactly the area the
+    /// scene covers in the window, so End() copies it 1:1 and the CRT shader runs once per screen pixel
+    /// (scanline spacing in screen pixels is the same as with a supersampled target scaled down to the window).
+    /// When the window is smaller than the scene, the pass is supersampled at twice the scene size and scaled
+    /// down, so scanlines narrower than a screen pixel don't alias.
+    /// </summary>
+    private Size GetCrtTargetSize()
+    {
+        var fitX = _targetSize.Width / (float)TargetSize.Width;
+        var fitY = _targetSize.Height / (float)TargetSize.Height;
+
+        if (MathF.Min(fitX, fitY) < 1f)
+        {
+            return TargetSize * 2;
+        }
+
+        // The limiting side matches the window exactly, so End() draws the target at scale 1 (no resampling).
+        return fitX <= fitY
+            ? new Size(_targetSize.Width, Math.Min(_targetSize.Height, (int)MathF.Round(TargetSize.Height * fitX)))
+            : new Size(Math.Min(_targetSize.Width, (int)MathF.Round(TargetSize.Width * fitY)), _targetSize.Height);
     }
 
     public void End()

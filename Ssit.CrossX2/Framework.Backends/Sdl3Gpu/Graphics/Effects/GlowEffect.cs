@@ -18,7 +18,15 @@ internal sealed unsafe class GlowEffect : IGlowEffect
     private readonly IActionScheduler _scheduler;
     private const float BlurSpreadPixels = 1f;
     private const int BlurIterations = 2;
-    private const float BlurPadding = 240f;
+
+    // The glow is blurred at a fraction of the output resolution: it is soft anyway, and full-resolution
+    // blur passes are the most expensive part of the frame on integrated GPUs (fill rate / bandwidth bound).
+    private const int BlurDownscale = 2;
+
+    // Transparent border (in output pixels) around the glow image for the blur to spread into instead of
+    // smearing clamped edge pixels. One blur pass reaches 4 taps * spread * source scale, and there are
+    // BlurIterations passes per axis; 64 px covers source scales up to 8.
+    private const float BlurPadding = 64f;
 
     private readonly SDL_GPUDevice* _device;
 
@@ -66,16 +74,20 @@ internal sealed unsafe class GlowEffect : IGlowEffect
             throw new InvalidOperationException($"SDL_CreateGPUSampler failed: {SDL_GetError()}");
         }
 
+        // The blur canvas covers the glow image plus padding, in output pixels, but its textures are
+        // BlurDownscale times smaller. All UV math below is resolution independent.
         int canvasWidth = glowSize.Width + (int)(BlurPadding * 2);
         int canvasHeight = glowSize.Height + (int)(BlurPadding * 2);
+        int canvasTextureWidth = Math.Max(1, (canvasWidth + BlurDownscale - 1) / BlurDownscale);
+        int canvasTextureHeight = Math.Max(1, (canvasHeight + BlurDownscale - 1) / BlurDownscale);
 
         var blurTextureCreateInfo = new SDL_GPUTextureCreateInfo
         {
             type = SDL_GPUTextureType.SDL_GPU_TEXTURETYPE_2D,
             format = format,
             usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET,
-            width = (uint)canvasWidth,
-            height = (uint)canvasHeight,
+            width = (uint)canvasTextureWidth,
+            height = (uint)canvasTextureHeight,
             layer_count_or_depth = 1,
             num_levels = 1,
             sample_count = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1,

@@ -100,16 +100,21 @@ internal static class AppRunnerSdl
             return;
         }
         
-        var shaderFormats = GetSupportedShaderFormats();
-        SDL_GPUDevice* device = SDL_CreateGPUDevice(shaderFormats, true, (byte*)null);
+        // GPU debug mode (validation layers) costs a lot of frame time, so it is only used by Debug builds.
+#if DEBUG
+        const bool gpuDebugMode = true;
+#else
+        const bool gpuDebugMode = false;
+#endif
+        SDL_GPUDevice* device = CreateGpuDevice(gpuDebugMode);
 
-        if (device == null)
+        if (device == null && gpuDebugMode)
         {
             // Debug layers (e.g. the D3D12 debug layer from Windows "Graphics Tools") may be missing.
             Console.Error.WriteLine($"SDL_CreateGPUDevice with debug mode failed: {SDL_GetError()}. Retrying without debug mode.");
-            device = SDL_CreateGPUDevice(shaderFormats, false, (byte*)null);
+            device = CreateGpuDevice(false);
         }
-        
+
         if (device == null)
         {
             Console.Error.WriteLine($"SDL_CreateGPUDevice failed: {SDL_GetError()}");
@@ -120,6 +125,21 @@ internal static class AppRunnerSdl
         {
             Console.Error.WriteLine($"SDL_ClaimWindowForGPUDevice failed: {SDL_GetError()}");
             return;
+        }
+
+        var deviceProperties = SDL_GetGPUDeviceProperties(device);
+        Console.WriteLine($"[GPU] {SDL_GetGPUDeviceDriver(device)}: {SDL_GetStringProperty(deviceProperties, SDL_PROP_GPU_DEVICE_NAME_STRING, "unknown")} " +
+                          $"(driver {SDL_GetStringProperty(deviceProperties, SDL_PROP_GPU_DEVICE_DRIVER_VERSION_STRING, "?")}, debug mode {gpuDebugMode})");
+
+        var perfStats = FramePerfStats.CreateIfEnabled();
+
+        if (perfStats != null)
+        {
+            // Uncapped presentation so the frame time reflects the actual cost, not the display refresh rate.
+            var presentMode = SDL_WindowSupportsGPUPresentMode(device, window, SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE)
+                ? SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE
+                : SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX;
+            SDL_SetGPUSwapchainParameters(device, window, SDL_GPUSwapchainComposition.SDL_GPU_SWAPCHAINCOMPOSITION_SDR, presentMode);
         }
 
         var handles = new SdlHandles(window, device);
@@ -403,6 +423,7 @@ internal static class AppRunnerSdl
             }
 
             eventSource.OnRenderFinished();
+            perfStats?.OnFrame(renderHost);
         }
         
         component.Dispose();
@@ -514,16 +535,76 @@ internal static class AppRunnerSdl
     }
 
     /// <summary>
-    /// Shader formats this platform ships shaders for. SDL picks the GPU driver from these:
+    /// Creates the GPU device for the shader formats this platform ships shaders for. SDL picks the GPU driver from these:
     /// Metal (MSL) on Apple platforms, Direct3D 12 (DXBC compiled at runtime from HLSL) on Windows.
+    /// Set the environment variable CROSSX_GPU_PREFER_LOW_POWER=1 to pick the integrated GPU on dual-GPU machines.
     /// </summary>
-    private static SDL_GPUShaderFormat GetSupportedShaderFormats()
+    private static unsafe SDL_GPUDevice* CreateGpuDevice(bool debugMode)
     {
-        if (OperatingSystem.IsWindows())
-        {
-            return SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXBC;
-        }
+        var props = SDL_CreateProperties();
 
-        return SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_MSL;
+        try
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXBC_BOOLEAN, true);
+            }
+            else
+            {
+                SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_MSL_BOOLEAN, true);
+            }
+
+            SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN, debugMode);
+            SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_PREFERLOWPOWER_BOOLEAN,
+                Environment.GetEnvironmentVariable("CROSSX_GPU_PREFER_LOW_POWER") == "1");
+
+            return SDL_CreateGPUDeviceWithProperties(props);
+        }
+        finally
+        {
+            SDL_DestroyProperties(props);
+        }
+    }
+
+    /// <summary>
+    /// Frame time statistics, enabled with the environment variable CROSSX_PERF=1.
+    /// Also switches presentation to uncapped (no vsync) so frame times show the real cost.
+    /// </summary>
+    private sealed class FramePerfStats
+    {
+        private ulong _windowStartTicks;
+        private ulong _lastTicks;
+        private int _frames;
+        private double _worstMs;
+
+        public static FramePerfStats CreateIfEnabled() =>
+            Environment.GetEnvironmentVariable("CROSSX_PERF") == "1" ? new FramePerfStats() : null;
+
+        public void OnFrame(RenderHost renderHost)
+        {
+            var now = SDL_GetTicksNS();
+
+            if (_windowStartTicks == 0)
+            {
+                _windowStartTicks = now;
+                _lastTicks = now;
+                return;
+            }
+
+            _worstMs = Math.Max(_worstMs, (now - _lastTicks) / 1e6);
+            _lastTicks = now;
+            _frames++;
+
+            var elapsed = (now - _windowStartTicks) / 1e9;
+
+            if (elapsed < 2.0)
+                return;
+
+            Console.WriteLine($"[Perf] {_frames / elapsed:F1} fps, avg {elapsed * 1000 / _frames:F2} ms, worst {_worstMs:F2} ms, " +
+                              $"scene {renderHost.TargetSize.Width}x{renderHost.TargetSize.Height}");
+            _windowStartTicks = now;
+            _frames = 0;
+            _worstMs = 0;
+        }
     }
 }
