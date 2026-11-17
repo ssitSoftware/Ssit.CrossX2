@@ -1,0 +1,42 @@
+<Project>
+
+  <!--
+    Shared build settings for games built on CrossX2.
+
+    Import from the game's .csproj (path relative to that project):
+      <Import Project="..\..\..\..\Libs\CrossX2\CrossX2.props" />
+
+    Trimming (PublishTrimmed=true)
+    CrossX2 relies on reflection the trimmer cannot see: IoC constructor matching,
+    Assembly.GetTypes() navigation, style method discovery and Newtonsoft.Json
+    (sprites, fonts, maps, settings, checkpoints). Trimming those assemblies strips
+    constructors/properties and crashes at runtime (e.g. "Cannot match constructor
+    for ...SdlSoundManagerImpl"). So we keep the game, every Ssit.CrossX2* assembly
+    and Newtonsoft.Json* whole, and let the trimmer shrink only the .NET libraries.
+
+    Set CrossXRootAssembliesForTrimming=false to opt out, or add your own
+    <TrimmerRootAssembly Include="..." /> items for extra reflection-heavy libraries.
+  -->
+
+  <PropertyGroup>
+    <CrossXRootAssembliesForTrimming Condition="'$(CrossXRootAssembliesForTrimming)' == ''">true</CrossXRootAssembliesForTrimming>
+  </PropertyGroup>
+
+  <!-- Runs after the SDK has worked out which assemblies get linked, so only assemblies
+       that are actually published are rooted (rooting a missing one fails with IL1032). -->
+  <Target Name="CrossXRootAssembliesForTrimming"
+          BeforeTargets="PrepareForILLink"
+          DependsOnTargets="_ComputeManagedAssemblyToLink"
+          Condition="'$(PublishTrimmed)' == 'true' And '$(CrossXRootAssembliesForTrimming)' == 'true'">
+    <ItemGroup>
+      <_CrossXLinkedAssemblyName Include="@(ManagedAssemblyToLink->'%(Filename)')" />
+      <TrimmerRootAssembly Include="@(_CrossXLinkedAssemblyName)"
+                           Condition="'%(Identity)' == '$(AssemblyName)'
+                                      Or $([System.String]::Copy('%(Identity)').StartsWith('Ssit.CrossX2'))
+                                      Or $([System.String]::Copy('%(Identity)').StartsWith('Newtonsoft.Json'))" />
+      <_CrossXLinkedAssemblyName Remove="@(_CrossXLinkedAssemblyName)" />
+    </ItemGroup>
+    <Message Importance="normal" Text="CrossX2: trimmer roots: @(TrimmerRootAssembly)" />
+  </Target>
+
+</Project>
