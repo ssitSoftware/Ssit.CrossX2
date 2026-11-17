@@ -13,6 +13,7 @@ struct SharpScaleUniforms
 {
     float4 textureSize; // xy = source size in texels, zw = 1 / size
     float4 scale;       // xy = output pixels per source texel, zw unused
+    float4 grading;     // x = gamma, y = lightness multiplier, z = saturation (0..1), w = 1 to apply grading
 };
 
 Texture2D<float4> tex : register(t0, space2);
@@ -37,5 +38,15 @@ float4 fragmentMain(VertexOut input) : SV_Target0
     float2 uv = (floor(texel) + offset) * sharp.textureSize.zw;
 
     // SampleLevel: the snapped uv has discontinuous derivatives, and the source has a single mip level anyway.
-    return tex.SampleLevel(samp, uv, 0) * input.color;
+    float4 color = tex.SampleLevel(samp, uv, 0);
+
+    // Colour grading, same maths and order as Crt.frag (gamma, lightness, then saturation).
+    if (sharp.grading.w > 0.5)
+    {
+        float3 rgb = pow(max(color.rgb, 0.0), sharp.grading.x) * sharp.grading.y;
+        float luma = dot(rgb, float3(0.299, 0.587, 0.114));
+        color.rgb = lerp(luma.xxx, rgb, sharp.grading.z);
+    }
+
+    return color * input.color;
 }

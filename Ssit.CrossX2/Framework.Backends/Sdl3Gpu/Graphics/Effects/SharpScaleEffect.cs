@@ -16,6 +16,7 @@ namespace Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Graphics.Effects;
 internal sealed unsafe class SharpScaleEffect : ISharpScaleEffect
 {
     private readonly SdlGpuRenderer _renderer;
+    private readonly SharpScaleEffectParameters _parameters;
     private readonly SDL_GPUDevice* _device;
 
     private readonly SDL_GPUGraphicsPipeline* _pipeline;
@@ -23,9 +24,10 @@ internal sealed unsafe class SharpScaleEffect : ISharpScaleEffect
     private readonly SDL_GPUBuffer* _vertexBuffer;
     private bool _disposed;
 
-    public SharpScaleEffect(SdlGpuRenderer renderer)
+    public SharpScaleEffect(SdlGpuRenderer renderer, SharpScaleEffectParameters parameters = null)
     {
         _renderer = renderer;
+        _parameters = parameters ?? new SharpScaleEffectParameters();
         _device = renderer.Device;
 
         SDL_GPUTextureFormat targetFormat = SDL_GetGPUSwapchainTextureFormat(_device, renderer.Window);
@@ -125,6 +127,8 @@ internal sealed unsafe class SharpScaleEffect : ISharpScaleEffect
         {
             TextureSize = new Vector4(sourceSize.Width, sourceSize.Height, 1f / sourceSize.Width, 1f / sourceSize.Height),
             Scale = new Vector4(destination.Width / sourceSize.Width, destination.Height / sourceSize.Height, 0f, 0f),
+            ColorGrading = new Vector4(_parameters.Gamma, _parameters.LightnessMultiplier, _parameters.Saturation,
+                _parameters.IsIdentity ? 0f : 1f),
         };
         SDL_PushGPUFragmentUniformData(commandBuffer, 0, (IntPtr)(&uniforms), (uint)sizeof(SharpScaleUniforms));
 
@@ -265,5 +269,6 @@ internal sealed unsafe class SharpScaleEffect : ISharpScaleEffect
     {
         public Vector4 TextureSize;
         public Vector4 Scale;
+        public Vector4 ColorGrading;
     }
 }
