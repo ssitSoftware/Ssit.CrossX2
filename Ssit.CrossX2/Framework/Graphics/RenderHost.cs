@@ -18,6 +18,7 @@ internal class RenderHost : IRenderHost
     // Created lazily in End() the first time CRT simulation is enabled.
     private ICrtSimEffect _crtSimEffect;
     private IGlowEffect _glowEffect;
+    private ISharpScaleEffect _sharpScaleEffect;
     
     private Size _minMaxScale = Size.Zero;
     private float? _minAspect;
@@ -171,29 +172,17 @@ internal class RenderHost : IRenderHost
 
     private void PrepareRenderTargets()
     {
-        var useEndRenderTarget = _targetSize.Width > TargetSize.Width || _targetSize.Height > TargetSize.Height;
-        if ((_parameters.Flags & RenderHostFlags.PixelPerfect) != 0)
-        {
-            useEndRenderTarget = false;
-        }
-        
-        var endRenderTargetScale = (int)MathF.Ceiling(MathF.Max(_targetSize.Width / (float)TargetSize.Width, _targetSize.Height / (float)TargetSize.Height));
-        
-        var endRenderTargetSize = TargetSize * endRenderTargetScale;
-
-        if ((_parameters.Flags & RenderHostFlags.EnableCrtSimulation) != 0)
-        {
-            useEndRenderTarget = true;
-            endRenderTargetSize = GetCrtTargetSize();
-        }
+        // Only the CRT pass needs an intermediate output target. Without it, End() upscales the scene straight
+        // into the window with the sharp scale effect.
+        var useEndRenderTarget = (_parameters.Flags & RenderHostFlags.EnableCrtSimulation) != 0;
+        var endRenderTargetSize = useEndRenderTarget ? GetCrtTargetSize() : Size.Zero;
 
         if (endRenderTargetSize != _endRenderTarget?.Size || !useEndRenderTarget)
         {
             _endRenderTarget?.Dispose();
             _endRenderTarget = null;
 
-            // An end target of the scene's own size would be a plain copy, except for CRT, which needs its own output.
-            if (useEndRenderTarget && (endRenderTargetSize != TargetSize || (_parameters.Flags & RenderHostFlags.EnableCrtSimulation) != 0))
+            if (useEndRenderTarget)
             {
                 _endRenderTarget = _container.IoCConstruct<IRenderTarget>(new CreateRenderTargetParameters
                 {
@@ -276,18 +265,9 @@ internal class RenderHost : IRenderHost
         
         if (_endRenderTarget != null)
         {
-            if ((_parameters.Flags & RenderHostFlags.EnableCrtSimulation) != 0)
-            {
-                // Created on first use, so apps that never enable CRT simulation don't pay for its shaders and pipeline.
-                _crtSimEffect ??= _container.IoCConstruct<ICrtSimEffect>();
-                _crtSimEffect.Render(_endRenderTarget, sourceTexture, Scale);
-            }
-            else
-            {
-                _renderer.StateManager.SetTextureFilter(TextureFilter.Point);
-                _renderer.SetRenderTarget(_endRenderTarget);
-                _renderer.SpriteRenderer.Draw(sourceTexture, new RectangleF(0, 0, _endRenderTarget.Size.Width, _endRenderTarget.Size.Height), null, Vector2.Zero);
-            }
+            // Created on first use, so apps that never enable CRT simulation don't pay for its shaders and pipeline.
+            _crtSimEffect ??= _container.IoCConstruct<ICrtSimEffect>();
+            _crtSimEffect.Render(_endRenderTarget, sourceTexture, Scale);
             sourceTexture = _endRenderTarget;
         }
         
@@ -310,8 +290,17 @@ internal class RenderHost : IRenderHost
         var pos = _renderer.TargetSize.ToVector() / 2f - sourceTexture.Size.ToVector() * scale / 2f;
         var renderArea = new RectangleF(pos, sourceTexture.Size.ToVector() * scale);
         
-        _renderer.SpriteRenderer.Draw(sourceTexture, renderArea);
-        
+        if (scale > 1f && (_parameters.Flags & RenderHostFlags.PixelPerfect) == 0)
+        {
+            // Non-integer upscale of the pixel-art scene: keep pixels crisp without uneven widths.
+            _sharpScaleEffect ??= _container.IoCConstruct<ISharpScaleEffect>();
+            _sharpScaleEffect.Render(sourceTexture, renderArea);
+        }
+        else
+        {
+            _renderer.SpriteRenderer.Draw(sourceTexture, renderArea);
+        }
+
         scale *= sourceTexture.Size.Width / (float)_renderTarget.Size.Width;
         
         Transform = Matrix3x2.CreateScale(scale) * Matrix3x2.CreateTranslation(pos);
@@ -335,7 +324,10 @@ internal class RenderHost : IRenderHost
         
         _glowEffect?.Dispose();
         _glowEffect = null;
-        
+
+        _sharpScaleEffect?.Dispose();
+        _sharpScaleEffect = null;
+
         _renderTarget?.Dispose();
         _glowRenderIntermediateTarget?.Dispose();
         _glowRenderTarget?.Dispose();

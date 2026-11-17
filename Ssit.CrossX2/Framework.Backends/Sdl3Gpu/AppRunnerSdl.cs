@@ -59,6 +59,7 @@ internal static class AppRunnerSdl
             .WithImplementation<ITexture, SdlGpuTexture>()
             .WithImplementation<ICrtSimEffect, CrtSimEffect>()
             .WithImplementation<IGlowEffect, GlowEffect>()
+            .WithImplementation<ISharpScaleEffect, SharpScaleEffect>()
             .WithImplementation<IRenderTarget, SdlGpuRenderTarget>()
             .WithImplementation<IVertexBuffer, SdlGpuVertexBuffer>()
             .WithImplementation<ISoundEffect, SdlSoundEffectImpl>()

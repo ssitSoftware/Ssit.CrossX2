@@ -36,6 +36,7 @@
       <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Effects\Crt.vert.metal" />
       <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Effects\FullscreenQuad.vert.metal" />
       <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Effects\GlowComposite.frag.metal" />
+      <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Effects\SharpScale.frag.metal" />
       <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Pipelines\Color.frag.metal" />
       <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Pipelines\Color.vert.metal" />
       <EmbeddedResource Include="Framework.Backends\Sdl3Gpu\Assets\Shaders\Metal\Pipelines\ColorLight.frag.metal" />
