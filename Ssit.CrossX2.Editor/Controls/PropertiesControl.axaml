@@ -62,6 +62,23 @@
                               IsEnabled="{Binding Enabled}" />
                 </DataTemplate>
 
+                <DataTemplate x:DataType="parameters:ParameterEnumModel" x:Key="ParameterEnumModel">
+                    <StackPanel Margin="10,10,25,10">
+                        <Label Content="{Binding Name}" />
+                        <ComboBox
+                            HorizontalAlignment="Stretch"
+                            IsEnabled="{Binding Enabled}"
+                            ItemsSource="{Binding Items}"
+                            SelectedItem="{Binding SelectedItem}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="parameters:EnumValueItem">
+                                    <TextBlock Text="{Binding DisplayName}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                </DataTemplate>
+
                 <DataTemplate x:DataType="parameters:ParameterLayerSizeModel" x:Key="ParameterLayerSizeModel">
                     <StackPanel Margin="10,10,25,10">
                         <Label Content="{Binding Name}" />

@@ -2,8 +2,8 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
+using Ssit.CrossX2.Editor.Helpers;
 using Ssit.CrossX2.Editor.Models.Parameters;
 using Ssit.CrossX2.Editor.Service;
 using Ssit.CrossX2.Editor.Tools;
@@ -191,18 +191,7 @@ public class PropertiesViewModel: BindableModel
         var handler = handlerType == null ? null : Activator.CreateInstance(handlerType) as IPropertyHandler;
         handler = new InternalHandler(handler, _editor, _instances, _mapFile);
 
-        var name = new StringBuilder();
-        foreach (var ch in prop.Name)
-        {
-            if (name.Length > 0 && Char.IsAsciiLetterUpper(ch))
-            {
-                name.Append(' ');
-            }
-
-            name.Append(ch);
-        }
-
-        var propName = name.ToString();
+        var propName = prop.Name.ToDisplayName();
         
         if (prop.PropertyType == typeof(string))
         {
@@ -247,6 +236,12 @@ public class PropertiesViewModel: BindableModel
         if (prop.PropertyType == typeof(bool))
         {
             Parameters.Add(new ParameterBooleanModel(propName, source, prop, handler));
+            return;
+        }
+        
+        if (prop.PropertyType.IsEnum)
+        {
+            Parameters.Add(new ParameterEnumModel(propName, prop.PropertyType, source, prop, handler));
             return;
         }
         
