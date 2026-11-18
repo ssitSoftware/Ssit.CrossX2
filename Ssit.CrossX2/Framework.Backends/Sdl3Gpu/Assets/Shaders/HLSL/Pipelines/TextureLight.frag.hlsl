@@ -18,7 +18,7 @@ SamplerState lightSamp     : register(s1, space2);
 struct LightingUniforms
 {
     float4 ambient;                    // rgb ambient color, a unused
-    float4 lightPositionRadius[8];     // xyz = position, w = radius
+    float4 lightPositionRadius[8];     // xyz = position, w = 1 / radius
     float4 lightColorIntensity[8];     // rgb = color, a = intensity
     float4 spotPositionRadius[8];      // xyz = position, w = radius^2
     float4 spotDirectionAngle[8];      // xy = normalized 2D direction (screen plane), z = cos(outerAngle), w = 1 / (cos(innerAngle) - cos(outerAngle))
@@ -37,8 +37,8 @@ cbuffer LightingBuffer : register(b0, space3)
 
 float3 ComputeLighting(float3 originalPosition)
 {
-    // Every vertex is assumed to face the observer directly (left-hand rule, N = -Z).
-    const float3 N = float3(0.0, 0.0, -1.0);
+    // Every vertex is assumed to face the observer directly (left-hand rule, N = -Z);
+    // the diffuse terms below use that normal folded into their formulas.
 
     float3 lighting = lights.ambient.rgb;
     int count = (int)lights.lightCount.x;
@@ -57,23 +57,25 @@ float3 ComputeLighting(float3 originalPosition)
         }
 
         float3 lightPosition = lights.lightPositionRadius[i].xyz;
-        float radius = lights.lightPositionRadius[i].w;
-        float3 lightColor = lights.lightColorIntensity[i].rgb;
-        float intensity = lights.lightColorIntensity[i].a;
+        float invRadius = lights.lightPositionRadius[i].w;      // 1 / radius (precomputed on CPU)
 
         float3 toLight = lightPosition - fragPosition;
-        float dist2D = length(toLight.xy);
-        float dist3D = length(toLight);
-        float3 lightDir = dist3D > 0.0001 ? toLight / dist3D : N;
+        float dist2DSq = dot(toLight.xy, toLight.xy);
 
-        float diffuse = max(dot(N, lightDir), 0.0);
+        // Early out: outside the light range (dist2D / radius >= 1).
+        if (dist2DSq * invRadius * invRadius >= 1.0)
+        {
+            continue;
+        }
 
-        float attenuation = clamp(1.0 - dist2D / max(radius, 0.0001), 0.0, 1.0);
-        attenuation *= attenuation;
-        attenuation *= diffuse;
+        // dot(N, toLight / |toLight|) with N = (0, 0, -1) reduces to -toLight.z / |toLight|.
+        float diffuse = max(-toLight.z * rsqrt(max(dist2DSq + toLight.z * toLight.z, 1e-8)), 0.0);
 
-        intensity *= attenuation;
-        lighting += lightColor * intensity;
+        // 1 - dist2D / radius, with dist2D = dist2DSq * rsqrt(dist2DSq).
+        float attenuation = saturate(1.0 - dist2DSq * rsqrt(max(dist2DSq, 1e-8)) * invRadius);
+        attenuation *= attenuation * diffuse;
+
+        lighting += lights.lightColorIntensity[i].rgb * (lights.lightColorIntensity[i].a * attenuation);
     }
 
     int spotCount = (int)lights.lightCount.z;

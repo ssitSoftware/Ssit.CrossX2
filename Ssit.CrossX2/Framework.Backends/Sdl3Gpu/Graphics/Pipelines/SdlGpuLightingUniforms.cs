@@ -23,7 +23,8 @@ internal static unsafe class SdlGpuLightingUniforms
         for (int i = 0; i < pointCount; i++)
         {
             PointLight light = pointLights[i];
-            positionRadius[i] = new Vector4(light.Position.X, light.Position.Y, light.Position.Z, light.Radius);
+            // 1 / radius is precomputed here so the shader needs no division per fragment.
+            positionRadius[i] = new Vector4(light.Position.X, light.Position.Y, light.Position.Z, 1f / MathF.Max(light.Radius, 0.0001f));
             colorIntensity[i] = new Vector4(light.Color.Rf, light.Color.Gf, light.Color.Bf, light.Intensity);
         }
 
@@ -128,7 +129,7 @@ internal static unsafe class SdlGpuLightingUniforms
     private struct LightingUniforms
     {
         public Vector4 Ambient;
-        public Vector4 LightPositionRadius0; // xyz = position, w = radius
+        public Vector4 LightPositionRadius0; // xyz = position, w = 1 / radius
         public Vector4 LightPositionRadius1;
         public Vector4 LightPositionRadius2;
         public Vector4 LightPositionRadius3;
