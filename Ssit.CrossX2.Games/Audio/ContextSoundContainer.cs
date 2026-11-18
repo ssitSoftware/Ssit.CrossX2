@@ -16,6 +16,34 @@ public class ContextSoundContainer(IContentManager contentManager,  ContextSound
     private readonly List<ResourceHandle<ISoundEffect>> _sounds = new();
     private readonly HashSet<string> _activeLoops = new();
 
+    /// <summary>
+    /// When true, looped sounds don't play. Loops requested meanwhile are remembered and start when unmuted.
+    /// </summary>
+    public bool LoopsMuted
+    {
+        get;
+        set
+        {
+            if (field == value) return;
+            field = value;
+
+            if (value)
+            {
+                foreach (var name in _activeLoops)
+                {
+                    if (_instances.TryGetValue((name, -1), out var instance))
+                    {
+                        instance.Item1.Stop();
+                    }
+                }
+            }
+            else
+            {
+                ResumeLoops();
+            }
+        }
+    }
+
     public ContextSoundContainer RegisterSound(string name, string path, float volume = 1, float pitch = 1)
     {
         return RegisterSound(name, -1, path, volume, pitch);
@@ -47,6 +75,11 @@ public class ContextSoundContainer(IContentManager contentManager,  ContextSound
         }
 
         _activeLoops.Add(name);
+
+        if (LoopsMuted)
+        {
+            return;
+        }
 
         if (!instance.Item1.IsPlaying)
         {
@@ -135,6 +168,11 @@ public class ContextSoundContainer(IContentManager contentManager,  ContextSound
     /// </summary>
     public void ResumeLoops()
     {
+        if (LoopsMuted)
+        {
+            return;
+        }
+
         foreach (var name in _activeLoops)
         {
             if (_instances.TryGetValue((name, -1), out var instance) && !instance.Item1.IsPlaying)

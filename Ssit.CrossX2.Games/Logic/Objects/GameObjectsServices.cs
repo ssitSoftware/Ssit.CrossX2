@@ -2,6 +2,7 @@ using Ssit.CrossX2.Framework.Audio;
 using Ssit.CrossX2.Framework.Content;
 using Ssit.CrossX2.Framework.Core;
 using Ssit.CrossX2.Framework.Games.Physics;
+using Ssit.CrossX2.Framework.Games.Rendering;
 using Ssit.CrossX2.Framework.Games.Template;
 using Ssit.CrossX2.Framework.IoC;
 
@@ -15,7 +16,8 @@ public class GameObjectsServices(
     IContentCache contentCache,
     ICommonSoundContainer commonSoundContainer,
     IMessenger messenger,
-    ICamera camera)
+    ICamera camera,
+    IGameRendererFilter rendererFilter)
 {
     public ISimulation Simulation { get; } = simulation;
     public IContentManager ContentManager { get; } = contentManager;
@@ -25,4 +27,5 @@ public class GameObjectsServices(
     public ICommonSoundContainer CommonSoundContainer { get; } = commonSoundContainer;
     public IMessenger Messenger { get; } = messenger;
     public ICamera Camera { get; } = camera;
+    public IGameRendererFilter RendererFilter { get; } = rendererFilter;
 }

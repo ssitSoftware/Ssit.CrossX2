@@ -43,6 +43,11 @@ public abstract class SpriteGameObject : IGameObjectRenderer, IBodyOwner, ISound
     private readonly List<IUpdatable> _updatables = new();
     private readonly Dictionary<Type, object> _parameters = new();
     public RectangleF Bounds => BoundsRect.Offset(Body.Position);
+
+    /// <summary>
+    /// True when the renderer filter is on and this object is not part of it (the object is not rendered).
+    /// </summary>
+    public bool IsFilteredOut => Services.RendererFilter is { } filter && !filter.IsVisible(((IGameObjectRenderer)this).FilterMode);
     
     public virtual bool FaceLeft
     {

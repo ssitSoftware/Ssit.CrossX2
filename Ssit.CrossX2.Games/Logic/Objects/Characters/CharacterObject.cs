@@ -66,6 +66,17 @@ public abstract class CharacterObject<TCharacter> : SpriteGameObject, IBodyEvent
         ((CharacterObject<TCharacter>)sm.Object).DetectOnGround();
     }
 
+    protected override void OnUpdate(float dt)
+    {
+        base.OnUpdate(dt);
+
+        if (SoundContainer is not null)
+        {
+            // Not rendered (renderer filter on) => no looped sounds.
+            SoundContainer.LoopsMuted = IsFilteredOut;
+        }
+    }
+
     protected override void OnDispose(bool disposing)
     {
         base.OnDispose(disposing);

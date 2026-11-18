@@ -1,6 +1,7 @@
 using System.Numerics;
 using Ssit.CrossX2.Framework.Audio;
 using Ssit.CrossX2.Framework.Games.Logic;
+using Ssit.CrossX2.Framework.Games.Logic.Objects;
 
 namespace Ssit.CrossX2.Framework.Games.Audio;
 
@@ -58,5 +59,25 @@ public static class ViewLoopSoundExtensions
         }
 
         instance.ApplyDoppler(dt, speedOfSound);
+    }
+
+    /// <summary>
+    /// Same as <see cref="UpdateViewLoop(ISoundEffectInstance, ICamera, float, float, float, float)"/>, using the owner's camera,
+    /// but also stops the sound while the owner is filtered out by the renderer filter (not rendered).
+    /// The loop restarts automatically once the owner is rendered again.
+    /// </summary>
+    public static void UpdateViewLoop(this ISoundEffectInstance instance, SpriteGameObject owner, float dt,
+        float volume = 1, float pitch = 1, float speedOfSound = ISoundEffectInstance.DefaultSpeedOfSound)
+    {
+        if (owner.IsFilteredOut)
+        {
+            if (instance.IsPlaying)
+            {
+                instance.Stop();
+            }
+            return;
+        }
+
+        instance.UpdateViewLoop(owner.Services.Camera, dt, volume, pitch, speedOfSound);
     }
 }
