@@ -38,11 +38,17 @@ internal static unsafe class SdlGpuLightingUniforms
         for (int i = 0; i < spotCount; i++)
         {
             SpotLight spot = spotLights[i];
-            spotPositionRadius[i] = new Vector4(spot.Position.X, spot.Position.Y, spot.Position.Z, spot.Radius);
-            spotDirectionAngle[i] = new Vector4(spot.Direction.X, spot.Direction.Y,
-                MathF.Cos(spot.OuterAngle * MathF.PI / 180f), MathF.Cos(spot.InnerAngle * MathF.PI / 180f));
+
+            // Per-light constants are precomputed here once instead of per fragment in the shader.
+            var direction = spot.Direction.LengthSquared() > 1e-8f ? Vector2.Normalize(spot.Direction) : Vector2.UnitY;
+            var cosOuter = MathF.Cos(spot.OuterAngle * MathF.PI / 180f);
+            var cosInner = MathF.Cos(spot.InnerAngle * MathF.PI / 180f);
+            var radius = MathF.Max(spot.Radius, 0.0001f);
+
+            spotPositionRadius[i] = new Vector4(spot.Position.X, spot.Position.Y, spot.Position.Z, radius * radius);
+            spotDirectionAngle[i] = new Vector4(direction.X, direction.Y, cosOuter, 1f / MathF.Max(cosInner - cosOuter, 0.0001f));
             spotColorIntensity[i] = new Vector4(spot.Color.Rf, spot.Color.Gf, spot.Color.Bf, spot.Intensity);
-            spotBulbRadius[i] = new Vector4(spot.BulbRadius, 0f, 0f, 0f);
+            spotBulbRadius[i] = new Vector4(spot.BulbRadius * spot.BulbRadius, 1f / radius, 0f, 0f);
         }
 
         var globalLights = lightingManager.GlobalLights;
@@ -138,7 +144,7 @@ internal static unsafe class SdlGpuLightingUniforms
         public Vector4 LightColorIntensity5;
         public Vector4 LightColorIntensity6;
         public Vector4 LightColorIntensity7;
-        public Vector4 SpotPositionRadius0; // xyz = position, w = radius
+        public Vector4 SpotPositionRadius0; // xyz = position, w = radius^2
         public Vector4 SpotPositionRadius1;
         public Vector4 SpotPositionRadius2;
         public Vector4 SpotPositionRadius3;
@@ -146,7 +152,7 @@ internal static unsafe class SdlGpuLightingUniforms
         public Vector4 SpotPositionRadius5;
         public Vector4 SpotPositionRadius6;
         public Vector4 SpotPositionRadius7;
-        public Vector4 SpotDirectionAngle0; // xy = normalized 2D direction, z = cos(outerAngle), w = cos(innerAngle)
+        public Vector4 SpotDirectionAngle0; // xy = normalized 2D direction, z = cos(outerAngle), w = 1 / (cos(innerAngle) - cos(outerAngle))
         public Vector4 SpotDirectionAngle1;
         public Vector4 SpotDirectionAngle2;
         public Vector4 SpotDirectionAngle3;
@@ -162,7 +168,7 @@ internal static unsafe class SdlGpuLightingUniforms
         public Vector4 SpotColorIntensity5;
         public Vector4 SpotColorIntensity6;
         public Vector4 SpotColorIntensity7;
-        public Vector4 SpotBulbRadius0; // x = bulb radius (world units), yzw unused
+        public Vector4 SpotBulbRadius0; // x = bulb radius^2 (world units), y = 1 / radius, zw unused
         public Vector4 SpotBulbRadius1;
         public Vector4 SpotBulbRadius2;
         public Vector4 SpotBulbRadius3;

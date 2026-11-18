@@ -1,10 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <!-- Mobile targets need the Android/iOS workloads, so they are built by default only on macOS.
-             Elsewhere (e.g. Windows) pass -p:CrossXMobileTargets=true to include them. -->
+        <!-- Mobile targets need the Android/iOS workloads. Pass -p:CrossXMobileTargets=true to include them. -->
         <TargetFrameworks>net10.0</TargetFrameworks>
-        <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('OSX')) Or '$(CrossXMobileTargets)' == 'true'">net10.0;net10.0-android;net10.0-ios</TargetFrameworks>
+        <TargetFrameworks Condition="'$(CrossXMobileTargets)' == 'true'">net10.0;net10.0-android;net10.0-ios</TargetFrameworks>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>disable</Nullable>
     </PropertyGroup>

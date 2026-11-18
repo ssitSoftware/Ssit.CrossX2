@@ -43,9 +43,24 @@ public class MapLightsContainer : ILightsContainer, IComparer<PointLight>, IComp
         _globalLights.Clear();
     }
 
-    public void Apply(Vector2 lookAt)
+    /// <param name="visibleBounds">Visible area of the main layer in world pixels.</param>
+    public void Apply(RectangleF visibleBounds)
     {
-        _lookAt = lookAt;
+        _lookAt = visibleBounds.Center;
+
+        // Lights that cannot reach the visible area only cost shader time.
+        // (Plain loops instead of RemoveAll so culling allocates nothing per frame.)
+        for (var idx = _pointLights.Count - 1; idx >= 0; --idx)
+        {
+            if (!IsVisible(visibleBounds, _pointLights[idx].Position, _pointLights[idx].Radius))
+                _pointLights.RemoveAt(idx);
+        }
+
+        for (var idx = _spotLights.Count - 1; idx >= 0; --idx)
+        {
+            if (!IsVisible(visibleBounds, _spotLights[idx].Position, _spotLights[idx].Radius))
+                _spotLights.RemoveAt(idx);
+        }
 
         if (_pointLights.Count > ILightingManager.MaxPointLights)
         {
@@ -58,6 +73,14 @@ public class MapLightsContainer : ILightsContainer, IComparer<PointLight>, IComp
             _spotLights.Sort(this);
             _spotLights.RemoveRange(ILightingManager.MaxSpotLights, _spotLights.Count - ILightingManager.MaxSpotLights);
         }
+    }
+
+    /// <summary>Conservative test: the light circle (a spot cone always fits in it) touches the rectangle.</summary>
+    private static bool IsVisible(RectangleF bounds, Vector3 position, float radius)
+    {
+        var dx = MathF.Max(MathF.Max(bounds.X - position.X, position.X - bounds.Right), 0f);
+        var dy = MathF.Max(MathF.Max(bounds.Y - position.Y, position.Y - bounds.Bottom), 0f);
+        return dx * dx + dy * dy < radius * radius;
     }
 
     public void SetAmbientLight(RgbaColor globalAmbient, RgbaColor? alternativeAmbient)
@@ -84,10 +107,11 @@ public class MapLightsContainer : ILightsContainer, IComparer<PointLight>, IComp
         var p0 = new Vector2(x.Position.X, x.Position.Y);
         var p1 = new Vector2(y.Position.X, y.Position.Y);
         
-        var d0 = (_lookAt - p0).Length();
-        var d1 = (_lookAt - p1).Length();
+        var d0 = (_lookAt - p0).LengthSquared();
+        var d1 = (_lookAt - p1).LengthSquared();
 
-        return Math.Sign(d1 - d0);
+        // Nearest first, so RemoveRange drops the farthest lights.
+        return d0.CompareTo(d1);
     }
 
     public int Compare(SpotLight x, SpotLight y)
@@ -95,9 +119,10 @@ public class MapLightsContainer : ILightsContainer, IComparer<PointLight>, IComp
         var p0 = new Vector2(x.Position.X, x.Position.Y);
         var p1 = new Vector2(y.Position.X, y.Position.Y);
         
-        var d0 = (_lookAt - p0).Length();
-        var d1 = (_lookAt - p1).Length();
+        var d0 = (_lookAt - p0).LengthSquared();
+        var d1 = (_lookAt - p1).LengthSquared();
 
-        return Math.Sign(d1 - d0);
+        // Nearest first, so RemoveRange drops the farthest lights.
+        return d0.CompareTo(d1);
     }
 }

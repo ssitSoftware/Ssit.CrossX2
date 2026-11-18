@@ -13,10 +13,10 @@ struct LightingUniforms
     float4 ambient;                    // rgb ambient color, a unused
     float4 lightPositionRadius[8];     // xyz = position, w = radius
     float4 lightColorIntensity[8];     // rgb = color, a = intensity
-    float4 spotPositionRadius[8];      // xyz = position, w = radius
-    float4 spotDirectionAngle[8];      // xy = normalized 2D direction (screen plane), z = cos(outerAngle), w = cos(innerAngle)
+    float4 spotPositionRadius[8];      // xyz = position, w = radius^2
+    float4 spotDirectionAngle[8];      // xy = normalized 2D direction (screen plane), z = cos(outerAngle), w = 1 / (cos(innerAngle) - cos(outerAngle))
     float4 spotColorIntensity[8];      // rgb = color, a = intensity
-    float4 spotBulbRadius[8];          // x = bulb radius (world units), yzw unused
+    float4 spotBulbRadius[8];          // x = bulb radius^2 (world units), y = 1 / radius, zw unused
     float4 lightCount;                 // x = point light count, y = position quantization resolution in pixels, z = spot light count, w unused
     float4 globalColorIntensity[4];    // rgb = color, a = intensity
     float4 globalCount;                // x = global light count, yzw unused
@@ -73,36 +73,43 @@ fragment float4 fragmentMain(VertexOut in [[stage_in]],
         }
 
         float3 spotPosition = lights.spotPositionRadius[i].xyz;
-        float radius = lights.spotPositionRadius[i].w;
-        float2 spotDirection = normalize(lights.spotDirectionAngle[i].xy);
-        float cosOuter = lights.spotDirectionAngle[i].z;
-        float cosInner = lights.spotDirectionAngle[i].w;
-        float3 lightColor = lights.spotColorIntensity[i].rgb;
-        float intensity = lights.spotColorIntensity[i].a;
-        float bulbRadius = lights.spotBulbRadius[i].x;
+        float radiusSq = lights.spotPositionRadius[i].w;       // radius^2 (precomputed on CPU)
+        float bulbRadiusSq = lights.spotBulbRadius[i].x;       // bulbRadius^2 (precomputed on CPU)
 
-        // The 3D position/distance only feeds the diffuse and distance falloff below;
-        // the cone itself is a 2D test in the screen plane.
         float3 toFragment = fragPosition - spotPosition;
-        float dist2D = length(toFragment.xy);
-        float dist3D = length(toFragment);
+        float dist2DSq = dot(toFragment.xy, toFragment.xy);
 
-        float2 toFragmentDirection2D = dist2D > 0.0001 ? toFragment.xy / dist2D : spotDirection;
-        float cosAngle = dot(toFragmentDirection2D, spotDirection);
-        float spotFactor = smoothstep(cosOuter, cosInner, cosAngle);
+        // Early out: outside the light range, or inside the physical bulb
+        // (the fixture occludes its own light).
+        if (dist2DSq >= radiusSq || dist2DSq < bulbRadiusSq)
+        {
+            continue;
+        }
 
-        float3 lightDir = dist3D > 0.0001 ? -toFragment / dist3D : N;
-        float diffuse = max(dot(N, lightDir), 0.0);
+        // The cone itself is a 2D test in the screen plane; one rsqrt replaces normalize + divides.
+        float invDist2D = rsqrt(max(dist2DSq, 1e-8));
+        float2 spotDirection = lights.spotDirectionAngle[i].xy;  // pre-normalized on CPU
+        float cosOuter = lights.spotDirectionAngle[i].z;
+        float invConeRange = lights.spotDirectionAngle[i].w;     // 1 / (cosInner - cosOuter)
 
-        float attenuation = clamp(1.0 - dist2D / max(radius, 0.0001), 0.0, 1.0);
-        attenuation *= attenuation;
-        attenuation *= spotFactor;
-        attenuation *= diffuse;
-        // Inside the physical bulb the fixture occludes its own light.
-        attenuation *= step(bulbRadius, dist2D);
+        float spotFactor = saturate((dot(toFragment.xy, spotDirection) * invDist2D - cosOuter) * invConeRange);
 
-        intensity *= attenuation;
-		lighting += lightColor * intensity;
+        // Early out: outside the cone.
+        if (spotFactor <= 0.0)
+        {
+            continue;
+        }
+
+        spotFactor = spotFactor * spotFactor * (3.0 - 2.0 * spotFactor); // smoothstep(cosOuter, cosInner, cosAngle)
+
+        // dot(N, -toFragment / |toFragment|) with N = (0, 0, -1) reduces to toFragment.z / |toFragment|.
+        float diffuse = max(toFragment.z * rsqrt(max(dist2DSq + toFragment.z * toFragment.z, 1e-8)), 0.0);
+
+        // 1 - dist2D / radius, with dist2D = dist2DSq * invDist2D and spotBulbRadius.y = 1 / radius.
+        float attenuation = saturate(1.0 - dist2DSq * invDist2D * lights.spotBulbRadius[i].y);
+        attenuation *= attenuation * spotFactor * diffuse;
+
+        lighting += lights.spotColorIntensity[i].rgb * (lights.spotColorIntensity[i].a * attenuation);
     }
 
     int globalLightCount = int(lights.globalCount.x);

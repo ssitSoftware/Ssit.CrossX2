@@ -287,7 +287,13 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
                 }
             }
 
-            _lightsContainer.Apply(_camera.LookAt * _gameTemplate.TileSize);
+            var viewSize = target.Size.ToVector() / scale;
+            var visibleBounds = MapRenderer.GetVisibleBounds(_mapDisplayElement, _camera.LookAt,
+                new Size((int)MathF.Ceiling(viewSize.X), (int)MathF.Ceiling(viewSize.Y)), _gameTemplate.TileSize);
+
+            var tileSize = _gameTemplate.TileSize;
+            _lightsContainer.Apply(new RectangleF(visibleBounds.X * tileSize, visibleBounds.Y * tileSize,
+                visibleBounds.Width * tileSize, visibleBounds.Height * tileSize));
         }
 
         var bgColor = FilterMode == 0 ? GetBgColor() : RgbaColor.Transparent;
