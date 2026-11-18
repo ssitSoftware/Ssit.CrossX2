@@ -6,6 +6,7 @@ namespace Ssit.CrossX2.Framework.Games.Logic;
 public class GameState(IActionScheduler actionScheduler) : IGameState
 {
     public event Action StateUpdated;
+    public event Action<IReadOnlyList<string>> FlagsSet;
     
     private readonly ConcurrentDictionary<string, bool> _flags = new();
     
@@ -13,12 +14,22 @@ public class GameState(IActionScheduler actionScheduler) : IGameState
 
     public void SetFlags(string flags)
     {
+        var newFlags = new List<string>();
+
         foreach (var flag in flags.Split('|'))
         {
-            _flags.TryAdd(flag, true);
+            if (_flags.TryAdd(flag, true))
+            {
+                newFlags.Add(flag);
+            }
         }
 
         actionScheduler.Schedule(() => StateUpdated?.Invoke());
+
+        if (newFlags.Count > 0)
+        {
+            actionScheduler.Schedule(() => FlagsSet?.Invoke(newFlags));
+        }
     }
 
     public IReadOnlyCollection<string> Flags => _flags.Keys.ToArray();

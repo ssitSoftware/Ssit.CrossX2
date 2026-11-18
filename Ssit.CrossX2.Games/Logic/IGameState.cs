@@ -3,6 +3,12 @@ namespace Ssit.CrossX2.Framework.Games.Logic;
 public interface IGameState
 {
     event Action StateUpdated;
+
+    /// <summary>
+    /// Raised (scheduled, like <see cref="StateUpdated"/>) when <see cref="SetFlags"/> sets flags that weren't set yet,
+    /// with those flags. Not raised by <see cref="RestoreFlags"/>.
+    /// </summary>
+    event Action<IReadOnlyList<string>> FlagsSet;
     bool HasFlag(string flag);
     void SetFlags(string flag);
     

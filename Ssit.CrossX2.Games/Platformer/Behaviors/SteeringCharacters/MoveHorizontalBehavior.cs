@@ -21,7 +21,7 @@ public class MoveHorizontalBehavior : SingleSteeringBehavior<ISteeringCharacter,
         var move = obj.SteeringInput.Value(SteeringControlNames.HorizontalMove);
         var walk = obj.SteeringInput.Button(SteeringControlNames.Walk).IsDown;
 
-        if (MathF.Abs(move) > 0.1f)
+        if (MathF.Abs(move) > 0.5f)
         {
             var physicsValues = obj.PhysicsValues;
             var velocity = obj.Body.Velocity;

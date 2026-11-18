@@ -63,7 +63,7 @@ internal unsafe class SdlGameController: IDisposable
             return SDL_GetGamepadButton(gamepad, (SDL_GamepadButton)button) == true;
         }
         
-        const float minAxisValueForButton = 0.85f;
+        const float minAxisValueForButton = 0.9f;
 
         switch (button)
         {
