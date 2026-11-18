@@ -11,8 +11,8 @@ namespace Ssit.CrossX2.Framework.Games.UI;
 /// </summary>
 public class CoinMeterView: Background
 {
-    /// <summary>Path to the coin icon texture. Required.</summary>
-    public string IconTexturePath { get; set; }
+    /// <summary>Path to the coin icon texture. Required. The texture is reloaded when the text changes.</summary>
+    public SharedString IconTexturePath { get; set; }
 
     /// <summary>Amount of coins to display.</summary>
     public SharedValue<int> Value { get; set; }
@@ -21,13 +21,13 @@ public class CoinMeterView: Background
     public bool TextOnRight { get; set; } = true;
 
     /// <summary>Space between the icon and the text.</summary>
-    public Length Spacing { get; set; } = 2;
+    public Length Spacing { get; set; }
 
     /// <summary>Font used for the amount. Required. FontSize 0 picks the font's native size.</summary>
     public FontDesc? Font { get; set; }
 
     /// <summary>Opacity of the whole view (icon and text), 0..1.</summary>
-    public SharedValue<float> Opacity { get; set; } = new(1);
+    public SharedValue<float> Opacity { get; set; }
 
     /// <summary>Color of the amount text.</summary>
     public ColorWrapper? TextColor { get; set; } = RgbaColor.White;

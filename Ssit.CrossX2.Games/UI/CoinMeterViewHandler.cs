@@ -12,7 +12,9 @@ namespace Ssit.CrossX2.Framework.Games.UI;
 
 internal class CoinMeterViewHandler: BackgroundHandler<CoinMeterView>
 {
-    private readonly ResourceHandle<ITexture> _texture;
+    private readonly IContentManager _contentManager;
+    private ResourceHandle<ITexture> _texture;
+    private string _texturePath;
     private readonly IFontsManager _fontsManager;
     private readonly IColorSource _colorSource;
 
@@ -20,7 +22,7 @@ internal class CoinMeterViewHandler: BackgroundHandler<CoinMeterView>
 
     public CoinMeterViewHandler(CreateHandlerParameters parameters, IContentManager contentManager, IFontsManager fontsManager) : base(parameters)
     {
-        if (string.IsNullOrEmpty(AttachedView.IconTexturePath))
+        if (string.IsNullOrEmpty(AttachedView.IconTexturePath?.ToString()))
         {
             throw new InvalidOperationException("CoinMeterView is missing IconTexturePath.");
         }
@@ -30,15 +32,43 @@ internal class CoinMeterViewHandler: BackgroundHandler<CoinMeterView>
             throw new InvalidOperationException("CoinMeterView is missing Font.");
         }
 
+        _contentManager = contentManager;
         _fontsManager = fontsManager;
         _colorSource = parameters.Parent?.GetParent<IColorSource>(true);
-        _texture = contentManager.Get<ITexture>(AttachedView.IconTexturePath);
+
+        LoadTexture();
+        AttachedView.IconTexturePath.TextChanged += OnIconTexturePathChanged;
 
         UpdateText(AttachedView.Value?.Value ?? 0);
 
         if (AttachedView.Value != null)
         {
             AttachedView.Value.ValueChanged += OnValueChanged;
+        }
+    }
+
+    private void LoadTexture()
+    {
+        var path = AttachedView.IconTexturePath?.ToString();
+
+        // Keep the current icon when the path is cleared or did not actually change.
+        if (string.IsNullOrEmpty(path) || path == _texturePath) return;
+
+        var oldTexture = _texture;
+        _texture = _contentManager.Get<ITexture>(path);
+        _texturePath = path;
+        oldTexture?.Dispose();
+    }
+
+    private void OnIconTexturePathChanged()
+    {
+        var oldSize = _texture?.Resource.Size;
+        LoadTexture();
+
+        // Different icon size changes the layout of the view.
+        if (oldSize != IconSize)
+        {
+            Parent?.RecalculateLayout(AttachedView);
         }
     }
 
@@ -172,6 +202,12 @@ internal class CoinMeterViewHandler: BackgroundHandler<CoinMeterView>
             AttachedView.Value.ValueChanged -= OnValueChanged;
         }
 
+        if (AttachedView.IconTexturePath != null)
+        {
+            AttachedView.IconTexturePath.TextChanged -= OnIconTexturePathChanged;
+        }
+
         _texture?.Dispose();
+        _texture = null;
     }
 }
