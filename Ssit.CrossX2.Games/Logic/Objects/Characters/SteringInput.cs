@@ -99,6 +99,30 @@ public class SteeringInput : ISteeringInputController, ISteeringInput, IUpdatabl
         }
     }
 
+    /// <summary>
+    /// Ids of the buttons that are down at the moment (in the last update).
+    /// </summary>
+    public List<string> GetPressedButtons() =>
+        _buttonStates.Where(pair => pair.Value.IsDown).Select(pair => pair.Key).ToList();
+
+    /// <summary>
+    /// Marks the buttons as already held (<see cref="ButtonState.Down"/>), e.g. when the character is moved to a new
+    /// game with the buttons still held - in the next update they stay down without being reported as just pressed
+    /// (or are reported as just released). With auto mapping the buttons are mapped first.
+    /// </summary>
+    public void RestorePressedButtons(IEnumerable<string> ids)
+    {
+        foreach (var id in ids)
+        {
+            if (_autoMapping && !_mappings.ContainsKey(id))
+            {
+                MapButton(id, id);
+            }
+
+            _buttonStates[id] = ButtonState.Down;
+        }
+    }
+
     public void SetValue(string id, float value) => _values[id] = value;
     public void SetButtonState(string id, ButtonState buttonState) => _buttonStates[id] = buttonState;
     
