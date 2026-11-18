@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
+using System.Linq;
 using System.Numerics;
+using System.Reflection;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using SkiaSharp;
@@ -11,6 +14,7 @@ using Ssit.CrossX2.Editor.Models;
 using Ssit.CrossX2.Editor.Service;
 using Ssit.CrossX2.Editor.Tools;
 using Ssit.CrossX2.Framework;
+using Ssit.CrossX2.Framework.Games.Editor;
 using Ssit.CrossX2.Framework.Games.Map;
 using Ssit.CrossX2.Framework.Games.Utils;
 
@@ -87,12 +91,31 @@ namespace Ssit.CrossX2.Editor.ViewModels
                         _editorData.RequestSave();
                     }
 
+                    UpdateMousePosition(_mouseScreenPosition);
                     Redraw();
                 }
             }
         }
 
         public PropertiesViewModel PropertiesView { get; }
+
+        private const string NoMousePositionInfo = "-";
+
+        private Vector2? _mouseScreenPosition;
+
+        /// <summary>Tile under the mouse cursor in the selected layer (status bar).</summary>
+        public string MouseTileInfo
+        {
+            get;
+            private set => SetField(ref field, value);
+        } = NoMousePositionInfo;
+
+        /// <summary>Exact position of the mouse cursor in the selected layer, in tiles (status bar).</summary>
+        public string MousePositionInfo
+        {
+            get;
+            private set => SetField(ref field, value);
+        } = NoMousePositionInfo;
 
         public IEditorTools Tools { get; }
 
@@ -649,12 +672,29 @@ namespace Ssit.CrossX2.Editor.ViewModels
 
                             _skPaint.Color = LinkColors[(li+obj.Id) % LinkColors.Length];
 
-                            if (obj.LinksShowCircularConnection != null && obj.LinksShowCircularConnection[li])
+                            var linkType = GetLinkType(obj.ParametersObject?.GetType(), li);
+
+                            if (linkType == EditorLinkType.Circular)
                             {
                                 _skPaint.IsStroke = true;
                                 _skPaint.StrokeWidth = 1;
 
                                 skCanvas.DrawCircle(p1.ToSkia(), (p2 - p1).Length(), _skPaint);
+                                continue;
+                            }
+
+                            if (linkType == EditorLinkType.Area)
+                            {
+                                _skPaint.IsStroke = true;
+                                _skPaint.StrokeWidth = 1;
+
+                                // Top left corner at the object, bottom right at the linked object (normalized,
+                                // so the area is drawn even if the linked object is placed above or left of it).
+                                var topLeft = Vector2.Min(p1, p2);
+                                var bottomRight = Vector2.Max(p1, p2);
+
+                                skCanvas.DrawRect(SKRect.Create(topLeft.X, topLeft.Y,
+                                    bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y), _skPaint);
                                 continue;
                             }
 
@@ -678,6 +718,34 @@ namespace Ssit.CrossX2.Editor.ViewModels
                 
                 _skPaint.StrokeWidth = 1;
             }
+        }
+
+        private static readonly Dictionary<Type, EditorLinkType[]> LinkTypesCache = new();
+
+        /// <summary>
+        /// How the link with the <paramref name="index"/> of <see cref="MapObject.Links"/> is displayed: taken from
+        /// the <see cref="EditorLinkAttribute"/> of the matching property of the parameters type. The links are
+        /// the int properties with the attribute, in the same order as <see cref="MapObject.UpdateLinks"/> collects them.
+        /// </summary>
+        private static EditorLinkType GetLinkType(Type parametersType, int index)
+        {
+            if (parametersType is null)
+                return EditorLinkType.Point;
+
+            if (!LinkTypesCache.TryGetValue(parametersType, out var linkTypes))
+            {
+                linkTypes = parametersType
+                    .GetProperties(BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.Public)
+                    .Where(p => p.PropertyType == typeof(int))
+                    .Select(p => p.GetCustomAttribute<EditorLinkAttribute>())
+                    .Where(a => a is not null)
+                    .Select(a => a.LinkType)
+                    .ToArray();
+
+                LinkTypesCache[parametersType] = linkTypes;
+            }
+
+            return index < linkTypes.Length ? linkTypes[index] : EditorLinkType.Point;
         }
 
         private void RenderObjects(MapLayer layer, SKCanvas skCanvas, GRContext grContext, bool showObjects, Vector2 start, bool behind)
@@ -826,6 +894,31 @@ namespace Ssit.CrossX2.Editor.ViewModels
             var template = _instances.Template;
             var ts = template.TileSize * Zoom.Value;
             return (position - offset) * ts + _currentSize / 2 + new Vector2(-template.TargetSize.Width / 2f, template.TargetSize.Height / 2f) * Zoom.Value;
+        }
+
+        public void UpdateMousePosition(Vector2? screenPosition)
+        {
+            _mouseScreenPosition = screenPosition;
+
+            if (screenPosition is null || SelectedLayer is null || _currentSize == Vector2.Zero)
+            {
+                MouseTileInfo = NoMousePositionInfo;
+                MousePositionInfo = NoMousePositionInfo;
+                return;
+            }
+
+            var mapPosition = ScreenToMap(screenPosition.Value);
+
+            var tileX = (int)MathF.Floor(mapPosition.X);
+            var tileY = (int)MathF.Floor(mapPosition.Y);
+
+            var insideLayer = tileX >= 0 && tileY >= 0 && tileX < SelectedLayer.Width && tileY < SelectedLayer.Height;
+
+            MouseTileInfo = insideLayer
+                ? string.Create(CultureInfo.InvariantCulture, $"{tileX}, {tileY}")
+                : NoMousePositionInfo;
+
+            MousePositionInfo = string.Create(CultureInfo.InvariantCulture, $"{mapPosition.X:0.00}, {mapPosition.Y:0.00}");
         }
 
         public void EnsurePanInBounds()

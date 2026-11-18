@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Ssit.CrossX2.Framework.Core;
+using Ssit.CrossX2.Framework.Games.Map;
 using Ssit.CrossX2.Framework.Games.Physics;
 using Ssit.CrossX2.Framework.Games.Platformer.Builders;
 using Ssit.CrossX2.Framework.Graphics;
@@ -18,6 +19,12 @@ public class CheckpointService : ICheckpointService
         /// Id of the map naming its state file in the slot directory (<see cref="Map.MapPathHelper.MapId"/>).
         /// </summary>
         public string MapId { get; init; }
+
+        /// <summary>
+        /// Common prefix of the map paths, cut off to get the map ids (<see cref="Map.MapPathHelper.MapId"/>).
+        /// Used to get the id of the map the game continues on when saving with a target map.
+        /// </summary>
+        public string MapPathPrefix { get; init; }
 
         /// <summary>
         /// Store a JPEG preview of the last rendered frame in each checkpoint (<see cref="CheckpointData.Preview"/>).
@@ -43,6 +50,7 @@ public class CheckpointService : ICheckpointService
     private readonly ISnapshotService _snapshotService;
     private readonly bool _storePreview;
     private readonly float _previewDownSize;
+    private readonly string _mapPathPrefix;
 
     public string MapPath { get; }
     
@@ -69,15 +77,23 @@ public class CheckpointService : ICheckpointService
         
         MapPath = parameters.MapPath;
         MapId = parameters.MapId;
+        _mapPathPrefix = parameters.MapPathPrefix;
     }
 
-    public CheckpointData Capture(object playerState)
+    public CheckpointData Capture(object playerState, string targetMapPath = null)
     {
         var savedAtUtc = DateTime.UtcNow;
+        
+        // The game continues on the target map (if any) - the map state still belongs to this map.
+        var gameMapPath = string.IsNullOrEmpty(targetMapPath) ? MapPath : targetMapPath;
+        var gameMapId = string.Equals(gameMapPath, MapPath, StringComparison.Ordinal)
+            ? MapId
+            : MapPathHelper.MapId(gameMapPath, _mapPathPrefix);
         
         var mapState = new MapStateData
         {
             MapPath = MapPath,
+            MapId = MapId,
             SavedAtUtc = savedAtUtc
         };
 
@@ -109,8 +125,8 @@ public class CheckpointService : ICheckpointService
 
         var gameState = new GameStateData
         {
-            MapPath = MapPath,
-            MapId = MapId,
+            MapPath = gameMapPath,
+            MapId = gameMapId,
             SavedAtUtc = savedAtUtc,
             Time = _clock?.Time ?? 0,
             Flags = _gameState?.Flags.ToList() ?? new List<string>(),
@@ -170,9 +186,9 @@ public class CheckpointService : ICheckpointService
         }
     }
 
-    public CheckpointData Save(int slot, object playerState)
+    public CheckpointData Save(int slot, object playerState, string targetMapPath = null)
     {
-        var data = Capture(playerState);
+        var data = Capture(playerState, targetMapPath);
 
         Task.Run(() =>
         {

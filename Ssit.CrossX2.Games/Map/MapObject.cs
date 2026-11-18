@@ -26,7 +26,6 @@ public class MapObject
     public object ParametersObject { get; set; }
 
     public List<int> Links { get; private set; }
-    public List<bool> LinksShowCircularConnection { get; private set; }
 
     internal static MapObject Load(BinaryReader reader, IGameTemplate gameTemplate)
     {
@@ -109,22 +108,16 @@ public class MapObject
         var properties = ParametersObject.GetType().GetProperties(BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.Public);
         
         Links?.Clear();
-        LinksShowCircularConnection?.Clear();
         foreach (var property in properties)
         {
-            if (property.GetCustomAttribute<EditorLinkAttribute>() is { } attribute)
+            if (property.GetCustomAttribute<EditorLinkAttribute>() is not null)
             {
                 var val = property.GetValue(ParametersObject);
 
                 if (val is int i)
                 {
-                    if (Links is null)
-                    {
-                        Links = new();
-                        LinksShowCircularConnection = new();
-                    }
+                    Links ??= new();
                     Links.Add(i);
-                    LinksShowCircularConnection.Add(attribute.ShowCircularConnection);
                 }
             }
         }

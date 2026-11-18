@@ -111,11 +111,15 @@ public class CheckpointStorage
     /// <summary>
     /// Writes the checkpoint into the slot directory: the map state into the file of its map (if the checkpoint has one),
     /// then the game state and the preview. States of other maps stored in the slot are kept.
+    /// The map state goes into the file of <see cref="MapStateData.MapId"/> - when the game continues on another map
+    /// (the checkpoint was saved when leaving the map), it is not the map of the game state.
     /// A checkpoint without a preview removes the previous one, so it never shows an older save.
     /// </summary>
     public void Write(int slot, CheckpointData data)
     {
-        if (data.MapState is not null && string.IsNullOrEmpty(data.MapId))
+        var mapStateId = data.MapState?.MapId ?? data.MapId;
+        
+        if (data.MapState is not null && string.IsNullOrEmpty(mapStateId))
             throw new ArgumentException("Checkpoint with a map state needs the map id.", nameof(data));
         
         var mapStateBytes = data.MapState is null ? null : Serialize(data.MapState);
@@ -125,7 +129,7 @@ public class CheckpointStorage
         {
             if (mapStateBytes is not null)
             {
-                _storage.WriteData(FilePath(slot, MapStateFileName(data.MapId)), mapStateBytes);
+                _storage.WriteData(FilePath(slot, MapStateFileName(mapStateId)), mapStateBytes);
             }
             
             _storage.WriteData(FilePath(slot, GameStateFileName), gameStateBytes);

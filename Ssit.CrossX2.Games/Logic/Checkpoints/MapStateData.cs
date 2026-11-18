@@ -16,6 +16,14 @@ public class MapStateData : ICheckpointFile
     /// Path of the map the state belongs to.
     /// </summary>
     public string MapPath { get; set; }
+
+    /// <summary>
+    /// Id of the map the state belongs to (<see cref="Map.MapPathHelper.MapId"/>) - names the state file in the slot
+    /// directory. Can differ from <see cref="GameStateData.MapId"/> when the game continues on another map
+    /// (the checkpoint was saved when leaving the map, see <see cref="ICheckpointService.Save"/>).
+    /// Null in states saved before it was added - <see cref="CheckpointData.MapId"/> is used then.
+    /// </summary>
+    public string MapId { get; set; }
     
     public DateTime SavedAtUtc { get; set; }
     

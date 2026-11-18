@@ -3,15 +3,19 @@ namespace Ssit.CrossX2.Framework.Games.Editor;
 public class EditorLinkAttribute : EditorAttribute
 {
     public Type Type { get; }
-    public bool ShowCircularConnection { get; }
     
-    public EditorLinkAttribute(Type type, Type validatorType = null, bool showCircularConnection =  false): base(validatorType)
+    /// <summary>
+    /// How the link is displayed in the editor.
+    /// </summary>
+    public EditorLinkType LinkType { get; }
+    
+    public EditorLinkAttribute(Type type, Type validatorType = null, EditorLinkType linkType = EditorLinkType.Point): base(validatorType)
     {
         Type = type;
-        ShowCircularConnection = showCircularConnection;
+        LinkType = linkType;
     }
     
-    public EditorLinkAttribute(Type type, bool showCircularConnection): this(type, null, showCircularConnection)
+    public EditorLinkAttribute(Type type, EditorLinkType linkType): this(type, null, linkType)
     {
     }
 }

@@ -15,7 +15,13 @@ public interface ISoundEffect: IDisposable
     ISoundEffectInstance CreateInstance();
 
     /// <summary>
-    /// Plays the sound effect once with the specified volume, pitch, and optional spatial emitter.
+    /// Plays the sound effect once with default parameters.
     /// </summary>
-    void PlayOnce();
+    void PlayOnce() => PlayOnce(new SoundParameters());
+
+    /// <summary>
+    /// Plays the sound effect once with the specified parameters (volume, pitch, pan).
+    /// </summary>
+    /// <param name="parameters">Playback parameters.</param>
+    void PlayOnce(SoundParameters parameters);
 }

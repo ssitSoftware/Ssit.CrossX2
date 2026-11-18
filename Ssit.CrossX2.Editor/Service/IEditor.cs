@@ -23,4 +23,5 @@ public interface IEditor
     int SelectedObject { get; set; }
     bool ShowMaterials { set; }
     bool ShowCollisions { get; }
+    void UpdateMousePosition(Vector2? screenPosition);
 }

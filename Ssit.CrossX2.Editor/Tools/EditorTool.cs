@@ -48,6 +48,8 @@ namespace Ssit.CrossX2.Editor.Tools
 
                 Editor.Offset -= offset;
             }
+
+            Editor.UpdateMousePosition(input.Position);
         }
 
         public virtual void OnButtonDown(MouseInputInfo input)
@@ -69,6 +71,7 @@ namespace Ssit.CrossX2.Editor.Tools
         public virtual void OnMouseLeave(MouseInputInfo input)
         {
             _position = null;
+            Editor.UpdateMousePosition(null);
         }
 
         public virtual void Reset()
@@ -102,6 +105,7 @@ namespace Ssit.CrossX2.Editor.Tools
 
                 Editor.Offset += mapPos - mapPos2;
                 Editor.EnsurePanInBounds();
+                Editor.UpdateMousePosition(input.Position);
                 Editor.Redraw();
                 return true;
             }
@@ -114,6 +118,7 @@ namespace Ssit.CrossX2.Editor.Tools
 
             Editor.Offset -= offset;
             Editor.EnsurePanInBounds();
+            Editor.UpdateMousePosition(input.Position);
             Editor.Redraw();
             return true;
         }

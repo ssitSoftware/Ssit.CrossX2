@@ -191,6 +191,7 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
                 {
                     MapPath = parameters.MapPath,
                     MapId = mapId,
+                    MapPathPrefix = parameters.MapPathPrefix,
                     StorePreview = parameters.StoreCheckpointPreview,
                     PreviewDownSize = parameters.CheckpointPreviewDownSize
                 });

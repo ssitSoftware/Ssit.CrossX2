@@ -12,7 +12,7 @@ public class PointLightObject: IBodyOwner, ILightProvider, IGameObjectRenderer
 {
     public class Parameters
     {
-        [EditorLink(typeof(ITarget), true)] public int Target { get; set; }
+        [EditorLink(typeof(ITarget), EditorLinkType.Circular)] public int Target { get; set; }
 
         [Editor] public RgbaColor Color { get; set; } = RgbaColor.White;
         [EditorFloat(0.1f, 4f, 0.1f)] public float Intensity { get; set; } = 1;

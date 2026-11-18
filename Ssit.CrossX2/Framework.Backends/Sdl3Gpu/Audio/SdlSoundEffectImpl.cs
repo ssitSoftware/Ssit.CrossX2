@@ -67,14 +67,16 @@ internal unsafe class SdlSoundEffectImpl: ISoundEffect
         return _iocContainer.IoCConstruct<SdlSoundEffectInstanceImpl>(_audioHandle);
     }
 
-    public void PlayOnce()
+    public void PlayOnce() => PlayOnce(new SoundParameters());
+
+    public void PlayOnce(SoundParameters parameters)
     {
         var instance = CreateInstance();
         
         _instances.Add(instance);
         
         instance.Finished += InstanceOnFinished;
-        instance.Parameters = new SoundParameters();
+        instance.Parameters = parameters;
         instance.Play();
     }
 

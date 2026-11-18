@@ -17,7 +17,7 @@
     xmlns:map="clr-namespace:Ssit.CrossX2.Framework.Games.Map;assembly=Ssit.CrossX2.Games"
     xmlns:template="clr-namespace:Ssit.CrossX2.Framework.Games.Template;assembly=Ssit.CrossX2.Games">
 
-    <Grid RowDefinitions="Auto, *">
+    <Grid RowDefinitions="Auto, *, Auto">
 
         <Grid
             Background="{DynamicResource ControlBackground}"
@@ -230,6 +230,38 @@
             Margin="0,1,0,0"
             MouseHandler="{Binding EditorViewModel.Tools.Current}"
             Renderer="{Binding EditorViewModel}" />
+
+        <!--  Status bar  -->
+        <Border
+            Background="{DynamicResource ControlBackground}"
+            Grid.Row="2"
+            IsVisible="{Binding EditorViewModel.IsFullscreen, Converter={StaticResource InvertBoolConverter}}"
+            Margin="0,1,0,0"
+            Padding="8,2">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <StackPanel.Styles>
+                    <Style Selector="TextBlock">
+                        <Setter Property="FontSize" Value="12" />
+                        <Setter Property="VerticalAlignment" Value="Center" />
+                    </Style>
+                    <Style Selector="TextBlock.Caption">
+                        <Setter Property="Opacity" Value="0.6" />
+                    </Style>
+                </StackPanel.Styles>
+
+                <i:Icon
+                    FontSize="12"
+                    Opacity="0.6"
+                    Value="mdi-crosshairs"
+                    VerticalAlignment="Center" />
+
+                <TextBlock Classes="Caption" Text="Tile:" />
+                <TextBlock MinWidth="60" Text="{Binding EditorViewModel.MouseTileInfo}" />
+
+                <TextBlock Classes="Caption" Text="Position:" />
+                <TextBlock MinWidth="90" Text="{Binding EditorViewModel.MousePositionInfo}" />
+            </StackPanel>
+        </Border>
 
     </Grid>
 </UserControl>
