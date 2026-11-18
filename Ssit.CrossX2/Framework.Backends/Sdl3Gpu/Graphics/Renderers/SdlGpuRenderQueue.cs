@@ -20,6 +20,10 @@ internal unsafe class SdlGpuRenderQueue: IDisposable, IRenderQueueInternal
     private readonly int _strideBytes = sizeof(VertexPct);
 
     private SDL_GPUBuffer* _gpuBuffer;
+    private SDL_GPUTransferBuffer* _transferBuffer;
+
+    // Vertices before this index are already in _gpuBuffer (see RenderQueueElements).
+    private int _uploadedPosition;
 
     private readonly VertexPct[] _buffer = new VertexPct[BufferVerticesCount];
     private readonly List<Command> _commands = new();
@@ -48,6 +52,17 @@ internal unsafe class SdlGpuRenderQueue: IDisposable, IRenderQueueInternal
 
         if (_gpuBuffer == null)
             throw new InvalidOperationException($"SDL_CreateGPUBuffer failed: {SDL_GetError()}");
+
+        // One persistent upload buffer instead of creating and releasing a D3D12 resource on every flush.
+        var transferBufferCreateInfo = new SDL_GPUTransferBufferCreateInfo
+        {
+            usage = SDL_GPUTransferBufferUsage.SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+            size = createInfo.size,
+        };
+        _transferBuffer = SDL_CreateGPUTransferBuffer(_renderer.Device, &transferBufferCreateInfo);
+
+        if (_transferBuffer == null)
+            throw new InvalidOperationException($"SDL_CreateGPUTransferBuffer failed: {SDL_GetError()}");
     }
 
     public void PushLine(VertexPct p1, VertexPct p2)
@@ -106,7 +121,12 @@ internal unsafe class SdlGpuRenderQueue: IDisposable, IRenderQueueInternal
     {
         if (_currentPosition + count >= BufferVerticesCount)
         {
-            _renderer.SubmitCommandBuffer();
+            // Draw what is queued, then wrap to the start. The next upload cycles both buffers, so draws
+            // already recorded (or still running on the GPU) keep reading the old contents. No submit needed.
+            Flush();
+            _currentPosition = 0;
+            _startPosition = 0;
+            _uploadedPosition = 0;
         }
     }
 
@@ -131,57 +151,66 @@ internal unsafe class SdlGpuRenderQueue: IDisposable, IRenderQueueInternal
     {
         StoreCommand();
         RenderQueueElements();
-        
+
         _commands.Clear();
-        
-        _currentPosition = 0;
-        _startPosition = 0;
+
+        // Positions are not reset: the next batch is appended after this one, so its upload never
+        // overwrites vertices that draws recorded earlier still read. Wrapping happens in CheckBufferOverflow.
+        _startPosition = _currentPosition;
         _currentTexture = null;
     }
 
+    /// <summary>Batches uploaded and drawn since the counter was last reset (perf stats).</summary>
+    internal static int FlushCount;
+
     private void RenderQueueElements()
     {
-        if (_currentPosition == 0)
+        if (_currentPosition == _uploadedPosition)
             return;
 
+        FlushCount++;
+
         _renderer.EndCurrentGpuRenderPass(false);
-        
+
         var device = _renderer.Device;
         var commandBuffer = _renderer.CommandBuffer;
 
-        uint byteSize = (uint)(_currentPosition * _strideBytes);
+        var first = _uploadedPosition;
+        var count = _currentPosition - first;
+        var byteOffset = (uint)(first * _strideBytes);
+        var byteSize = (uint)(count * _strideBytes);
 
-        var transferBufferCreateInfo = new SDL_GPUTransferBufferCreateInfo
-        {
-            usage = SDL_GPUTransferBufferUsage.SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            size = byteSize,
-        };
-        SDL_GPUTransferBuffer* transferBuffer = SDL_CreateGPUTransferBuffer(device, &transferBufferCreateInfo);
+        // Cycle when starting from the beginning: earlier frames' copies/draws may still use the old contents,
+        // and SDL then hands out another internal buffer instead of stalling. Appended ranges never overlap
+        // what was uploaded before, so they don't need it.
+        var cycle = first == 0;
 
-        if (transferBuffer == null)
-            throw new InvalidOperationException($"SDL_CreateGPUTransferBuffer failed: {SDL_GetError()}");
+        void* mapped = (void*)SDL_MapGPUTransferBuffer(device, _transferBuffer, cycle);
 
-        void* mapped = (void*)SDL_MapGPUTransferBuffer(device, transferBuffer, false);
-        new ReadOnlySpan<VertexPct>(_buffer, 0, _currentPosition).CopyTo(new Span<VertexPct>(mapped, _currentPosition));
-        SDL_UnmapGPUTransferBuffer(device, transferBuffer);
+        if (mapped == null)
+            throw new InvalidOperationException($"SDL_MapGPUTransferBuffer failed: {SDL_GetError()}");
+
+        new ReadOnlySpan<VertexPct>(_buffer, first, count).CopyTo(new Span<VertexPct>((byte*)mapped + byteOffset, count));
+        SDL_UnmapGPUTransferBuffer(device, _transferBuffer);
 
         SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(commandBuffer);
 
         var transferBufferLocation = new SDL_GPUTransferBufferLocation
         {
-            transfer_buffer = transferBuffer,
-            offset = 0,
+            transfer_buffer = _transferBuffer,
+            offset = byteOffset,
         };
         var bufferRegion = new SDL_GPUBufferRegion
         {
             buffer = _gpuBuffer,
-            offset = 0,
+            offset = byteOffset,
             size = byteSize,
         };
-        SDL_UploadToGPUBuffer(copyPass, &transferBufferLocation, &bufferRegion, false);
+        SDL_UploadToGPUBuffer(copyPass, &transferBufferLocation, &bufferRegion, cycle);
 
         SDL_EndGPUCopyPass(copyPass);
-        SDL_ReleaseGPUTransferBuffer(device, transferBuffer);
+
+        _uploadedPosition = _currentPosition;
 
         foreach (var command in _commands)
         {
@@ -198,6 +227,12 @@ internal unsafe class SdlGpuRenderQueue: IDisposable, IRenderQueueInternal
         {
             SDL_ReleaseGPUBuffer(_renderer.Device, _gpuBuffer);
             _gpuBuffer = null;
+        }
+
+        if (_transferBuffer != null)
+        {
+            SDL_ReleaseGPUTransferBuffer(_renderer.Device, _transferBuffer);
+            _transferBuffer = null;
         }
 
         _disposed = true;

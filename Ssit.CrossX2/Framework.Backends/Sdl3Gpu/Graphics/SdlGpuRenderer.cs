@@ -124,6 +124,28 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
     /// <returns>True when a swapchain frame was presented.</returns>
     public bool Present()
     {
+        var startTicks = SDL_GetTicksNS();
+
+        try
+        {
+            return PresentInternal();
+        }
+        finally
+        {
+            LastPresentNs = SDL_GetTicksNS() - startTicks;
+        }
+    }
+
+    /// <summary>
+    /// CPU time spent in the last <see cref="Present"/>, mostly waiting for the GPU / swapchain (used by perf stats).
+    /// </summary>
+    public ulong LastPresentNs { get; private set; }
+
+    /// <summary>GPU render passes begun since the counter was last reset (perf stats).</summary>
+    internal static int RenderPassCount;
+
+    private bool PresentInternal()
+    {
         EndCurrentGpuRenderPass();
 
         var commandBuffer = CommandBuffer;
@@ -270,6 +292,7 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
             store_op = SDL_GPUStoreOp.SDL_GPU_STOREOP_STORE,
         };
 
+        RenderPassCount++;
         _gpuRenderPass = SDL_BeginGPURenderPass(CommandBuffer, &colorTargetInfo, 1, null);
 
         if (_gpuRenderPass == null)

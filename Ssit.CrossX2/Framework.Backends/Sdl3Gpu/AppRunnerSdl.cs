@@ -134,13 +134,28 @@ internal static class AppRunnerSdl
 
         var perfStats = FramePerfStats.CreateIfEnabled();
 
-        if (perfStats != null)
+        // Perf stats default to uncapped presentation so the frame time reflects the actual cost, not the display refresh rate.
+        var presentMode = GetRequestedPresentMode() ?? (perfStats != null ? SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE : null);
+
+        if (presentMode is { } requestedMode)
         {
-            // Uncapped presentation so the frame time reflects the actual cost, not the display refresh rate.
-            var presentMode = SDL_WindowSupportsGPUPresentMode(device, window, SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE)
-                ? SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE
-                : SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX;
-            SDL_SetGPUSwapchainParameters(device, window, SDL_GPUSwapchainComposition.SDL_GPU_SWAPCHAINCOMPOSITION_SDR, presentMode);
+            // IMMEDIATE and MAILBOX are optional in SDL; fall back to the other uncapped mode, then to VSYNC (always supported).
+            SDL_GPUPresentMode[] candidates = requestedMode == SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC
+                ? [requestedMode]
+                : [requestedMode, requestedMode == SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX
+                    ? SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE
+                    : SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX];
+
+            var mode = candidates.FirstOrDefault(m => SDL_WindowSupportsGPUPresentMode(device, window, m), SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC);
+
+            if (!SDL_SetGPUSwapchainParameters(device, window, SDL_GPUSwapchainComposition.SDL_GPU_SWAPCHAINCOMPOSITION_SDR, mode))
+            {
+                Console.Error.WriteLine($"SDL_SetGPUSwapchainParameters({mode}) failed: {SDL_GetError()}");
+            }
+            else
+            {
+                Console.WriteLine($"[GPU] present mode {mode}");
+            }
         }
 
         var handles = new SdlHandles(window, device);
@@ -400,7 +415,9 @@ internal static class AppRunnerSdl
             component.Update((float)dt);
             eventSource.OnUpdated();
             gameControllers.PostUpdate();
-            
+
+            var updateEndTicks = SDL_GetTicksNS();
+
             int ww, wh;
             SDL_GetWindowSizeInPixels(window, &ww, &wh);
 
@@ -424,7 +441,8 @@ internal static class AppRunnerSdl
             }
 
             eventSource.OnRenderFinished();
-            perfStats?.OnFrame(renderHost);
+            perfStats?.OnFrame(renderHost, updateNs: updateEndTicks - ticks,
+                renderNs: SDL_GetTicksNS() - updateEndTicks, presentNs: sdlRenderer.LastPresentNs);
         }
         
         component.Dispose();
@@ -568,6 +586,19 @@ internal static class AppRunnerSdl
     }
 
     /// <summary>
+    /// Present mode requested with the environment variable CROSSX_PRESENT_MODE (vsync, mailbox or immediate);
+    /// null when not set, which keeps SDL's default.
+    /// </summary>
+    private static SDL_GPUPresentMode? GetRequestedPresentMode() =>
+        Environment.GetEnvironmentVariable("CROSSX_PRESENT_MODE")?.Trim().ToLowerInvariant() switch
+        {
+            "vsync" => SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC,
+            "mailbox" => SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX,
+            "immediate" => SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE,
+            _ => null
+        };
+
+    /// <summary>
     /// Frame time statistics, enabled with the environment variable CROSSX_PERF=1.
     /// Also switches presentation to uncapped (no vsync) so frame times show the real cost.
     /// </summary>
@@ -577,11 +608,19 @@ internal static class AppRunnerSdl
         private ulong _lastTicks;
         private int _frames;
         private double _worstMs;
+        private ulong _updateNs;
+        private ulong _renderNs;
+        private ulong _presentNs;
+        private int _gcCount;
+        private long _allocatedBytes;
 
         public static FramePerfStats CreateIfEnabled() =>
             Environment.GetEnvironmentVariable("CROSSX_PERF") == "1" ? new FramePerfStats() : null;
 
-        public void OnFrame(RenderHost renderHost)
+        /// <param name="updateNs">Input + app update.</param>
+        /// <param name="renderNs">Whole Render call, including <paramref name="presentNs"/>.</param>
+        /// <param name="presentNs">Swapchain wait + final submit, which is mostly waiting for the GPU.</param>
+        public void OnFrame(RenderHost renderHost, ulong updateNs, ulong renderNs, ulong presentNs)
         {
             var now = SDL_GetTicksNS();
 
@@ -589,23 +628,41 @@ internal static class AppRunnerSdl
             {
                 _windowStartTicks = now;
                 _lastTicks = now;
+                _gcCount = GC.CollectionCount(0);
+                _allocatedBytes = GC.GetAllocatedBytesForCurrentThread();
                 return;
             }
 
             _worstMs = Math.Max(_worstMs, (now - _lastTicks) / 1e6);
             _lastTicks = now;
             _frames++;
+            _updateNs += updateNs;
+            _renderNs += renderNs;
+            _presentNs += Math.Min(presentNs, renderNs);
 
             var elapsed = (now - _windowStartTicks) / 1e9;
 
             if (elapsed < 2.0)
                 return;
 
+            var gcCount = GC.CollectionCount(0);
+            var allocatedBytes = GC.GetAllocatedBytesForCurrentThread();
+            double PerFrameMs(ulong ns) => ns / 1e6 / _frames;
+
             Console.WriteLine($"[Perf] {_frames / elapsed:F1} fps, avg {elapsed * 1000 / _frames:F2} ms, worst {_worstMs:F2} ms, " +
+                              $"update {PerFrameMs(_updateNs):F2} ms, draw {PerFrameMs(_renderNs - _presentNs):F2} ms, " +
+                              $"present/GPU wait {PerFrameMs(_presentNs):F2} ms, " +
+                              $"batches {Graphics.Renderers.SdlGpuRenderQueue.FlushCount / (double)_frames:F0}/frame, render passes {SdlGpuRenderer.RenderPassCount / (double)_frames:F0}/frame, " +
+                              $"alloc {(allocatedBytes - _allocatedBytes) / 1024.0 / _frames:F1} KB/frame, gen0 GCs {gcCount - _gcCount}, " +
                               $"scene {renderHost.TargetSize.Width}x{renderHost.TargetSize.Height}");
             _windowStartTicks = now;
             _frames = 0;
             _worstMs = 0;
+            _updateNs = _renderNs = _presentNs = 0;
+            Graphics.Renderers.SdlGpuRenderQueue.FlushCount = 0;
+            SdlGpuRenderer.RenderPassCount = 0;
+            _gcCount = gcCount;
+            _allocatedBytes = allocatedBytes;
         }
     }
 }

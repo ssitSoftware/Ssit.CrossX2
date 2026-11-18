@@ -18,9 +18,21 @@ Compile errors are thrown as `InvalidOperationException` with the compiler outpu
 The desktop build only targets `net10.0` on Windows. To also build the Android/iOS targets
 there (with the workloads installed), pass `-p:CrossXMobileTargets=true`.
 
-The GPU device is created with SDL debug mode first; if that fails (for example when the D3D12
-debug layer from the optional "Graphics Tools" Windows feature is not installed) it retries
-without debug mode.
+In Debug builds the GPU device is created with SDL debug mode first; if that fails (for example
+when the D3D12 debug layer from the optional "Graphics Tools" Windows feature is not installed)
+it retries without debug mode. Release builds never use debug mode.
+
+## Environment variables
+
+| Variable                         | Effect                                                                 |
+|----------------------------------|------------------------------------------------------------------------|
+| `CROSSX_PERF=1`                  | Logs `[Perf]` fps / frame times every 2 s; presents uncapped (immediate) unless `CROSSX_PRESENT_MODE` says otherwise. |
+| `CROSSX_PRESENT_MODE=<mode>`     | `vsync` (SDL default, capped at the display refresh), `mailbox` or `immediate` (uncapped; falls back to the other one, then to vsync, when unsupported). |
+| `CROSSX_GPU_PREFER_LOW_POWER=1`  | Picks the integrated GPU on dual-GPU machines.                         |
+
+On hybrid (Optimus) laptops the frame rate with vsync is also limited by the NVIDIA/Windows
+settings outside the engine: NVIDIA Control Panel "Max Frame Rate" / "Vertical sync",
+Battery Boost on battery power, and Windows lowering the panel refresh rate on battery.
 
 ## Writing shaders
 
