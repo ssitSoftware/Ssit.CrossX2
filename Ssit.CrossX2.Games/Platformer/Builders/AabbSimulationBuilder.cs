@@ -29,6 +29,17 @@ public class AabbSimulationBuilder
 
         public IMaterial Empty => null;
     }
+
+    private const float MapBoundsThickness = 0.1f;
+
+    private static readonly IMaterial MapBoundsMaterial = new Material
+    {
+        Index = -1,
+        Friction = 1,
+        Bounce = 0,
+        Sides = ColliderSides.All,
+        ColliderGroup = ICollider.GroupTerrain
+    };
     
     private MapFile _mapFile;
     private IFilesProvider _filesProvider;
@@ -182,8 +193,38 @@ public class AabbSimulationBuilder
             regionsFromArray.GenerateRegions(collisions, null, new Matcher(), CreateCollider, list);
             _cache = SaveCache(mapAabb, list);
         }
+
+        // Map bounds are not cached - they are always generated from map size.
+        AddMapBoundsColliders(mapAabb, list);
+        mapAabb.Inflate(MapBoundsThickness);
         
         simulation.InitializeStaticColliders(mapAabb, list);
+    }
+
+    private static void AddMapBoundsColliders(Aabb mapAabb, List<RectCollider> list)
+    {
+        const float t = MapBoundsThickness;
+        var center = mapAabb.Center;
+        var outerWidth = mapAabb.Width + 2 * t;
+        
+        // Top and bottom span the full outer width, so they cover the corners too.
+        AddMapBoundsCollider(list, new Vector2(center.X, mapAabb.Top - t / 2), new Vector2(outerWidth, t));
+        AddMapBoundsCollider(list, new Vector2(center.X, mapAabb.Bottom + t / 2), new Vector2(outerWidth, t));
+        
+        AddMapBoundsCollider(list, new Vector2(mapAabb.Left - t / 2, center.Y), new Vector2(t, mapAabb.Height));
+        AddMapBoundsCollider(list, new Vector2(mapAabb.Right + t / 2, center.Y), new Vector2(t, mapAabb.Height));
+    }
+
+    private static void AddMapBoundsCollider(List<RectCollider> list, Vector2 center, Vector2 size)
+    {
+        list.Add(new RectCollider(new RectColliderCreationParameters
+        {
+            Type = ColliderType.Static,
+            Center = center,
+            Size = size,
+            Material = MapBoundsMaterial,
+            Active = true
+        }));
     }
 
     private byte[] SaveCache(Aabb mapAabb, List<RectCollider> list)

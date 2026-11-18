@@ -4,6 +4,9 @@ namespace Ssit.CrossX2.Framework.Games.Physics;
 
 public interface ICollider: IAabbObject
 {
+    /// <summary>Collider group used by terrain (static map colliders, map bounds).</summary>
+    public const byte GroupTerrain = 0;
+
     event CollisionDelegate CollisionWith;
     string Name { get; }
     IBody AttachedBody { get; }

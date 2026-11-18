@@ -52,9 +52,8 @@ public class AirJumpBehavior : SteeringBehavior<ISteeringCharacter>
                 // Snap to the pad's center so the launch always starts from the same spot
                 obj.Body.Position = collider.Aabb.Center;
                 
-                // Default launch: standard jump height and run speed in the facing direction (Y grows downward, hence the minus)
+                // Default launch: standard jump height, horizontal velocity kept as is (Y grows downward, hence the minus)
                 obj.Body.Velocity = obj.Body.Velocity with { Y = -obj.PhysicsValues.JumpVelocity };
-                obj.Body.Velocity = obj.Body.Velocity with { X = obj.FaceLeft ? -obj.PhysicsValues.RunSpeed : obj.PhysicsValues.RunSpeed };
 
                 // A pad-specific direction replaces the default launch velocity and may turn the character
                 if (dir.HasValue)
