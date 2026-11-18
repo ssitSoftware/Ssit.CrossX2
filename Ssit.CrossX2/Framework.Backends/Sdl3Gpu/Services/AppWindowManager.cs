@@ -4,9 +4,67 @@ using static SDL.SDL3;
 
 namespace Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Services;
 
-internal unsafe class AppWindowManager(SDL_Window* window): IAppWindowManager, IInternalWindowProvider
+internal unsafe class AppWindowManager(SDL_Window* window, SDL_GPUDevice* device): IAppWindowManager, IInternalWindowProvider
 {
     private IActionScheduler _actionScheduler;
+    private SDL_GPUPresentMode? _forcedPresentMode;
+
+    public bool VSync
+    {
+        get;
+        set
+        {
+            if (field == value)
+                return;
+
+            field = value;
+
+            if (_forcedPresentMode != null)
+                return;
+
+            var mode = value ? SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC : SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE;
+
+            // Applied between frames: the swapchain must not be changed while a swapchain texture is acquired.
+            if (_actionScheduler != null)
+            {
+                _actionScheduler.Schedule(() => ApplyPresentMode(mode));
+            }
+            else
+            {
+                ApplyPresentMode(mode);
+            }
+        }
+    } = true; // SDL's default present mode is VSYNC.
+
+    /// <summary>
+    /// Pins the present mode (CROSSX_PRESENT_MODE / perf stats); later <see cref="VSync"/> changes are ignored.
+    /// </summary>
+    public void ForcePresentMode(SDL_GPUPresentMode mode)
+    {
+        _forcedPresentMode = mode;
+        ApplyPresentMode(mode);
+    }
+
+    private void ApplyPresentMode(SDL_GPUPresentMode requestedMode)
+    {
+        // IMMEDIATE and MAILBOX are optional in SDL; fall back to the other uncapped mode, then to VSYNC (always supported).
+        SDL_GPUPresentMode[] candidates = requestedMode == SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC
+            ? [requestedMode]
+            : [requestedMode, requestedMode == SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX
+                ? SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE
+                : SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX];
+
+        var mode = candidates.FirstOrDefault(m => SDL_WindowSupportsGPUPresentMode(device, window, m), SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC);
+
+        if (!SDL_SetGPUSwapchainParameters(device, window, SDL_GPUSwapchainComposition.SDL_GPU_SWAPCHAINCOMPOSITION_SDR, mode))
+        {
+            Console.Error.WriteLine($"SDL_SetGPUSwapchainParameters({mode}) failed: {SDL_GetError()}");
+        }
+        else
+        {
+            Console.WriteLine($"[GPU] present mode {mode}");
+        }
+    }
     public bool ShouldContinue { get; private set; } = true;
     private Size _minimumSize = new(160, 90);
     private Size _windowSize = new(320, 180);

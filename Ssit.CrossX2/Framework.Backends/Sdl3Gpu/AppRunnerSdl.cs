@@ -134,34 +134,16 @@ internal static class AppRunnerSdl
 
         var perfStats = FramePerfStats.CreateIfEnabled();
 
-        // Perf stats default to uncapped presentation so the frame time reflects the actual cost, not the display refresh rate.
-        var presentMode = GetRequestedPresentMode() ?? (perfStats != null ? SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE : null);
-
-        if (presentMode is { } requestedMode)
-        {
-            // IMMEDIATE and MAILBOX are optional in SDL; fall back to the other uncapped mode, then to VSYNC (always supported).
-            SDL_GPUPresentMode[] candidates = requestedMode == SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC
-                ? [requestedMode]
-                : [requestedMode, requestedMode == SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX
-                    ? SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE
-                    : SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX];
-
-            var mode = candidates.FirstOrDefault(m => SDL_WindowSupportsGPUPresentMode(device, window, m), SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC);
-
-            if (!SDL_SetGPUSwapchainParameters(device, window, SDL_GPUSwapchainComposition.SDL_GPU_SWAPCHAINCOMPOSITION_SDR, mode))
-            {
-                Console.Error.WriteLine($"SDL_SetGPUSwapchainParameters({mode}) failed: {SDL_GetError()}");
-            }
-            else
-            {
-                Console.WriteLine($"[GPU] present mode {mode}");
-            }
-        }
-
         var handles = new SdlHandles(window, device);
         var pointingDevices = new SdlPointingDevices(new SdlHandle<SDL_Window>(window));
-        
-        var appWindowManager = new AppWindowManager(window);
+
+        var appWindowManager = new AppWindowManager(window, device);
+
+        // CROSSX_PRESENT_MODE pins the present mode; IAppWindowManager.VSync is then ignored.
+        if (GetRequestedPresentMode() is { } forcedMode)
+        {
+            appWindowManager.ForcePresentMode(forcedMode);
+        }
 
         builder
             .WithSingleton<IRenderer, SdlGpuRenderer>().As<SdlGpuRenderer>()
@@ -600,7 +582,7 @@ internal static class AppRunnerSdl
 
     /// <summary>
     /// Frame time statistics, enabled with the environment variable CROSSX_PERF=1.
-    /// Also switches presentation to uncapped (no vsync) so frame times show the real cost.
+    /// Present mode is left alone: turn VSync off (or set CROSSX_PRESENT_MODE) to measure uncapped frame times.
     /// </summary>
     private sealed class FramePerfStats
     {

@@ -16,6 +16,13 @@ public enum WindowedMode
 public interface IAppWindowManager
 {
     bool IsFullscreen { get; }
+
+    /// <summary>
+    /// Synchronizes presentation with the display refresh rate (default true). When false the frame rate is uncapped.
+    /// Ignored while the CROSSX_PRESENT_MODE environment variable forces a present mode.
+    /// </summary>
+    bool VSync { get; set; }
+
     event Action<WindowClosingEventArgs> Closing; 
     void Close();
     bool SetFullscreen();

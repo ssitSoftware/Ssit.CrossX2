@@ -26,8 +26,8 @@ it retries without debug mode. Release builds never use debug mode.
 
 | Variable                         | Effect                                                                 |
 |----------------------------------|------------------------------------------------------------------------|
-| `CROSSX_PERF=1`                  | Logs `[Perf]` fps / frame times every 2 s; presents uncapped (immediate) unless `CROSSX_PRESENT_MODE` says otherwise. |
-| `CROSSX_PRESENT_MODE=<mode>`     | `vsync` (SDL default, capped at the display refresh), `mailbox` or `immediate` (uncapped; falls back to the other one, then to vsync, when unsupported). |
+| `CROSSX_PERF=1`                  | Logs `[Perf]` fps, update / draw / GPU-wait times, batches and allocations every 2 s. Turn VSync off (or set `CROSSX_PRESENT_MODE=immediate`) to see uncapped frame times. |
+| `CROSSX_PRESENT_MODE=<mode>`     | `vsync` (SDL default, capped at the display refresh), `mailbox` or `immediate` (uncapped; falls back to the other one, then to vsync, when unsupported). Overrides `IAppWindowManager.VSync`. |
 | `CROSSX_GPU_PREFER_LOW_POWER=1`  | Picks the integrated GPU on dual-GPU machines.                         |
 
 On hybrid (Optimus) laptops the frame rate with vsync is also limited by the NVIDIA/Windows
