@@ -52,6 +52,18 @@ public class FilesStorage(string appName) : IFileStorage
         }
     }
 
+    public string[] GetFiles(string path)
+    {
+        var fullPath = Path.Combine(StorageDirectory(appName), path);
+
+        if (!Directory.Exists(fullPath))
+        {
+            return [];
+        }
+
+        return Directory.GetFiles(fullPath).Select(Path.GetFileName).ToArray();
+    }
+
     public void WriteData(string path, byte[] data)
     {
         File.WriteAllBytes(PrepareWritePath(path), data);

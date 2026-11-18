@@ -37,13 +37,23 @@ public interface ICheckpointService
     CheckpointData Capture(object playerState, string targetMapPath = null);
     
     /// <summary>
-    /// Captures the current state and writes it to the directory of the save <paramref name="slot"/> in the application
-    /// storage: the map state into the file of the current map, the game state with <paramref name="playerState"/>
-    /// into the GameState file (see <see cref="CheckpointStorage"/>). The files are written in the background.
-    /// With <paramref name="targetMapPath"/> the game state points to the target map, so the game continues there
-    /// (see <see cref="Capture"/>).
+    /// Saves a checkpoint: captures the current state and writes it to the directory of the save <paramref name="slot"/>
+    /// in the application storage - the map states of the Immediate directory (maps visited since the last checkpoint),
+    /// the map state into the file of the current map, the game state with <paramref name="playerState"/> into the
+    /// GameState file and the preview; the Immediate directory is deleted (see <see cref="CheckpointStorage"/>).
+    /// The files are written in the background.
     /// </summary>
-    CheckpointData Save(int slot, object playerState, string targetMapPath = null);
+    CheckpointData Save(int slot, object playerState);
+
+    /// <summary>
+    /// Stores the current state of the game without saving a checkpoint: captures the state (without a preview) and
+    /// writes the map state and the game state with <paramref name="playerState"/> into the Immediate directory of the
+    /// <paramref name="slot"/> (<see cref="CheckpointStorage.WriteImmediateAsync"/>) - the last checkpoint in the slot
+    /// directory stays as it is. The files are written in the background.
+    /// With <paramref name="targetMapPath"/> the game state points to the target map, so the game continues there
+    /// (see <see cref="Capture"/>), e.g. when the player leaves the map through a map link.
+    /// </summary>
+    CheckpointData SaveImmediate(int slot, object playerState, string targetMapPath = null);
     
     /// <summary>
     /// Restores the game time (<see cref="IGameClock.Set"/>, first - map objects can rely on it), the state of

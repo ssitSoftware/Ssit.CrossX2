@@ -80,7 +80,10 @@ public class CheckpointService : ICheckpointService
         _mapPathPrefix = parameters.MapPathPrefix;
     }
 
-    public CheckpointData Capture(object playerState, string targetMapPath = null)
+    public CheckpointData Capture(object playerState, string targetMapPath = null) =>
+        Capture(playerState, targetMapPath, true);
+
+    private CheckpointData Capture(object playerState, string targetMapPath, bool preview)
     {
         var savedAtUtc = DateTime.UtcNow;
         
@@ -133,7 +136,7 @@ public class CheckpointService : ICheckpointService
             PlayerState = playerState is null ? null : JToken.FromObject(playerState, Serializer)
         };
 
-        var data = new CheckpointData(gameState, mapState, CapturePreview());
+        var data = new CheckpointData(gameState, mapState, preview ? CapturePreview() : null);
         
         LastCheckpoint = data;
         return data;
@@ -186,22 +189,17 @@ public class CheckpointService : ICheckpointService
         }
     }
 
-    public CheckpointData Save(int slot, object playerState, string targetMapPath = null)
+    public CheckpointData Save(int slot, object playerState)
     {
-        var data = Capture(playerState, targetMapPath);
+        var data = Capture(playerState, null, true);
+        _storage.WriteAsync(slot, data);
+        return data;
+    }
 
-        Task.Run(() =>
-        {
-            try
-            {
-                _storage.Write(slot, data);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Failed to write checkpoint: {e}");
-            }
-        });
-        
+    public CheckpointData SaveImmediate(int slot, object playerState, string targetMapPath = null)
+    {
+        var data = Capture(playerState, targetMapPath, false);
+        _storage.WriteImmediateAsync(slot, data);
         return data;
     }
 

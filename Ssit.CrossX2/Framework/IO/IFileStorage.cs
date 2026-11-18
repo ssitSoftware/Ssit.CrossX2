@@ -43,6 +43,12 @@ public interface IFileStorage
     void DeleteDirectory(string path);
 
     /// <summary>
+    /// Returns the names (without the directory) of the files in the directory, not of its subdirectories.
+    /// Empty if the directory doesn't exist.
+    /// </summary>
+    string[] GetFiles(string path);
+
+    /// <summary>
     /// Writes the binary file. Missing parent directories are created.
     /// </summary>
     void WriteData(string path, byte[] data);
