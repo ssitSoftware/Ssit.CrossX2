@@ -353,10 +353,6 @@ internal static class AppRunnerSdl
                     case SDL_EventType.SDL_EVENT_MOUSE_MOTION:
                         break;
                     
-                    case SDL_EventType.SDL_EVENT_WINDOW_MOUSE_LEAVE:
-                        SDL_ShowCursor();
-                        break;
-                    
                     case SDL_EventType.SDL_EVENT_WINDOW_MOUSE_ENTER:
                         if ((pointingDevices.Mode & PointingDevicesMode.Mouse) == 0)
                         {
@@ -374,6 +370,16 @@ internal static class AppRunnerSdl
                 }
                 
                 gameControllers.ProcessEvent(@event);
+            }
+
+            // When nothing else drives the cursor (no Mouse / AutoHideMouse mode), keep it hidden.
+            // SDL's hidden cursor only applies over our window, so the system cursor outside the
+            // window is unaffected. Re-checked every frame because macOS can drop the matching
+            // MOUSE_ENTER (fullscreen transitions, menu bar reveal, Space switches).
+            if ((pointingDevices.Mode & (PointingDevicesMode.Mouse | PointingDevicesMode.AutoHideMouse)) == 0 &&
+                SDL_CursorVisible())
+            {
+                SDL_HideCursor();
             }
             
             actionScheduler.Process();
