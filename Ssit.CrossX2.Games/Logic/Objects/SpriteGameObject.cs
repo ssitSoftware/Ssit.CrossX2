@@ -225,7 +225,7 @@ public abstract class SpriteGameObject : IGameObjectRenderer, IBodyOwner, ISound
     /// or the body position for objects without colliders.
     /// </summary>
     protected virtual Vector2 SoundEmitterPosition =>
-        Body.Colliders.Length > 0 ? Body.Colliders[0].Aabb.Center : Body.Position;
+        Body.Colliders is { Length: > 0 } colliders ? colliders[0].Aabb.Center : Body.Position;
 
     Vector2 ISoundEmitter.Position => SoundEmitterPosition;
 }

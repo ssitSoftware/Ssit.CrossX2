@@ -41,6 +41,11 @@ internal static class RectRectCollision
 
     private static bool AnalyzeVerticalMovementCollision(ref Aabb after, ref Aabb before, ref Aabb obstacle, ref Vector2 move, ref Vector2 normal)
     {
+        // Already touching the obstacle from the side (e.g. sliding along a tiled wall) - it is beside, not above / below.
+        // Without this the top / bottom edge of the next wall tile works as a floor / ceiling and stops the slide.
+        if (IsTouchingHorizontally(ref before, ref obstacle))
+            return false;
+
         if (before.Bottom - MovementCollisionCalculator.MovementEpsilon < obstacle.Top && after.Bottom + MovementCollisionCalculator.MovementEpsilon > obstacle.Top)
         {
             var movey = obstacle.Top - before.Bottom;
@@ -74,6 +79,12 @@ internal static class RectRectCollision
 
     private static bool AnalyzeHorizontalMovementCollision(ref Aabb after, ref Aabb before, ref Aabb obstacle, ref Vector2 move, ref Vector2 normal)
     {
+        // Already touching the obstacle from above / below (e.g. sliding along a tiled ceiling or floor) - it is above / below,
+        // not beside. Without this the side edge of the next ceiling tile works as a wall when the move goes a bit into
+        // the ceiling (flyers pressed into a wall-ceiling corner could not slide out).
+        if (IsTouchingVertically(ref before, ref obstacle))
+            return false;
+
         if (before.Right - MovementCollisionCalculator.MovementEpsilon < obstacle.Left && after.Right + MovementCollisionCalculator.MovementEpsilon > obstacle.Left)
         {
             var movex = obstacle.Left - before.Right;
@@ -104,4 +115,14 @@ internal static class RectRectCollision
 
         return false;
     }
+
+    /// <summary>The rect touches the obstacle's bottom or top face (within the movement epsilon) - it is right below / above it.</summary>
+    private static bool IsTouchingVertically(ref Aabb rect, ref Aabb obstacle) =>
+        MathF.Abs(rect.Bottom - obstacle.Top) <= MovementCollisionCalculator.MovementEpsilon ||
+        MathF.Abs(rect.Top - obstacle.Bottom) <= MovementCollisionCalculator.MovementEpsilon;
+
+    /// <summary>The rect touches the obstacle's left or right face (within the movement epsilon) - it is right beside it.</summary>
+    private static bool IsTouchingHorizontally(ref Aabb rect, ref Aabb obstacle) =>
+        MathF.Abs(rect.Right - obstacle.Left) <= MovementCollisionCalculator.MovementEpsilon ||
+        MathF.Abs(rect.Left - obstacle.Right) <= MovementCollisionCalculator.MovementEpsilon;
 }
