@@ -26,7 +26,7 @@ public class MoveHorizontalBehavior : SingleSteeringBehavior<ISteeringCharacter,
             var physicsValues = obj.PhysicsValues;
             var velocity = obj.Body.Velocity;
             // Traction: slippery ground (low friction) makes acceleration slower
-            var factor = MathF.Max(0.01f, MathF.Min(1, obj.SteeringParameters.GroundMaterial.Friction * obj.Body.Colliders[0].Material.Friction));
+            var factor = MathF.Max(0.01f, MathF.Min(1, obj.SteeringParameters.GroundMaterial?.Friction * obj.Body.Colliders[0].Material.Friction ?? 1));
 
             var maxSpeed = walk ? physicsValues.WalkSpeed : physicsValues.RunSpeed;
             
