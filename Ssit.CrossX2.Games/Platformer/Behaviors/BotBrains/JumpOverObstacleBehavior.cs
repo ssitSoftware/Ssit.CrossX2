@@ -33,8 +33,10 @@ public class JumpOverObstacleBehavior(float probeDistance, string lostTargetStat
             ? new Aabb(aabb.Left - distance, aabb.Top, aabb.Left - 0.01f, aabb.Bottom - float.Epsilon)
             : new Aabb(aabb.Right + 0.01f, aabb.Top, aabb.Right + distance, aabb.Bottom - float.Epsilon);
 
-        // Only colliders with a side facing us can block - one-way platforms are passed through.
-        var collidersByDistance = body.Simulation.GetColliders(probe, body, IMaterial.AllColliders, colliderType: ColliderType.Static)
+        // Only colliders the body actually collides with (not e.g. levers / switches) and with a side
+        // facing us can block - one-way platforms are passed through.
+        var collidesWith = body.Colliders[0].Material.CollidesWith;
+        var collidersByDistance = body.Simulation.GetColliders(probe, body, collidesWith, colliderType: ColliderType.Static)
             .Where(c => c.BlocksHorizontalMove(faceLeft))
             .OrderBy(c => faceLeft ? aabb.Left - c.Aabb.Right : c.Aabb.Left - aabb.Right);
 

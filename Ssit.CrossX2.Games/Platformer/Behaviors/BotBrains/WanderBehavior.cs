@@ -76,13 +76,14 @@ public class WanderBehavior(float aheadProbeDistance, float groundProbeDistance)
     private static bool HasAnyObstacle(IBody body, Aabb probe, Func<ICollider, bool> filter)
     {
         var simulation = body.Simulation;
+        // Only colliders the body actually collides with - non-solid objects (levers, switches) are walked through.
+        var collidesWith = body.Colliders[0].Material.CollidesWith;
 
-        if (simulation.GetColliders(probe, body, IMaterial.AllColliders, colliderType: ColliderType.Static).Any(filter))
+        if (simulation.GetColliders(probe, body, collidesWith, colliderType: ColliderType.Static).Any(filter))
         {
             return true;
         }
 
-        var collidesWith = body.Colliders[0].Material.CollidesWith;
         return simulation.GetColliders(probe, body, collidesWith, colliderType: ColliderType.Dynamic).Any(filter);
     }
 }

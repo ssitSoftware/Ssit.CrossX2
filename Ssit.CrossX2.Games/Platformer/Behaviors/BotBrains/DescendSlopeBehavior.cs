@@ -40,7 +40,9 @@ public class DescendSlopeBehavior(float probeDepth) : Behavior<IBrainCharacter>
         var probe = new Aabb(x - 0.05f, fromY - float.Epsilon, x + 0.05f, fromY + probeDepth);
 
         float? top = null;
-        foreach (var collider in body.Simulation.GetColliders(probe, body, IMaterial.AllColliders, colliderType: ColliderType.Static))
+        // Only colliders the body can stand on - non-solid objects (levers, switches) are not ground.
+        var collidesWith = body.Colliders[0].Material.CollidesWith;
+        foreach (var collider in body.Simulation.GetColliders(probe, body, collidesWith, colliderType: ColliderType.Static))
         {
             if (top is not { } current || collider.Aabb.Top < current)
                 top = collider.Aabb.Top;

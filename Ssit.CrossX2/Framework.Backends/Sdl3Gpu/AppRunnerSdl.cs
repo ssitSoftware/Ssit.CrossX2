@@ -372,15 +372,7 @@ internal static class AppRunnerSdl
                 gameControllers.ProcessEvent(@event);
             }
 
-            // When nothing else drives the cursor (no Mouse / AutoHideMouse mode), keep it hidden.
-            // SDL's hidden cursor only applies over our window, so the system cursor outside the
-            // window is unaffected. Re-checked every frame because macOS can drop the matching
-            // MOUSE_ENTER (fullscreen transitions, menu bar reveal, Space switches).
-            if ((pointingDevices.Mode & (PointingDevicesMode.Mouse | PointingDevicesMode.AutoHideMouse)) == 0 &&
-                SDL_CursorVisible())
-            {
-                SDL_HideCursor();
-            }
+            UpdateCursorVisibility(window, pointingDevices);
             
             actionScheduler.Process();
             
@@ -539,6 +531,56 @@ internal static class AppRunnerSdl
         return sdlGpuRenderer.Present();
 
         //DebugScreenshot.MaybeCapture(sdlGpuRenderer.Device, window, swapchainTexture, swapchainWidth, swapchainHeight);
+    }
+
+    /// <summary>
+    /// When nothing else drives the cursor (no Mouse / AutoHideMouse mode), keeps it hidden while it is over
+    /// the focused game window and visible everywhere else. Evaluated every frame from the real cursor
+    /// position, so it doesn't depend on MOUSE_ENTER/LEAVE events, which macOS can drop
+    /// (fullscreen transitions, menu bar reveal, Space switches).
+    /// </summary>
+    private static unsafe void UpdateCursorVisibility(SDL_Window* window, SdlPointingDevices pointingDevices)
+    {
+        if ((pointingDevices.Mode & (PointingDevicesMode.Mouse | PointingDevicesMode.AutoHideMouse)) != 0)
+        {
+#if !IOS && !ANDROID
+            if (OperatingSystem.IsMacOS())
+            {
+                MacNativeCursor.SetHidden(false);
+            }
+#endif
+            return;
+        }
+
+        if (SDL_CursorVisible())
+        {
+            SDL_HideCursor();
+        }
+
+#if !IOS && !ANDROID
+        // SDL_HideCursor is enough on Windows / Linux - the native fallback below is macOS only.
+        if (!OperatingSystem.IsMacOS())
+        {
+            return;
+        }
+
+        var hasFocus = (SDL_GetWindowFlags(window) & SDL_WindowFlags.SDL_WINDOW_INPUT_FOCUS) != 0;
+        var isOverWindow = false;
+
+        if (hasFocus)
+        {
+            float mouseX, mouseY;
+            int windowX, windowY, windowW, windowH;
+            SDL_GetGlobalMouseState(&mouseX, &mouseY);
+            SDL_GetWindowPosition(window, &windowX, &windowY);
+            SDL_GetWindowSize(window, &windowW, &windowH);
+
+            isOverWindow = mouseX >= windowX && mouseX < windowX + windowW &&
+                           mouseY >= windowY && mouseY < windowY + windowH;
+        }
+
+        MacNativeCursor.SetHidden(hasFocus && isOverWindow);
+#endif
     }
 
     /// <summary>
