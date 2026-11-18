@@ -129,20 +129,23 @@ public class TextHandler(ViewHandler.CreateHandlerParameters parameters, IFontsM
     }
 
     /// <summary>
-    /// With <see cref="Views.Text.Justify"/>, splits every wrapped line (not the last line of a paragraph, nor a line
+    /// Whether the wrapped lines are justified: <see cref="ContentAlign.Justified"/> in <see cref="Label.TextAlign"/>.
+    /// </summary>
+    private bool IsJustified
+        => ((AttachedView.TextAlign ?? ContentAlign.Left) & ContentAlign.Justified) == ContentAlign.Justified;
+
+    /// <summary>
+    /// With <see cref="IsJustified"/>, splits every wrapped line (not the last line of a paragraph, nor a line
     /// without spaces) into words and places them so the stretched spaces fill <paramref name="wrapWidth"/>.
-    /// No-break spaces stay inside the words with their normal width.
+    /// No-break spaces are stretched too (the line was only never broken at them).
     /// </summary>
     private void CalculateJustification(IFont font, TextSpacing spacing, int wrapWidth)
     {
         _justifiedWords.Clear();
         _justifiedLines.Clear();
 
-        if (!AttachedView.Justify || wrapWidth <= 0 || font is not IGlyphFont glyphFont)
+        if (!IsJustified || wrapWidth <= 0 || font is not IGlyphFont glyphFont)
             return;
-
-        var additionalSpacing = (int)(spacing - 50) * glyphFont.Metrics.WhitespaceWidth / 50f;
-        var whitespaceWidth = glyphFont.Metrics.WhitespaceWidth + additionalSpacing;
 
         foreach (var line in TextRenderingContext.Lines)
         {
@@ -152,9 +155,9 @@ public class TextHandler(ViewHandler.CreateHandlerParameters parameters, IFontsM
                 continue;
             }
 
-            // Never narrower than a normal space (a line wider than the wrap width just keeps its spaces).
-            var widthWithoutSpaces = line.Width - line.Whitespaces * whitespaceWidth;
-            var stretchedWidth = MathF.Max(whitespaceWidth, (wrapWidth - widthWithoutSpaces) / line.Whitespaces);
+            // Extra width of every breaking space - never negative (a line wider than the wrap width just keeps its
+            // spaces). The spaces keep their own width (a space glyph's advance, or the font's whitespace width).
+            var extraSpaceWidth = MathF.Max(0, (wrapWidth - line.Width) / line.Whitespaces);
 
             var first = _justifiedWords.Count;
             var text = line.Text;
@@ -163,7 +166,7 @@ public class TextHandler(ViewHandler.CreateHandlerParameters parameters, IFontsM
 
             for (var idx = 0; idx <= text.Length; idx++)
             {
-                if (idx < text.Length && !GlyphFontRenderer.IsBreakingSpace(glyphFont, text[idx]))
+                if (idx < text.Length && !GlyphFontRenderer.IsStretchableSpace(glyphFont, text[idx]))
                     continue;
 
                 if (idx > wordStart)
@@ -173,7 +176,11 @@ public class TextHandler(ViewHandler.CreateHandlerParameters parameters, IFontsM
                     x += GlyphFontRenderer.MeasureWidth(glyphFont, word, spacing);
                 }
 
-                x += stretchedWidth;
+                if (idx < text.Length)
+                {
+                    x += GlyphFontRenderer.MeasureWidth(glyphFont, new TextSource(text, idx, 1), spacing) + extraSpaceWidth;
+                }
+
                 wordStart = idx + 1;
             }
 

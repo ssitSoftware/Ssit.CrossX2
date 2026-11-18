@@ -13,17 +13,23 @@ internal static class GlyphFontRenderer
     private static readonly TextRenderingContext TempContext = new();
 
     /// <summary>
-    /// No-break space (&amp;#160; in XML): drawn like a space, but a line never breaks at it and justification doesn't
-    /// stretch it.
+    /// No-break space (&amp;#160; in XML): drawn and stretched by justification like a space, but a line never breaks
+    /// at it.
     /// </summary>
     public const char NonBreakingSpace = '\u00A0';
 
     /// <summary>
-    /// True for a character a line can break at and justification stretches: a space, or any character without a glyph
-    /// except the no-break space.
+    /// True for a character a line can break at: a space, or any character without a glyph except the no-break space.
     /// </summary>
     internal static bool IsBreakingSpace(IGlyphFont font, char c) =>
         c == ' ' || c != NonBreakingSpace && font.GetGlyph(c) == null;
+
+    /// <summary>
+    /// True for a character justification stretches: a breaking space (<see cref="IsBreakingSpace"/>) or the no-break
+    /// space.
+    /// </summary>
+    internal static bool IsStretchableSpace(IGlyphFont font, char c) =>
+        c == NonBreakingSpace || IsBreakingSpace(font, c);
     
     public static void RenderText(IQuadsRenderer quadsRenderer, IGlyphFont font, TextSource text, Vector2 position, ContentAlign align, float scale,
         RgbaColor color, RgbaColor outlineColor, TextSpacing spacing, int lineSpacing, TextRenderingContext context)
@@ -228,13 +234,14 @@ internal static class GlyphFontRenderer
             posY += line.Spacing * scale;
 
             var whitespaceSize = (font.Metrics.WhitespaceWidth + additionalSpacing) * scale;
-            // Not stretched by justification.
-            var nonBreakingSpaceSize = whitespaceSize;
+
+            // Justification - extra width added to every stretchable space (a space with its own glyph and a no-break
+            // space too), so the line fills the width.
+            var extraSpaceSize = 0f;
 
             if ((align & ContentAlign.Justified) == ContentAlign.Justified && line is { Whitespaces: > 0, EndOfParagraph: false } && line.Width * scale < justifyWidth + whitespaceSize)
             {
-                var lineWidthNoSpaces = line.Width * scale - line.Whitespaces * whitespaceSize;
-                whitespaceSize = (justifyWidth - lineWidthNoSpaces) / line.Whitespaces;
+                extraSpaceSize = (justifyWidth - line.Width * scale) / line.Whitespaces;
             }
             
             var previousCharacter = '\0';
@@ -243,9 +250,14 @@ internal static class GlyphFontRenderer
                 var c = line.Text[i];
                 var glyph = font.GetGlyph(c);
              
+                if (IsStretchableSpace(font, c))
+                {
+                    posX += extraSpaceSize;
+                }
+
                 if (glyph == null)
                 {
-                    posX += c == NonBreakingSpace ? nonBreakingSpaceSize : whitespaceSize;
+                    posX += whitespaceSize;
                     previousCharacter = '\0';
                     continue;
                 }
@@ -323,8 +335,8 @@ internal static class GlyphFontRenderer
                 
         for (var i = 0; i < line.Length; ++i)
         {
-            // Only the stretchable ones - a no-break space keeps its width.
-            if (font.GetGlyph(line[i]) is null && line[i] != NonBreakingSpace)
+            // The stretchable ones - a space with its own glyph and a no-break space too.
+            if (IsStretchableSpace(font, line[i]))
             {
                 whitespaces++;
             }

@@ -55,8 +55,8 @@ internal class StylesContainer
         {
             if (string.IsNullOrWhiteSpace(style))
                 continue;
-            
-            ApplyStyle(obj, style);
+
+            ApplyStyle(obj, style == "@" ? "__default__" : style);
         }
     }
 
