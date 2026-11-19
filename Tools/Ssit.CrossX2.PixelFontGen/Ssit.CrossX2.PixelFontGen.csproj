@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+        <LangVersion>latestmajor</LangVersion>
+        <AssemblyName>pixelfontgen</AssemblyName>
+        <RootNamespace>Ssit.CrossX2.PixelFontGen</RootNamespace>
+        <TargetFramework>net10.0</TargetFramework>
+        <OutputType>Exe</OutputType>
+
+        <!-- Optional: allows `dotnet pack` + `dotnet tool install` as a global/local tool -->
+        <PackAsTool>true</PackAsTool>
+        <ToolCommandName>pixelfontgen</ToolCommandName>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Ssit.CrossX2\Ssit.CrossX2.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="SkiaSharp" Version="3.119.1" />
+    </ItemGroup>
+
+</Project>
