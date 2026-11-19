@@ -47,7 +47,7 @@ public class HitInRangeBehavior(SizeF size, Vector2 offset, float attackPower = 
                 continue;
 
             // Hit direction is the facing direction
-            hittable.Hit(new Vector2(obj.FaceLeft ? -1 : 1, 0), attackPower, obj as IHittable);
+            hittable.Hit(new Vector2(obj.FaceLeft ? -1 : 1, 0), attackPower, obj as IHitter);
         }
         
         return false;

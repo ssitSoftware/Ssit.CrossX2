@@ -51,7 +51,7 @@ public class DiveAttackBehavior(BoxHitDetector hitBox, string afterState) : Stee
         var hit = hitBox.Detect(obj.Body, obj.FaceLeft, IMaterial.AllColliders, FlightSteering.IsEnemyOf, ColliderSides.None);
         if (hit.Hittable is { Alive: true } hittable)
         {
-            hittable.Hit(direction, Power, obj as IHittable);
+            hittable.Hit(direction, Power, obj as IHitter);
             return Finish(obj);
         }
 

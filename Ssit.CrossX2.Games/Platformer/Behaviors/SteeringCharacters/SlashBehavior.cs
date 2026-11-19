@@ -42,7 +42,7 @@ public class SlashBehavior : SteeringBehavior<ISteeringCharacter>
         // Test the hit box in front of the character (facing-aware), only against left/right collider sides
         var result = _boxHitDetector.Detect(obj.Body, obj.FaceLeft, IMaterial.AllColliders, Filter, ColliderSides.Left | ColliderSides.Right);
 
-        result.Hittable?.Hit(obj.FaceLeft ? new Vector2(-1, 0) : new Vector2(1, 0), power, obj as IHittable);
+        result.Hittable?.Hit(obj.FaceLeft ? new Vector2(-1, 0) : new Vector2(1, 0), power, obj as IHitter);
 
         // Small recoil away from the target when the slash connected with anything (also walls)
         if (result.HitAnything)
