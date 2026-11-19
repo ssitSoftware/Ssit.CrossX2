@@ -20,6 +20,12 @@ public class CoinMeterView: Background
     /// <summary>If true, text is placed on the right of the icon; otherwise on the left.</summary>
     public bool TextOnRight { get; set; } = true;
 
+    /// <summary>
+    /// Minimum number of digits displayed. The value is padded with leading zeros to reach it
+    /// (e.g. 3 shows 7 as "007"). Values below 1 behave like 1.
+    /// </summary>
+    public int MinDigits { get; set; } = 1;
+
     /// <summary>Space between the icon and the text.</summary>
     public Length Spacing { get; set; }
 

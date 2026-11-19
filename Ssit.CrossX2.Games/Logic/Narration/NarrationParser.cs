@@ -112,7 +112,7 @@ internal static class NarrationParser
         if (list.Count == 0)
             return null;
         
-        return new NarrationEntry(text, list.ToArray());
+        return new NarrationEntry(node.Attribute("Id"), text, list.ToArray());
     }
 
     private static NarrationOption ParseOption(XNode node)
@@ -122,6 +122,7 @@ internal static class NarrationParser
         
         var action = node.Attribute("Action");
         var set = node.Attribute("Set");
+        var gotoId = node.Attribute("Goto");
         var text = GetTexts(node);
 
         NarrationEntry entry = null;
@@ -134,7 +135,11 @@ internal static class NarrationParser
         {
             entry = ParseEntry(entryNode);
         }
+
+        // Either a jump or a nested text - not both.
+        if (gotoId != null && entryNode != null)
+            throw new InvalidDataException($"Option with Goto=\"{gotoId}\" can't have a nested <Text>.");
         
-        return new NarrationOption(text, entry, action, set);
+        return new NarrationOption(text, entry, action, set, gotoId);
     }
 }

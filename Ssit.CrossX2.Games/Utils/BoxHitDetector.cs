@@ -14,10 +14,27 @@ public class BoxHitDetector(Vector2 offset, SizeF size, ColliderType colliderTyp
 
     private static bool DefaultFilter(IBody _1, IHittable _) => true;
 
+    /// <summary>
+    /// Optional extra detector checked only when this one found no <see cref="IHittable"/> (e.g. a box below the main one,
+    /// so attacks reach targets standing a bit lower). Only a hittable found by the fallback replaces this detector's result.
+    /// </summary>
+    public BoxHitDetector Fallback { get; init; }
+
     public HitTestResult Detect(IBody body, bool faceLeft, ulong collidesWith, Func<IBody, IHittable, bool> filter = null, ColliderSides bodylessSides = ColliderSides.All)
     {
         filter ??= DefaultFilter;
 
+        var result = DetectSelf(body, faceLeft, collidesWith, filter, bodylessSides);
+        if (result.Hittable != null || Fallback == null)
+            return result;
+
+        // No hittable in the main box - look for one in the fallback box (bodyless colliders are skipped there).
+        var fallbackResult = Fallback.Detect(body, faceLeft, collidesWith, filter, ColliderSides.None);
+        return fallbackResult.Hittable != null ? fallbackResult : result;
+    }
+
+    private HitTestResult DetectSelf(IBody body, bool faceLeft, ulong collidesWith, Func<IBody, IHittable, bool> filter, ColliderSides bodylessSides)
+    {
         QueryAndSort(body, faceLeft, collidesWith);
 
         foreach (var collider in _colliderBuffer)

@@ -42,12 +42,22 @@ public class SlashBehavior : SteeringBehavior<ISteeringCharacter>
         // Test the hit box in front of the character (facing-aware), only against left/right collider sides
         var result = _boxHitDetector.Detect(obj.Body, obj.FaceLeft, IMaterial.AllColliders, Filter, ColliderSides.Left | ColliderSides.Right);
 
+        // The attacker's weapon decides the final damage (e.g. its sharpness).
+        var meleeAttacker = obj as IMeleeAttacker;
+        if (meleeAttacker is not null)
+        {
+            power = meleeAttacker.GetMeleePower(power);
+        }
+
         result.Hittable?.Hit(obj.FaceLeft ? new Vector2(-1, 0) : new Vector2(1, 0), power, obj as IHitter);
 
         // Small recoil away from the target when the slash connected with anything (also walls)
         if (result.HitAnything)
         {
             obj.Body.Velocity += new Vector2(obj.FaceLeft ? obj.PhysicsValues.AttackVelocity : -obj.PhysicsValues.AttackVelocity, 0);
+
+            // After the hit - the hittable has already seen the weapon as it was (e.g. still silver coated).
+            meleeAttacker?.OnMeleeHit(result.Hittable);
         }
 
         return false;

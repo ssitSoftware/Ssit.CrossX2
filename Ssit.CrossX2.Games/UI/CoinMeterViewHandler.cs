@@ -89,7 +89,9 @@ internal class CoinMeterViewHandler: BackgroundHandler<CoinMeterView>
 
     private void UpdateText(int value)
     {
-        _text = value.ToString(CultureInfo.InvariantCulture);
+        // "D<n>" pads with leading zeros to at least n digits (sign is kept in front).
+        var minDigits = Math.Max(1, AttachedView.MinDigits);
+        _text = value.ToString("D" + minDigits.ToString(CultureInfo.InvariantCulture), CultureInfo.InvariantCulture);
     }
 
     private void OnValueChanged(int value)
