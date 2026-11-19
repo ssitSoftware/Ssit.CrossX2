@@ -4,7 +4,11 @@ using Ssit.CrossX2.Framework.Games.Physics;
 
 namespace Ssit.CrossX2.Framework.Games.Utils;
 
-public class BoxHitDetector(Vector2 offset, SizeF size, ColliderType colliderType = ColliderType.Static | ColliderType.Dynamic)
+/// <param name="triggerGroups">
+/// Collider groups (<see cref="IMaterial.Bit"/> mask) of triggers that are hit-tested too. When non-zero, triggers are
+/// queried as well, but only triggers of these groups are considered (e.g. sword-only targets like berry bushes).
+/// </param>
+public class BoxHitDetector(Vector2 offset, SizeF size, ColliderType colliderType = ColliderType.Static | ColliderType.Dynamic, ulong triggerGroups = 0)
 {
     private readonly List<ICollider> _colliderBuffer = new();
 
@@ -19,6 +23,10 @@ public class BoxHitDetector(Vector2 offset, SizeF size, ColliderType colliderTyp
         foreach (var collider in _colliderBuffer)
         {
             if (!collider.IsActive)
+                continue;
+
+            if (triggerGroups != 0 && (collider.Type & ColliderType.Trigger) != 0
+                && (triggerGroups & IMaterial.Bit(collider.Material.ColliderGroup)) == 0)
                 continue;
             
             if (collider.AttachedBody?.Owner is IHittable { Alive: true } hittable && filter(body, hittable))
@@ -43,7 +51,7 @@ public class BoxHitDetector(Vector2 offset, SizeF size, ColliderType colliderTyp
         var aabb = GetAabb(body, faceLeft);
 
         _colliderBuffer.Clear();
-        body.Simulation.CheckCollision(aabb, body, collidesWith: collidesWith, colliders: _colliderBuffer, colliderType: colliderType, debugRegister: true);
+        body.Simulation.CheckCollision(aabb, body, collidesWith: collidesWith, colliders: _colliderBuffer, colliderType: triggerGroups != 0 ? colliderType | ColliderType.Trigger : colliderType, debugRegister: true);
 
         _colliderBuffer.Sort((a, b) =>
             faceLeft ? b.Aabb.Right.CompareTo(a.Aabb.Right) : a.Aabb.Left.CompareTo(b.Aabb.Left));
