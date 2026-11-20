@@ -19,7 +19,7 @@ internal class SdlGameControllers: IGameControllers
         }
     }
 
-    public byte VibrationForce { get; set; }
+    public float VibrationLevel { get; set => field = Math.Clamp(value, 0f, 1f); } = 1f;
 
     private readonly SdlGameController[] _controllers =
     [
@@ -68,7 +68,10 @@ internal class SdlGameControllers: IGameControllers
 
     public void Vibrate(int player, Vibration low, Vibration high, uint ms)
     {
-        _controllers[player].Vibrate(low, high, ms);
+        if (VibrationLevel > 0)
+        {
+            _controllers[player].Vibrate(low, high, ms, VibrationLevel);
+        }
     }
 
     public void PostUpdate()

@@ -16,7 +16,7 @@ public abstract class GameControllersBase: IGameControllers
         }
     }
 
-    public byte VibrationForce { get; set; } = 3;
+    public float VibrationLevel { get; set => field = Math.Clamp(value, 0f, 1f); } = 1f;
 
     public ButtonState GetButton(int player, GameControllerButton button)
     {
@@ -49,9 +49,9 @@ public abstract class GameControllersBase: IGameControllers
 
     public void Vibrate(int player, Vibration low, Vibration high, uint ms)
     {
-        if (VibrationForce > 0)
+        if (VibrationLevel > 0)
         {
-            VibrateInternal(player, (ushort) ((int) low * 0xffff * VibrationForce / 40), (ushort) ((int) high * 0xffff * VibrationForce / 40), ms);
+            VibrateInternal(player, (ushort) ((int) low * 0xffff * VibrationLevel / 10), (ushort) ((int) high * 0xffff * VibrationLevel / 10), ms);
         }
     }
 

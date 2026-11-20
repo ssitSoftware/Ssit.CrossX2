@@ -49,7 +49,7 @@ public class SlashBehavior : SteeringBehavior<ISteeringCharacter>
             power = meleeAttacker.GetMeleePower(power);
         }
 
-        result.Hittable?.Hit(obj.FaceLeft ? new Vector2(-1, 0) : new Vector2(1, 0), power, obj as IHitter);
+        var hitTaken = result.Hittable?.Hit(obj.FaceLeft ? new Vector2(-1, 0) : new Vector2(1, 0), power, obj as IHitter) ?? false;
 
         // Small recoil away from the target when the slash connected with anything (also walls)
         if (result.HitAnything)
@@ -57,7 +57,7 @@ public class SlashBehavior : SteeringBehavior<ISteeringCharacter>
             obj.Body.Velocity += new Vector2(obj.FaceLeft ? obj.PhysicsValues.AttackVelocity : -obj.PhysicsValues.AttackVelocity, 0);
 
             // After the hit - the hittable has already seen the weapon as it was (e.g. still silver coated).
-            meleeAttacker?.OnMeleeHit(result.Hittable);
+            meleeAttacker?.OnMeleeHit(result.Hittable, hitTaken);
         }
 
         return false;

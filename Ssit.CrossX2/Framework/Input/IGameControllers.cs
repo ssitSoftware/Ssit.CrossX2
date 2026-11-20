@@ -14,12 +14,12 @@ public interface IGameControllers
     void SwitchButtons(int player, bool @switch);
     
     /// <summary>
-    /// Gets or sets the vibration force for the game controllers.
+    /// Gets or sets the vibration level for the game controllers.
     /// </summary>
     /// <remarks>
-    /// The vibration force is represented as a byte value.
+    /// Multiplier of every vibration intensity, from 0 (vibration off) to 1 (full strength).
     /// </remarks>
-    byte VibrationForce { get; set; }
+    float VibrationLevel { get; set; }
 
     /// <summary>
     /// Gets the state of a specified game controller button for a given player.

@@ -43,16 +43,16 @@ public class VerticalStackHandler<TVerticalStack>(ViewHandler.CreateHandlerParam
 
             foreach (var child in AttachedView.Children)
             {
+                // A hidden child takes no space.
+                if (!child.Visible.Value)
+                    continue;
+
                 var handlerView = (IHandlerView)child;
                 handlerView.Handler.CalculateSize(out var w, out var h1);
 
                 h += h1.Calculate(CurrentScale, 0);
                 maxW = MathF.Max(maxW, w.Calculate(CurrentScale, 0));
-
-                if (child.Visible.Value)
-                {
-                    visibleCount++;
-                }
+                visibleCount++;
             }
 
             if (height.IsAuto)
@@ -105,7 +105,8 @@ public class VerticalStackHandler<TVerticalStack>(ViewHandler.CreateHandlerParam
         var xx = bounds.X + x.Calculate(CurrentScale, bounds.Width);
         var yy = bounds.Y + offsetY;
         var ww = width.Calculate(CurrentScale, bounds.Width);
-        var hh = height.Calculate(CurrentScale, bounds.Height);
+        // A hidden child takes no space - zero height at its place, so the following children move up.
+        var hh = child.Visible.Value ? height.Calculate(CurrentScale, bounds.Height) : 0;
         
         switch (horizontalAlign)
         {

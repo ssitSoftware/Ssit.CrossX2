@@ -181,6 +181,39 @@ public abstract class Page<TViewModel>: View, IPage where TViewModel: class
             _recalculationNeeded = false;
             _rootHandler.Update(0);
         }
+
+        MoveFocusFromHiddenElement();
+    }
+
+    /// <summary>
+    /// When the focused element (or any of its parents) got hidden, the focus moves to the next element
+    /// (below it, or above when there is none below). Without any visible element the focus is cleared.
+    /// </summary>
+    private void MoveFocusFromHiddenElement()
+    {
+        // Wait for the pending layout, so the focus moves from the element's new (collapsed) place.
+        if (_recalculateLayout)
+            return;
+
+        var focused = _focusWalker.FocusedElement;
+        if (focused is null || IsVisible(focused as ViewHandler))
+            return;
+
+        if (!_focusWalker.MoveFocus(FocusDirection.Down) && !_focusWalker.MoveFocus(FocusDirection.Up))
+        {
+            _focusWalker.SetFocus(null);
+        }
+    }
+
+    private static bool IsVisible(ViewHandler handler)
+    {
+        for (var current = handler; current is not null; current = current.Parent as ViewHandler)
+        {
+            if (!current.View.Visible.Value)
+                return false;
+        }
+
+        return true;
     }
 
     bool IPage.OnUiButton(UiButton button, IInputContext inputContext)

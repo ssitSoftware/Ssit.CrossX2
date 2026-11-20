@@ -12,5 +12,9 @@ public interface IMeleeAttacker
     /// <summary>
     /// Called after a melee hit connected with anything - the <paramref name="hittable"/> (null for a wall etc.).
     /// </summary>
-    void OnMeleeHit(IHittable hittable);
+    /// <param name="hitTaken">
+    /// True when the <paramref name="hittable"/> took the hit (<see cref="IHittable.Hit"/> returned true);
+    /// false for a wall or a hit it ignored (e.g. a short invulnerability window).
+    /// </param>
+    void OnMeleeHit(IHittable hittable, bool hitTaken);
 }

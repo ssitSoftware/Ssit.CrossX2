@@ -8,6 +8,9 @@ internal unsafe class SdlGameController: IDisposable
 {
     private readonly int _playerIndex;
     private SdlHandle<SDL_Gamepad> _handle;
+
+    /// <summary>SDL instance id of the opened gamepad (valid only while <see cref="_handle"/> is set).</summary>
+    private uint _instanceId;
     
     private static readonly HashSet<uint> AttachedControllers = new();
     private readonly HashSet<GameControllerButton> _previousButtons = new();
@@ -18,7 +21,11 @@ internal unsafe class SdlGameController: IDisposable
         SDL_FindController();
     }
 
-    public bool IsConnected => SDL_GetGamepadFromPlayerIndex(_playerIndex) != null;
+    /// <summary>
+    /// Whether this slot has an opened, still connected gamepad. Checked on the slot's own handle - SDL's player index
+    /// doesn't have to match the slot (SDL can assign its own index to a reconnected gamepad).
+    /// </summary>
+    public bool IsConnected => _handle != null && _handle.Pointer != null && SDL_GamepadConnected(_handle.Pointer) == true;
 
     public float GetAxis(GameControllerAxis axis)
     {
@@ -131,6 +138,10 @@ internal unsafe class SdlGameController: IDisposable
         {
             SDL_CloseGamepad(gamepad);
             _handle = null;
+
+            // Free the device, so it can be opened again when it reconnects (SDL gives it a new instance id then).
+            AttachedControllers.Remove(_instanceId);
+            _instanceId = 0;
         }
     }
     
@@ -148,13 +159,12 @@ internal unsafe class SdlGameController: IDisposable
                 break;
             
             case SDL_EventType.SDL_EVENT_GAMEPAD_REMOVED:
-
-                if (_handle != null && _handle.Pointer != null)
+                // Close only the slot holding the removed gamepad. The connection state of a removed gamepad
+                // isn't reliable, so the slot could keep its stale handle and the reconnected gamepad would
+                // end up in the next free slot.
+                if (_handle != null && _handle.Pointer != null && (uint)sdlEvent.gdevice.which == _instanceId)
                 {
-                    if (SDL_GetGamepadConnectionState(_handle.Pointer) <= 0)
-                    {
-                        CloseHandle();
-                    }
+                    CloseHandle();
                 }
                 break;
         }
@@ -185,6 +195,7 @@ internal unsafe class SdlGameController: IDisposable
                     
                     SDL_SetGamepadPlayerIndex(gp, _playerIndex);
                     _handle = new SdlHandle<SDL_Gamepad>(gp);
+                    _instanceId = (uint)joysticks[i];
 
                     var canRumble = SDL_GetBooleanProperty(SDL_GetGamepadProperties(gp), SDL_PROP_GAMEPAD_CAP_RUMBLE_BOOLEAN, false);
                     Console.WriteLine($"[Gamepad] Player {_playerIndex}: '{SDL_GetGamepadName(gp)}' type={SDL_GetGamepadType(gp)} rumble={canRumble}");
@@ -198,7 +209,7 @@ internal unsafe class SdlGameController: IDisposable
         }
     }
 
-    public void Vibrate(Vibration low, Vibration high, uint ms)
+    public void Vibrate(Vibration low, Vibration high, uint ms, float level = 1f)
     {
         var gamepad = _handle != null ? _handle.Pointer : null;
 
@@ -207,8 +218,10 @@ internal unsafe class SdlGameController: IDisposable
             return;
         }
 
-        var lowVib = (int)low * 0xffff / 10;
-        var highVib = (int)high * 0xffff / 10;
+        level *= level;
+        
+        var lowVib = (int)((int)low * 0xffff * level / 10);
+        var highVib = (int)((int)high * 0xffff * level / 10);
         
         if (SDL_RumbleGamepad(gamepad, (ushort)lowVib, (ushort)highVib, ms) != true)
         {

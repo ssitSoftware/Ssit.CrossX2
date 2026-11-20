@@ -33,6 +33,16 @@ public abstract class ViewHandler: IDisposable
 
         if (((IHandlerView)View).Handler != null) throw new InvalidOperationException();
         View.Handler = this;
+
+        View.Visible.ValueChanged += OnVisibleChanged;
+    }
+
+    /// <summary>
+    /// Showing / hiding a view changes the layout of its parents (hidden views take no space in stacks).
+    /// </summary>
+    private void OnVisibleChanged()
+    {
+        Parent?.GetParent<IPage>(true)?.RecalculateLayout();
     }
 
     protected Length CalculateLengthWithPadding(Length length, Length? pad1, Length? pad2)
@@ -141,6 +151,7 @@ public abstract class ViewHandler: IDisposable
     
     public void Dispose()
     {
+        View.Visible.ValueChanged -= OnVisibleChanged;
         OnDispose(true);
         View.Handler = null;
     }
