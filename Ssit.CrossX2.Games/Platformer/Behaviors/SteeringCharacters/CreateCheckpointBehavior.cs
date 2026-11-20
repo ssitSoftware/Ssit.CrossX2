@@ -14,7 +14,7 @@ namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 /// Add the behavior (first) to the states the save can start from and to <paramref name="creatingState"/>.
 /// The hold timer is stored per object, so it keeps running across these states.
 /// </summary>
-public class CreateCheckpointBehavior(float holdTime = 1f, string controlName = SteeringControlNames.Save,
+public class CreateCheckpointBehavior(float holdTime = 1f, string controlName = SteeringControlNames.Operate,
     string creatingState = "CreateCheckpoint", string returnState = "Idle")
     : SteeringBehavior<ISteeringCharacter>
 {
