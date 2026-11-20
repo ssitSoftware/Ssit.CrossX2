@@ -49,9 +49,23 @@ public class HorizontalSliderHandler<TSlider> : ViewHandler<TSlider>, IUiCommand
         }
     }
 
+    /// <summary>
+    /// Bounds of the track with its outline: the screen bounds extended by <see cref="HorizontalSlider.WithOutlineWidth"/>
+    /// on both sides, so the outline baked into the graphics lies outside the slider bounds (like a text outline).
+    /// </summary>
+    private RectangleF TrackBounds
+    {
+        get
+        {
+            var sb = ScreenBounds;
+            var outlineWidth = AttachedView.WithOutlineWidth * CurrentScale;
+            return new RectangleF(sb.X - outlineWidth, sb.Y, sb.Width + outlineWidth * 2, sb.Height);
+        }
+    }
+
     protected override void OnDraw(IRenderer renderer)
     {
-        var sb = ScreenBounds;
+        var sb = TrackBounds;
 
         var offset = AttachedView.Value.Value - AttachedView.Min;
         var floatOffset = (float) offset / (AttachedView.Max - AttachedView.Min);
@@ -65,25 +79,29 @@ public class HorizontalSliderHandler<TSlider> : ViewHandler<TSlider>, IUiCommand
         var outlineColor =
             AttachedView.OutlineColor?.GetColor(renderer, _colorSource) ?? RgbaColor.Black;
         
-        var thumbRect = new RectangleF(sb.X + floatOffset * totalWidth, sb.Center.Y - thumbSize.Y / 2, thumbSize.X, thumbSize.Y);
+        // All parts are snapped to whole screen pixels and the track parts are drawn edge to edge. With a fractional
+        // position (e.g. the track moved by an odd WithOutlineWidth) the pixel centres can fall exactly on texel edges,
+        // and the end quads and the stretched middle quad then picked different texture rows - the track ends
+        // showed 1 px higher than the middle.
+        var thumbRect = new RectangleF(MathF.Round(sb.X + floatOffset * totalWidth), MathF.Round(sb.Center.Y - thumbSize.Y / 2), thumbSize.X, thumbSize.Y);
 
-        var posX = sb.X;
-        var posY = sb.Center.Y - AttachedView.Template.Track.Height * CurrentScale / 2f;
-        
-        renderer.SpriteRenderer.Draw(_texture.Resource.Texture, new Vector2(posX, posY), AttachedView.Template.TrackStart, origin: Vector2.Zero, scale: CurrentScale, color: fgColor); 
-        renderer.SpriteRenderer.Draw(_texture.Resource.Outline, new Vector2(posX, posY), AttachedView.Template.TrackStart, origin: Vector2.Zero, scale: CurrentScale, color: outlineColor);
-        
-        posX += AttachedView.Template.TrackStart.Width * CurrentScale;
-        
-        var trackLength = sb.Width - (AttachedView.Template.TrackStart.Width + AttachedView.Template.TrackEnd.Width) * CurrentScale;
-        
-        renderer.SpriteRenderer.Draw(_texture.Resource.Texture, new RectangleF(posX, posY, trackLength, AttachedView.Template.Track.Height * CurrentScale), AttachedView.Template.Track, nullableColor: fgColor); 
-        renderer.SpriteRenderer.Draw(_texture.Resource.Outline, new RectangleF(posX, posY, trackLength, AttachedView.Template.Track.Height * CurrentScale), AttachedView.Template.Track, nullableColor: outlineColor);
+        var trackHeight = AttachedView.Template.Track.Height * CurrentScale;
+        var posY = MathF.Round(sb.Center.Y - trackHeight / 2f);
 
-        posX += trackLength;
+        var startX = MathF.Round(sb.X);
+        var middleX = MathF.Round(sb.X + AttachedView.Template.TrackStart.Width * CurrentScale);
+        var endX = MathF.Round(sb.Right - AttachedView.Template.TrackEnd.Width * CurrentScale);
+        var rightX = MathF.Round(sb.Right);
+        var trackLength = endX - middleX;
         
-        renderer.SpriteRenderer.Draw(_texture.Resource.Texture, new Vector2(posX, posY), AttachedView.Template.TrackEnd, origin: Vector2.Zero, scale: CurrentScale, color: fgColor); 
-        renderer.SpriteRenderer.Draw(_texture.Resource.Outline, new Vector2(posX, posY), AttachedView.Template.TrackEnd, origin: Vector2.Zero, scale: CurrentScale, color: outlineColor);
+        renderer.SpriteRenderer.Draw(_texture.Resource.Texture, new RectangleF(startX, posY, middleX - startX, trackHeight), AttachedView.Template.TrackStart, nullableColor: fgColor); 
+        renderer.SpriteRenderer.Draw(_texture.Resource.Outline, new RectangleF(startX, posY, middleX - startX, trackHeight), AttachedView.Template.TrackStart, nullableColor: outlineColor);
+        
+        renderer.SpriteRenderer.Draw(_texture.Resource.Texture, new RectangleF(middleX, posY, trackLength, trackHeight), AttachedView.Template.Track, nullableColor: fgColor); 
+        renderer.SpriteRenderer.Draw(_texture.Resource.Outline, new RectangleF(middleX, posY, trackLength, trackHeight), AttachedView.Template.Track, nullableColor: outlineColor);
+        
+        renderer.SpriteRenderer.Draw(_texture.Resource.Texture, new RectangleF(endX, posY, rightX - endX, trackHeight), AttachedView.Template.TrackEnd, nullableColor: fgColor); 
+        renderer.SpriteRenderer.Draw(_texture.Resource.Outline, new RectangleF(endX, posY, rightX - endX, trackHeight), AttachedView.Template.TrackEnd, nullableColor: outlineColor);
         
         renderer.SpriteRenderer.Draw(_texture.Resource.Texture, thumbRect, AttachedView.Template.Thumb, nullableColor: fgColor);
         renderer.SpriteRenderer.Draw(_texture.Resource.Outline, thumbRect, AttachedView.Template.Thumb, nullableColor: outlineColor);
@@ -172,7 +190,7 @@ public class HorizontalSliderHandler<TSlider> : ViewHandler<TSlider>, IUiCommand
 
     private void UpdateValueFromPosition(float pointerX)
     {
-        var sb = ScreenBounds;
+        var sb = TrackBounds;
         var thumbWidth = AttachedView.Template.Thumb.Width * CurrentScale;
         var totalWidth = sb.Width - thumbWidth;
 
