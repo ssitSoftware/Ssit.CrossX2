@@ -86,11 +86,6 @@ internal static class AppRunnerSdl
 #elif ANDROID
         flags = SDL_WindowFlags.SDL_WINDOW_BORDERLESS | SDL_WindowFlags.SDL_WINDOW_FULLSCREEN |
                 SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY;
-#else
-        // Without this, macOS defaults to "auto" and hides the menu/title bar
-        // (and its green button) because fullscreen was toggled programmatically
-        // rather than via the window's own fullscreen button.
-        SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_MENU_VISIBILITY, "1");
 #endif
         
         SDL_Window* window = SDL_CreateWindow(appInitializer.WindowTitle, size.Width, size.Height, flags);
@@ -372,7 +367,7 @@ internal static class AppRunnerSdl
                 gameControllers.ProcessEvent(@event);
             }
 
-            UpdateCursorVisibility(window, pointingDevices);
+            UpdateCursorVisibility(pointingDevices);
             
             actionScheduler.Process();
             
@@ -539,48 +534,14 @@ internal static class AppRunnerSdl
     /// position, so it doesn't depend on MOUSE_ENTER/LEAVE events, which macOS can drop
     /// (fullscreen transitions, menu bar reveal, Space switches).
     /// </summary>
-    private static unsafe void UpdateCursorVisibility(SDL_Window* window, SdlPointingDevices pointingDevices)
+    private static void UpdateCursorVisibility(SdlPointingDevices pointingDevices)
     {
         if ((pointingDevices.Mode & (PointingDevicesMode.Mouse | PointingDevicesMode.AutoHideMouse)) != 0)
         {
-#if !IOS && !ANDROID
-            if (OperatingSystem.IsMacOS())
-            {
-                MacNativeCursor.SetHidden(false);
-            }
-#endif
+            SDL_ShowCursor();
             return;
         }
-
-        if (SDL_CursorVisible())
-        {
-            SDL_HideCursor();
-        }
-
-#if !IOS && !ANDROID
-        // SDL_HideCursor is enough on Windows / Linux - the native fallback below is macOS only.
-        if (!OperatingSystem.IsMacOS())
-        {
-            return;
-        }
-
-        var hasFocus = (SDL_GetWindowFlags(window) & SDL_WindowFlags.SDL_WINDOW_INPUT_FOCUS) != 0;
-        var isOverWindow = false;
-
-        if (hasFocus)
-        {
-            float mouseX, mouseY;
-            int windowX, windowY, windowW, windowH;
-            SDL_GetGlobalMouseState(&mouseX, &mouseY);
-            SDL_GetWindowPosition(window, &windowX, &windowY);
-            SDL_GetWindowSize(window, &windowW, &windowH);
-
-            isOverWindow = mouseX >= windowX && mouseX < windowX + windowW &&
-                           mouseY >= windowY && mouseY < windowY + windowH;
-        }
-
-        MacNativeCursor.SetHidden(hasFocus && isOverWindow);
-#endif
+        SDL_HideCursor();
     }
 
     /// <summary>

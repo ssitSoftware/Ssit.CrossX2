@@ -100,6 +100,7 @@ internal unsafe class AppWindowManager(SDL_Window* window, SDL_GPUDevice* device
                         SDL_SetWindowPosition(window, (int)SDL_WINDOWPOS_CENTERED, (int)SDL_WINDOWPOS_CENTERED);
                         _firstTimeWindowed = false;
                     }
+                    ApplyFullscreenMenuVisibility();
                     SDL_SetWindowFullscreen(window, true);
                 }
             }
@@ -124,7 +125,7 @@ internal unsafe class AppWindowManager(SDL_Window* window, SDL_GPUDevice* device
 
             var size = _lastWindowSize;
             
-            switch (_windowedMode)
+            switch (_windowedMode &  WindowedMode.SizeModes)
             {
                 case WindowedMode.None:
                     SDL_SetWindowMinimumSize(window, _minimumSize.Width, _minimumSize.Height);
@@ -165,6 +166,27 @@ internal unsafe class AppWindowManager(SDL_Window* window, SDL_GPUDevice* device
         _lastWindowSize = size;
         _minimumSize = minimumSize;
         _windowedMode = mode;
+
+        // SDL applies the hint to a window that is already fullscreen, so a flag change takes effect immediately.
+        if (_actionScheduler != null && IsFullscreen)
+        {
+            _actionScheduler.Schedule(ApplyFullscreenMenuVisibility);
+        }
+    }
+
+    /// <summary>
+    /// macOS: controls whether the menu bar / title bar can be revealed by moving the cursor to the top edge
+    /// of a fullscreen Space. With <see cref="WindowedMode.BorderlessFullscreen"/> they stay hidden ("0"),
+    /// otherwise they behave like a regular macOS fullscreen window ("1"). Must be set before
+    /// SDL_SetWindowFullscreen - SDL's default ("auto") would hide them for programmatic fullscreen.
+    /// </summary>
+    private void ApplyFullscreenMenuVisibility()
+    {
+        if (!OperatingSystem.IsMacOS())
+            return;
+
+        var borderless = (_windowedMode & WindowedMode.BorderlessFullscreen) != 0;
+        SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_MENU_VISIBILITY, borderless ? "0" : "1");
     }
 
     public void SetTitle(string title) => SDL_SetWindowTitle(window, title);

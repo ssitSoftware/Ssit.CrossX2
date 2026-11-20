@@ -3,11 +3,14 @@ namespace Ssit.CrossX2.Framework.Services;
 /// <summary>
 /// Window sizing behavior used when the application runs in windowed mode.
 /// </summary>
+[Flags]
 public enum WindowedMode
 {
     None = 0,
     KeepAspect = 1,
     KeepSize = 2,
+    SizeModes = KeepAspect | KeepSize,
+    BorderlessFullscreen = 4,
 }
 
 /// <summary>
