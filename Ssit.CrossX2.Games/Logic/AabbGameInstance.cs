@@ -82,8 +82,6 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
     public event Action Updated;
     public event Action<object> Message;
     public IMessenger Messenger => this;
-    
-    private readonly IGameTimer _timer;
     private readonly IGameClock _clock = new GameClock();
 
     private readonly IActionScheduler _scheduler;
@@ -130,16 +128,6 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
     {
 
         _contentCache = container.IoCConstruct<IContentCache>(); 
-        
-        if (parameters.TargetFps.HasValue)
-        {
-            _timer = container.IoCConstruct<TargetGameTimer>(new TargetGameTimer.Parameters{ TargetFps = parameters.TargetFps.Value});
-        }
-        else
-        {
-            _timer = new GameTimer(parameters.MaxFps.HasValue ? 1f / parameters.MaxFps.Value : 0f);
-        }
-
         _internalStopwatch.Start();
         
         Slot = parameters.Slot;
@@ -363,10 +351,9 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
         if (_isDisposed)
             return;
 
-        _timer.Update(deltaTime);
         _clock.Update(deltaTime);
-        
-        Simulation.SimulationParameters.TimeDelta = _timer.TimeDelta;
+
+        Simulation.SimulationParameters.TimeDelta = MathF.Max(deltaTime, 1 / 1440f);
         Simulation.Update(deltaTime, FixedUpdate);
         _mapDisplayElement.Update(deltaTime);
         Updated?.Invoke();
