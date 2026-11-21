@@ -46,7 +46,9 @@ internal static class RectRectCollision
         if (IsTouchingHorizontally(ref before, ref obstacle))
             return false;
 
-        if (before.Bottom - MovementCollisionCalculator.MovementEpsilon < obstacle.Top && after.Bottom + MovementCollisionCalculator.MovementEpsilon > obstacle.Top)
+        // Only the face the body moves towards - with the epsilon, a move away shorter than it would otherwise
+        // count as hitting the face the body has just left (and snap it back, e.g. stuck at a wall with a small dt).
+        if (move.Y > 0 && before.Bottom - MovementCollisionCalculator.MovementEpsilon < obstacle.Top && after.Bottom + MovementCollisionCalculator.MovementEpsilon > obstacle.Top)
         {
             var movey = obstacle.Top - before.Bottom;
             var testMove = move * (movey / move.Y);
@@ -60,7 +62,7 @@ internal static class RectRectCollision
             }
         }
 
-        if (before.Top + MovementCollisionCalculator.MovementEpsilon > obstacle.Bottom && after.Top - MovementCollisionCalculator.MovementEpsilon < obstacle.Bottom)
+        if (move.Y < 0 && before.Top + MovementCollisionCalculator.MovementEpsilon > obstacle.Bottom && after.Top - MovementCollisionCalculator.MovementEpsilon < obstacle.Bottom)
         {
             var movey = obstacle.Bottom - before.Top;
             var testMove = move * (movey / move.Y);
@@ -85,7 +87,9 @@ internal static class RectRectCollision
         if (IsTouchingVertically(ref before, ref obstacle))
             return false;
 
-        if (before.Right - MovementCollisionCalculator.MovementEpsilon < obstacle.Left && after.Right + MovementCollisionCalculator.MovementEpsilon > obstacle.Left)
+        // Only the face the body moves towards - with the epsilon, a move away shorter than it would otherwise
+        // count as hitting the face the body has just left (and snap it back, e.g. stuck at a wall with a small dt).
+        if (move.X > 0 && before.Right - MovementCollisionCalculator.MovementEpsilon < obstacle.Left && after.Right + MovementCollisionCalculator.MovementEpsilon > obstacle.Left)
         {
             var movex = obstacle.Left - before.Right;
             var testMove = move * (movex / move.X);
@@ -99,7 +103,7 @@ internal static class RectRectCollision
             }
         }
 
-        if (before.Left + MovementCollisionCalculator.MovementEpsilon > obstacle.Right && after.Left - MovementCollisionCalculator.MovementEpsilon < obstacle.Right)
+        if (move.X < 0 && before.Left + MovementCollisionCalculator.MovementEpsilon > obstacle.Right && after.Left - MovementCollisionCalculator.MovementEpsilon < obstacle.Right)
         {
             var movex = obstacle.Right - before.Left;
             var testMove = move * (movex / move.X);

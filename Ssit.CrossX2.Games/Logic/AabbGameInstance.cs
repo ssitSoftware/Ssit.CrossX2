@@ -39,8 +39,8 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
         public Action<IIoCContainerBuilder> RegisterServices { get; set; }
         public IMaterial[] Materials { get; set; }
         public int BackgroundColorIndex { get; set; }
-        public int? MaxFps { get; set; }
-        public int? TargetFps { get; set; }
+        public int? MinPhisicsUPS { get; set; }
+        public int? MaxPhisicsUPS { get; set; }
         public IBackgroundRenderer BackgroundRenderer { get; set; }
         
         /// <summary>
@@ -82,6 +82,8 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
     public event Action Updated;
     public event Action<object> Message;
     public IMessenger Messenger => this;
+    
+    private readonly IGameTimer _timer;
     private readonly IGameClock _clock = new GameClock();
 
     private readonly IActionScheduler _scheduler;
@@ -99,7 +101,7 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
     
     private bool _isDisposed;
 
-    private Queue<object> _messages = new();
+    private readonly Queue<object> _messages = new();
 
     int IGameInstance.RenderPasses => 1;
     
@@ -126,8 +128,9 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
         IActionScheduler scheduler, IGameTemplate gameTemplate, IFileStorage storage,
         Parameters parameters)
     {
-
         _contentCache = container.IoCConstruct<IContentCache>(); 
+        _timer = new GameTimer(1f / parameters.MaxPhisicsUPS, 1f / parameters.MinPhisicsUPS);
+
         _internalStopwatch.Start();
         
         Slot = parameters.Slot;
@@ -351,9 +354,10 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
         if (_isDisposed)
             return;
 
+        _timer.Update(deltaTime);
         _clock.Update(deltaTime);
 
-        Simulation.SimulationParameters.TimeDelta = MathF.Max(deltaTime, 1 / 1440f);
+        Simulation.SimulationParameters.TimeDelta = _timer.TimeDelta;
         Simulation.Update(deltaTime, FixedUpdate);
         _mapDisplayElement.Update(deltaTime);
         Updated?.Invoke();

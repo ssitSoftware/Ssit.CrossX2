@@ -25,6 +25,7 @@ public class SteeringInput : ISteeringInputController, ISteeringInput, IUpdatabl
         if (_autoMapping && !_mappings.ContainsKey(id))
         {
             MapButton(id, id);
+            AnalyzeButton(id);
         }
 
         if (!_buttonStates.ContainsKey(id))
@@ -40,6 +41,7 @@ public class SteeringInput : ISteeringInputController, ISteeringInput, IUpdatabl
         if (_autoMapping && !_mappings.ContainsKey(id))
         {
             MapValue(id, id);
+            AnalyzeValue(id);
         }
 
         _values.TryAdd(id, 0.0f);

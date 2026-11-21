@@ -96,11 +96,6 @@ public class WallContactCollisionBehavior(WallContactCollisionBehavior.DefaultMo
                 {
                     obj.FaceLeft = !obj.FaceLeft;
                 }
-                else
-                {
-                    obj.SetSteeringState("Idle");
-                }
-
                 return true;
             }
         }
