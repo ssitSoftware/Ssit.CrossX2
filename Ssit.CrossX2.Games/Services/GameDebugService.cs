@@ -2,7 +2,7 @@ using Ssit.CrossX2.Framework.UI.Values;
 
 namespace Ssit.CrossX2.Framework.Games.Services;
 
-public class GameDebugService: IGameDebugService
+internal class GameDebugService: IGameDebugService, IUpsInfoService
 {
     public SharedBool ShowDebug => _showDebug;
 
@@ -12,4 +12,7 @@ public class GameDebugService: IGameDebugService
     {
         _showDebug.SetValue(!_showDebug.Value);
     }
+
+    public int Ups { get; private set; }
+    public void SetUps(int ups) => Ups = ups;
 }

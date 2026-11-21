@@ -6,4 +6,5 @@ public interface IGameDebugService
 {
     SharedBool ShowDebug { get; }
     void ToggleDebug();
+    int Ups { get; }
 }

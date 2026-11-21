@@ -128,8 +128,12 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
         IActionScheduler scheduler, IGameTemplate gameTemplate, IFileStorage storage,
         Parameters parameters)
     {
-        _contentCache = container.IoCConstruct<IContentCache>(); 
-        _timer = new GameTimer(1f / parameters.MaxPhisicsUPS, 1f / parameters.MinPhisicsUPS);
+        _contentCache = container.IoCConstruct<IContentCache>();
+        _timer = container.IoCConstruct<GameTimer>(new GameTimer.Parameters
+        {
+            MinUps = parameters.MinPhisicsUPS,
+            MaxUps = parameters.MaxPhisicsUPS
+        });
 
         _internalStopwatch.Start();
         

@@ -9,10 +9,15 @@ namespace Ssit.CrossX2.Framework.Games;
 
 public static class ServiceRegistrar
 {
+    public static IIoCContainerBuilder WithXxGames(this IIoCContainerBuilder builder)
+    {
+        builder.WithSingleton<IGameDebugService, GameDebugService>().As<IUpsInfoService>();
+        return builder;
+    }
+    
     public static IUiAppBuilder WithXxGames(this IUiAppBuilder builder)
     {
         builder
-            .WithServiceRegistrar(s => s.WithSingleton<IGameDebugService, GameDebugService>())
             .WithHandlersMapping(m => m
                 .AddMapping<GameView, GameViewHandler>()
                 .AddMapping<BossHealthView, BossHealthViewHandler>()

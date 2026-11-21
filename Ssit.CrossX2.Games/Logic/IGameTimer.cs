@@ -4,4 +4,5 @@ public interface IGameTimer
 {
     void Update(float dt);
     float TimeDelta { get; }
+    float TargetUps { get; }
 }

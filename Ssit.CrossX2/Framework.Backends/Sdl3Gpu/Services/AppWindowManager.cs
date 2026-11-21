@@ -231,7 +231,11 @@ internal unsafe class AppWindowManager(SDL_Window* window, SDL_GPUDevice* device
         var display =  SDL_GetDisplayForWindow(window);
         var mode = SDL_GetCurrentDisplayMode(display);
 
-        return (mode->w, mode->h, (int)Math.Ceiling(mode->refresh_rate));
+        var hz = mode->refresh_rate_denominator > 0
+            ? (double)mode->refresh_rate_numerator / mode->refresh_rate_denominator
+            : mode->refresh_rate;
+        
+        return (mode->w, mode->h, (int)Math.Ceiling(hz));
     }
 
     /// <summary>

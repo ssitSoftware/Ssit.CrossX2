@@ -37,4 +37,5 @@ public interface IAppWindowManager
     Size GetWindowMaxSize();
     
     (int w, int h, int hz) GetDisplayMode();
+    double GetRefreshRate() => GetDisplayMode().hz;
 }
