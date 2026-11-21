@@ -21,6 +21,15 @@ public class AirJumpBehavior : SteeringBehavior<ISteeringCharacter>
         bool Activate(out Vector2? direction);
     }
 
+    /// <summary>
+    /// Optionally implemented by characters that want to react to a pad launch (e.g. gamepad feedback).
+    /// Called after the launch velocity is applied.
+    /// </summary>
+    public interface IAirJumpListener
+    {
+        void OnAirJumped(IAirJumpPad pad);
+    }
+
     protected override bool OnFixedUpdate(ISteeringCharacter obj, float dt)
     {
         if (obj.SteeringParameters.IsOnGround)
@@ -66,6 +75,8 @@ public class AirJumpBehavior : SteeringBehavior<ISteeringCharacter>
                 }
 
                 obj.SteeringParameters.LastHorizontalVelocity = obj.Body.Velocity.X;
+
+                (obj as IAirJumpListener)?.OnAirJumped(jp);
 
                 return true;
             }
