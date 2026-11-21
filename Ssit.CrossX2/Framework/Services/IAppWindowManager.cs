@@ -21,10 +21,11 @@ public interface IAppWindowManager
     bool IsFullscreen { get; }
 
     /// <summary>
-    /// Synchronizes presentation with the display refresh rate (default true). When false the frame rate is uncapped.
+    /// Frame pacing (default <see cref="Services.VSyncMode.VSync"/>): synchronized with the display refresh,
+    /// limited to a multiple of the refresh rate with VSync off, or uncapped.
     /// Ignored while the CROSSX_PRESENT_MODE environment variable forces a present mode.
     /// </summary>
-    bool VSync { get; set; }
+    VSyncMode VSyncMode { get; set; }
 
     event Action<WindowClosingEventArgs> Closing; 
     void Close();

@@ -134,11 +134,13 @@ internal static class AppRunnerSdl
 
         var appWindowManager = new AppWindowManager(window, device);
 
-        // CROSSX_PRESENT_MODE pins the present mode; IAppWindowManager.VSync is then ignored.
+        // CROSSX_PRESENT_MODE pins the present mode; IAppWindowManager.VSyncMode is then ignored.
         if (GetRequestedPresentMode() is { } forcedMode)
         {
             appWindowManager.ForcePresentMode(forcedMode);
         }
+
+        var frameRateLimiter = new FrameRateLimiter();
 
         builder
             .WithSingleton<IRenderer, SdlGpuRenderer>().As<SdlGpuRenderer>()
@@ -198,6 +200,8 @@ internal static class AppRunnerSdl
         
         while (appWindowManager.ShouldContinue)
         {
+            WaitForNextFrame(frameRateLimiter, appWindowManager);
+
             SDL_Event @event;
             while (SDL_PollEvent(&@event))
             {
@@ -438,6 +442,24 @@ internal static class AppRunnerSdl
         SDL_Quit();
     }
 
+    /// <summary>
+    /// <see cref="VSyncMode.Limit"/>: sleeps until the limiter's next frame slot. Runs before events are polled,
+    /// so input is sampled right before the update and the wait doesn't add input latency. The refresh rate is
+    /// re-read every frame, so moving the window to another display or changing its mode retargets the limit.
+    /// </summary>
+    private static void WaitForNextFrame(FrameRateLimiter frameRateLimiter, AppWindowManager appWindowManager)
+    {
+        frameRateLimiter.RefreshRate = appWindowManager.IsFrameRateLimited ? appWindowManager.GetRefreshRate() : 0;
+
+        var waitNs = frameRateLimiter.GetWaitTimeNs(SDL_GetTicksNS());
+
+        if (waitNs > 0)
+        {
+            // Sleeps most of the time, then spins for the last moment: plain sleeps are too coarse at 480 FPS (~2 ms).
+            SDL_DelayPrecise(waitNs);
+        }
+    }
+
     private static void WriteMemoryLeakReport()
     {
         if (SdlGpuTexture.Count > 0)
@@ -591,7 +613,7 @@ internal static class AppRunnerSdl
 
     /// <summary>
     /// Frame time statistics, enabled with the environment variable CROSSX_PERF=1.
-    /// Present mode is left alone: turn VSync off (or set CROSSX_PRESENT_MODE) to measure uncapped frame times.
+    /// Present mode is left alone: use VSyncMode.Full (or set CROSSX_PRESENT_MODE) to measure uncapped frame times.
     /// </summary>
     private sealed class FramePerfStats
     {

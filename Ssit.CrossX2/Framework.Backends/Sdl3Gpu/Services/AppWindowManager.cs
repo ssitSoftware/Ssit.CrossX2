@@ -9,7 +9,7 @@ internal unsafe class AppWindowManager(SDL_Window* window, SDL_GPUDevice* device
     private IActionScheduler _actionScheduler;
     private SDL_GPUPresentMode? _forcedPresentMode;
 
-    public bool VSync
+    public VSyncMode VSyncMode
     {
         get;
         set
@@ -22,7 +22,10 @@ internal unsafe class AppWindowManager(SDL_Window* window, SDL_GPUDevice* device
             if (_forcedPresentMode != null)
                 return;
 
-            var mode = value ? SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC : SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE;
+            // Limit only paces frames in the app runner; the swapchain itself is uncapped like Full.
+            var mode = value == VSyncMode.VSync
+                ? SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC
+                : SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE;
 
             // Applied between frames: the swapchain must not be changed while a swapchain texture is acquired.
             if (_actionScheduler != null)
@@ -34,10 +37,16 @@ internal unsafe class AppWindowManager(SDL_Window* window, SDL_GPUDevice* device
                 ApplyPresentMode(mode);
             }
         }
-    } = true; // SDL's default present mode is VSYNC.
+    } = VSyncMode.VSync; // SDL's default present mode is VSYNC.
 
     /// <summary>
-    /// Pins the present mode (CROSSX_PRESENT_MODE / perf stats); later <see cref="VSync"/> changes are ignored.
+    /// True when the app runner should pace frames to a refresh rate multiple: <see cref="Framework.Services.VSyncMode.Limit"/>
+    /// and no present mode forced by CROSSX_PRESENT_MODE.
+    /// </summary>
+    public bool IsFrameRateLimited => _forcedPresentMode == null && VSyncMode == VSyncMode.Limit;
+
+    /// <summary>
+    /// Pins the present mode (CROSSX_PRESENT_MODE / perf stats); later <see cref="VSyncMode"/> changes are ignored.
     /// </summary>
     public void ForcePresentMode(SDL_GPUPresentMode mode)
     {
@@ -223,6 +232,21 @@ internal unsafe class AppWindowManager(SDL_Window* window, SDL_GPUDevice* device
         var mode = SDL_GetCurrentDisplayMode(display);
 
         return (mode->w, mode->h, (int)Math.Ceiling(mode->refresh_rate));
+    }
+
+    /// <summary>
+    /// Exact refresh rate in Hz of the display showing the window (e.g. 59.94), 0 when unknown.
+    /// </summary>
+    public double GetRefreshRate()
+    {
+        var mode = SDL_GetCurrentDisplayMode(SDL_GetDisplayForWindow(window));
+
+        if (mode == null)
+            return 0;
+
+        return mode->refresh_rate_denominator > 0
+            ? (double)mode->refresh_rate_numerator / mode->refresh_rate_denominator
+            : mode->refresh_rate;
     }
 
     public void RaiseAppExiting(WindowClosingEventArgs args)
