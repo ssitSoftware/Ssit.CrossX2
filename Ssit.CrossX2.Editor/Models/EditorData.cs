@@ -37,6 +37,9 @@ public class EditorData: IZoomData, IDisposable
     [JsonProperty] public decimal Zoom { get; set; } = 1;
     [JsonProperty] public bool ShowLinks { get; set; }
     [JsonProperty] public bool ShowObjects { get; set; } = true;
+
+    /// <summary>Name and position labels on selected objects.</summary>
+    [JsonProperty] public bool ShowObjectLabels { get; set; } = true;
     [JsonProperty] public bool ShowMaterials { get; set; }
     [JsonProperty] public bool ShowCollisions { get; set; }
     [JsonProperty] public float CameraX { get; set; }

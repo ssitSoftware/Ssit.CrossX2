@@ -317,6 +317,13 @@ namespace Ssit.CrossX2.Editor.ViewModels
         public ZoomViewModel Zoom { get; }
     
         private SKPaint _skPaint = new();
+
+        // Position and name labels of selected objects: collected while the layers are drawn (render thread) and
+        // drawn after them, so tiles and other objects never cover them.
+        private readonly SKFont _labelFont = new() { Size = 12 };
+        // Dark orange (the selection frame's hue), dark enough for white text to stay readable.
+        private static readonly SKColor SelectionLabelColor = new(176, 72, 0, 240);
+        private readonly List<(string Text, float X, float Y, bool BelowRight)> _selectionLabels = new();
     
         private Vector2 _currentSize;
 
@@ -367,6 +374,22 @@ namespace Ssit.CrossX2.Editor.ViewModels
 
                     EnableAnimation(value);
                 }
+            }
+        }
+
+        /// <summary>Name and position labels on selected objects.</summary>
+        public bool ShowObjectLabels
+        {
+            get => _editorData.ShowObjectLabels;
+            set
+            {
+                if (value == _editorData.ShowObjectLabels) return;
+
+                _editorData.ShowObjectLabels = value;
+                _editorData.RequestSave();
+
+                OnPropertyChanged();
+                Redraw();
             }
         }
 
@@ -455,6 +478,7 @@ namespace Ssit.CrossX2.Editor.ViewModels
         
             // A new list: the published one may still be read by a hit test.
             _currentObjects = new List<MapObjectInfo>(_lastFrameObjects.Count);
+            _selectionLabels.Clear();
             
             _currentSize = new Vector2(width, height);
 
@@ -554,6 +578,13 @@ namespace Ssit.CrossX2.Editor.ViewModels
 
             // All objects of the frame are known now (the tool's own rendering hit-tests them, too).
             _lastFrameObjects = _currentObjects;
+
+            foreach (var label in _selectionLabels)
+            {
+                DrawSelectionLabel(skCanvas, _skPaint, label.Text, label.X, label.Y, label.BelowRight);
+            }
+
+            _skPaint.Color = SKColors.White;
 
             Tools.Current.Render(skCanvas, grContext, width, height);
 
@@ -952,6 +983,16 @@ namespace Ssit.CrossX2.Editor.ViewModels
                 skPaint.Color = SKColors.GreenYellow.WithAlpha(192);
                 skCanvas.DrawLine(pos.X + 10, pos.Y + 10, pos.X - 10, pos.Y - 10, skPaint);
                 skCanvas.DrawLine(pos.X + 10, pos.Y - 10, pos.X - 10, pos.Y + 10, skPaint);
+
+                // Outside the frame: position (in tiles) below its bottom-right corner, name above its top-left.
+                var positionText = string.Create(CultureInfo.InvariantCulture,
+                    $"{mapObject.Position.X:0.##}, {mapObject.Position.Y:0.##}");
+
+                if (ShowObjectLabels)
+                {
+                    _selectionLabels.Add((positionText, rect.Right, rect.Bottom + 2, true));
+                    _selectionLabels.Add((editorImg.Name, rect.X, rect.Y - 2, false));
+                }
             }
             else if (layer == SelectedLayer && !IsFullscreen && (!ShowAllLayers || ShowGrid))
             {
@@ -966,6 +1007,35 @@ namespace Ssit.CrossX2.Editor.ViewModels
             skPaint.ColorFilter = oldFilter;
             
             return rect;
+        }
+
+        /// <summary>
+        /// White text on an orange (selection frame) background. By default the label sits above (<paramref name="x"/>,
+        /// <paramref name="y"/>) and starts there (above a frame's top-left corner); with <paramref name="belowRight"/>
+        /// it hangs below that point and ends there (below a frame's bottom-right corner).
+        /// </summary>
+        private void DrawSelectionLabel(SKCanvas skCanvas, SKPaint skPaint, string text, float x, float y,
+            bool belowRight)
+        {
+            if (string.IsNullOrEmpty(text)) return;
+
+            var wasStroke = skPaint.IsStroke;
+
+            var width = _labelFont.MeasureText(text) + 8;
+            var height = _labelFont.Size + 6;
+
+            var labelRect = belowRight
+                ? SKRect.Create(x - width, y, width, height)
+                : SKRect.Create(x, y - height, width, height);
+
+            skPaint.IsStroke = false;
+            skPaint.Color = SelectionLabelColor;
+            skCanvas.DrawRect(labelRect, skPaint);
+
+            skPaint.Color = SKColors.White;
+            skCanvas.DrawText(text, labelRect.Left + 4, labelRect.Bottom - 4, _labelFont, skPaint);
+
+            skPaint.IsStroke = wasStroke;
         }
 
         public RectangleF DrawEditorImage(EditorImage image, bool flipped, Vector2 position, SKCanvas skCanvas, GRContext grContext, SKPaint skPaint)

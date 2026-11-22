@@ -177,11 +177,28 @@
 
                     <Border Classes="ToolbarSeparator" />
 
-                    <ToggleButton
-                        Classes="Toolbar"
-                        IsChecked="{Binding EditorViewModel.ShowObjects}"
-                        ToolTip.Tip="Show objects"
-                        i:Attached.Icon="mdi-human-greeting" />
+                    <StackPanel Orientation="Horizontal">
+                        <ToggleButton
+                            Classes="Toolbar"
+                            IsChecked="{Binding EditorViewModel.ShowObjects}"
+                            ToolTip.Tip="Show objects"
+                            i:Attached.Icon="mdi-human-greeting" />
+
+                        <DropDownButton
+                            Height="36"
+                            Padding="2,0"
+                            ToolTip.Tip="Object display options"
+                            Width="22">
+                            <DropDownButton.Flyout>
+                                <Flyout Placement="BottomEdgeAlignedLeft">
+                                    <CheckBox
+                                        Content="Show object labels"
+                                        IsChecked="{Binding EditorViewModel.ShowObjectLabels}"
+                                        ToolTip.Tip="Name and position labels on selected objects" />
+                                </Flyout>
+                            </DropDownButton.Flyout>
+                        </DropDownButton>
+                    </StackPanel>
 
                     <ToggleButton
                         Classes="Toolbar"
