@@ -27,6 +27,9 @@
             <TabItem Header="Objects">
                 <panels:ImagesSelector DataContext="{Binding ObjectsSelector}" />
             </TabItem>
+            <TabItem Header="Prefabs">
+                <panels:PrefabLibraryPanel DataContext="{Binding PrefabLibrary}" />
+            </TabItem>
         </TabControl.Items>
     </TabControl>
 </UserControl>

@@ -23,5 +23,8 @@ namespace Ssit.CrossX2.Editor.Service
         /// <param name="suggestedFileName">Initial file name (save picker only).</param>
         Task<string> ChooseFile(bool open, string title, string filters, string startFolder = null,
             string suggestedFileName = null);
+
+        /// <summary>Folder picker; throws <see cref="TaskCanceledException"/> when cancelled.</summary>
+        Task<string> ChooseFolder(string title, string startFolder = null);
     }
 }

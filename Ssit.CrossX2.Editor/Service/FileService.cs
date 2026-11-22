@@ -101,4 +101,34 @@ public class FileService: IFileService
             if (file is null) throw new TaskCanceledException();
             return file;
         }
+
+    public async Task<string> ChooseFolder(string title, string startFolder = null)
+    {
+        string folder = null;
+
+        if (_applicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            var owner = desktop.Windows.FirstOrDefault(w => w.IsActive) ?? desktop.MainWindow;
+            var storageProvider = owner.StorageProvider;
+
+            IStorageFolder suggestedStartLocation = null;
+            if (!string.IsNullOrWhiteSpace(startFolder) && Directory.Exists(startFolder))
+            {
+                suggestedStartLocation = await storageProvider.TryGetFolderFromPathAsync(startFolder);
+            }
+
+            var folders = await storageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = title,
+                AllowMultiple = false,
+                SuggestedStartLocation = suggestedStartLocation
+            });
+
+            var selected = folders?.FirstOrDefault();
+            folder = selected?.TryGetLocalPath() ?? selected?.Path.AbsolutePath;
+        }
+
+        if (folder is null) throw new TaskCanceledException();
+        return folder;
+    }
 }

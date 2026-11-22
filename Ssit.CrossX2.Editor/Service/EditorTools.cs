@@ -37,6 +37,7 @@ public class EditorTools: BindableModel, IEditorTools
         _tools.Add(services.Create<InsertObjectTool>());
         _tools.Add(services.Create<InsertImageTool>());
         _tools.Add(services.Create<SetMaterialTool>());
+        _tools.Add(services.Create<PlacePrefabTool>());
     }
 
     public EditorTool GetTool(string tool) => _tools.FirstOrDefault( o=>o.Name == tool);

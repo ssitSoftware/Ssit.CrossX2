@@ -61,12 +61,57 @@
                         ToolTip.Tip="Region selection tool&#13;Drag to select tiles and the objects they touch"
                         Value="{x:Static tools:RegionSelectionTool.Name}" />
 
-                    <Button
-                        Classes="Toolbar"
-                        Command="{Binding ExtractPrefabCommand}"
-                        ToolTip.ShowOnDisabled="True"
-                        ToolTip.Tip="Extract selection as prefab&#13;Select a region with the region selection tool first"
-                        i:Attached.Icon="mdi-package-variant-plus" />
+                    <StackPanel Orientation="Horizontal">
+                        <Button
+                            Classes="Toolbar"
+                            Command="{Binding ExtractPrefabCommand}"
+                            ToolTip.ShowOnDisabled="True"
+                            ToolTip.Tip="Extract selection as prefab&#13;Select a region with the region selection tool first"
+                            i:Attached.Icon="mdi-package-variant-plus" />
+
+                        <!--  Defaults for Extract prefab; stays enabled without a selection.  -->
+                        <DropDownButton
+                            Height="36"
+                            Padding="2,0"
+                            ToolTip.Tip="Extract prefab defaults"
+                            Width="22">
+                            <DropDownButton.Flyout>
+                                <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                                    <MenuItem Header="Content" IsEnabled="False" />
+                                    <MenuItem
+                                        Command="{Binding SetPrefabDefaultCommand}"
+                                        CommandParameter="PrefabTilesAndObjects"
+                                        GroupName="PrefabContent"
+                                        Header="Tiles and objects"
+                                        IsChecked="{Binding PrefabTilesAndObjects, Mode=TwoWay}"
+                                        ToggleType="Radio" />
+                                    <MenuItem
+                                        Command="{Binding SetPrefabDefaultCommand}"
+                                        CommandParameter="PrefabTilesOnly"
+                                        GroupName="PrefabContent"
+                                        Header="Tiles only"
+                                        IsChecked="{Binding PrefabTilesOnly, Mode=TwoWay}"
+                                        ToggleType="Radio" />
+                                    <Separator />
+                                    <MenuItem Header="Layers" IsEnabled="False" />
+                                    <MenuItem
+                                        Command="{Binding SetPrefabDefaultCommand}"
+                                        CommandParameter="PrefabCurrentLayerOnly"
+                                        GroupName="PrefabLayers"
+                                        Header="Current layer only"
+                                        IsChecked="{Binding PrefabCurrentLayerOnly, Mode=TwoWay}"
+                                        ToggleType="Radio" />
+                                    <MenuItem
+                                        Command="{Binding SetPrefabDefaultCommand}"
+                                        CommandParameter="PrefabAllMatchingLayers"
+                                        GroupName="PrefabLayers"
+                                        Header="All layers with the same speed"
+                                        IsChecked="{Binding PrefabAllMatchingLayers, Mode=TwoWay}"
+                                        ToggleType="Radio" />
+                                </MenuFlyout>
+                            </DropDownButton.Flyout>
+                        </DropDownButton>
+                    </StackPanel>
 
                     <controls1:SelectionToggleButton
                         Classes="Toolbar"

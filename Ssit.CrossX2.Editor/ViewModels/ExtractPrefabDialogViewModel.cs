@@ -17,6 +17,7 @@ namespace Ssit.CrossX2.Editor.ViewModels;
 /// <summary>
 /// Extracts the region selection as a prefab: choose the current layer or all layers with the same speed,
 /// tiles and objects or tiles only, check the preview, save to the (remembered) prefab folder.
+/// Both choices start from, and are remembered as, the defaults in <see cref="EditorData"/>.
 /// </summary>
 public class ExtractPrefabDialogViewModel : BindableModel, IDialog
 {
@@ -123,6 +124,10 @@ public class ExtractPrefabDialogViewModel : BindableModel, IDialog
         CancelCommand = new RelayCommand(() => RequestClose?.Invoke());
         SaveCommand = new AsyncRelayCommand(Save, () => CanSave);
 
+        // Start from the remembered choices; "all layers" falls back to the current layer when nothing matches.
+        _tilesOnly = editorData.PrefabTilesOnly;
+        _allMatchingLayers = editorData.PrefabAllMatchingLayers && CanUseMatchingLayers;
+
         Rebuild();
     }
 
@@ -134,6 +139,9 @@ public class ExtractPrefabDialogViewModel : BindableModel, IDialog
         OnPropertyChanged(nameof(CurrentLayerOnly));
         OnPropertyChanged(nameof(AllMatchingLayers));
 
+        _editorData.PrefabAllMatchingLayers = value;
+        _editorData.RequestSave();
+
         Rebuild();
     }
 
@@ -144,6 +152,9 @@ public class ExtractPrefabDialogViewModel : BindableModel, IDialog
         _tilesOnly = value;
         OnPropertyChanged(nameof(TilesAndObjects));
         OnPropertyChanged(nameof(TilesOnly));
+
+        _editorData.PrefabTilesOnly = value;
+        _editorData.RequestSave();
 
         Rebuild();
     }

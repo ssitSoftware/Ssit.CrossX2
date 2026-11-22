@@ -1,0 +1,92 @@
+<UserControl
+    d:DesignHeight="450"
+    d:DesignWidth="400"
+    mc:Ignorable="d"
+    x:Class="Ssit.CrossX2.Editor.Panels.PrefabLibraryPanel"
+    x:DataType="viewModels:PrefabLibraryViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:i="clr-namespace:Projektanker.Icons.Avalonia;assembly=Projektanker.Icons.Avalonia"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:viewModels="clr-namespace:Ssit.CrossX2.Editor.ViewModels">
+
+    <Grid RowDefinitions="Auto, *">
+
+        <DockPanel Grid.Row="0" Margin="8,4">
+            <Button
+                Classes="Toolbar"
+                Command="{Binding RefreshCommand}"
+                DockPanel.Dock="Right"
+                ToolTip.Tip="Reload prefabs"
+                i:Attached.Icon="mdi-refresh" />
+
+            <Button
+                Classes="Toolbar"
+                Command="{Binding ChooseFolderCommand}"
+                DockPanel.Dock="Right"
+                Margin="0,0,4,0"
+                ToolTip.Tip="Choose prefab folder"
+                i:Attached.Icon="mdi-folder-open-outline" />
+
+            <TextBlock
+                Text="{Binding FolderName}"
+                TextTrimming="CharacterEllipsis"
+                ToolTip.Tip="{Binding Folder}"
+                VerticalAlignment="Center" />
+        </DockPanel>
+
+        <ListBox
+            Background="Transparent"
+            Grid.Row="1"
+            ItemsSource="{Binding Prefabs}"
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+            SelectedItem="{Binding SelectedPrefab}">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="viewModels:PrefabItem">
+                    <StackPanel
+                        Margin="2"
+                        Spacing="4"
+                        ToolTip.Tip="{Binding Path}"
+                        Width="160">
+                        <Border
+                            Background="#181818"
+                            CornerRadius="4"
+                            Height="110">
+                            <Image
+                                Margin="4"
+                                Source="{Binding Preview}"
+                                Stretch="Uniform"
+                                StretchDirection="DownOnly" />
+                        </Border>
+                        <TextBlock
+                            HorizontalAlignment="Center"
+                            Text="{Binding Name}"
+                            TextTrimming="CharacterEllipsis" />
+                        <TextBlock
+                            FontSize="11"
+                            HorizontalAlignment="Center"
+                            Opacity="0.6"
+                            Text="{Binding Info}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <TextBlock
+            Grid.Row="1"
+            HorizontalAlignment="Center"
+            IsVisible="{Binding IsEmpty}"
+            Margin="16"
+            Opacity="0.6"
+            Text="{Binding EmptyMessage}"
+            TextAlignment="Center"
+            TextWrapping="Wrap"
+            VerticalAlignment="Center" />
+    </Grid>
+</UserControl>

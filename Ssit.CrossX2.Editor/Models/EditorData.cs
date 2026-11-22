@@ -18,6 +18,12 @@ public class EditorData: IZoomData, IDisposable
 
     /// <summary>Folder the last prefab was saved to, kept apart from the maps' folder.</summary>
     [JsonProperty] public string PrefabFolder { get; set; }
+
+    /// <summary>Extract prefab default: tiles only (true) or tiles and objects (false).</summary>
+    [JsonProperty] public bool PrefabTilesOnly { get; set; }
+
+    /// <summary>Extract prefab default: all layers with the same speed (true) or the current layer only (false).</summary>
+    [JsonProperty] public bool PrefabAllMatchingLayers { get; set; }
     [JsonProperty] public bool ShowAllLayers { get; set; }
     [JsonProperty] public bool ShowGrid { get; set; } = true;
     [JsonProperty] public bool OnionMode { get; set; }

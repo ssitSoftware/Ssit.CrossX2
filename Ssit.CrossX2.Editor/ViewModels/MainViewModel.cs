@@ -28,6 +28,8 @@ namespace Ssit.CrossX2.Editor.ViewModels
 
         public ImageSelectorViewModel ObjectsSelector { get; }
         public ImageSelectorViewModel ImagesSelector { get; }
+
+        public PrefabLibraryViewModel PrefabLibrary { get; }
         
         public ITilesetsContainer TilesetsContainer { get; }
     
@@ -47,6 +49,46 @@ namespace Ssit.CrossX2.Editor.ViewModels
         public IAsyncRelayCommand SaveAsCommand { get; }
         public ICommand HorizontalFlipCommand { get; }
         public IAsyncRelayCommand ExtractPrefabCommand { get; }
+
+        /// <summary>Sets an Extract prefab default; the parameter is the name of one of the properties below.</summary>
+        public ICommand SetPrefabDefaultCommand { get; }
+
+        // Extract prefab defaults (dropdown next to the Extract prefab button), shared with the dialog.
+        public bool PrefabTilesAndObjects
+        {
+            get => !_editorData.PrefabTilesOnly;
+            set
+            {
+                if (value) SetPrefabTilesOnly(false);
+            }
+        }
+
+        public bool PrefabTilesOnly
+        {
+            get => _editorData.PrefabTilesOnly;
+            set
+            {
+                if (value) SetPrefabTilesOnly(true);
+            }
+        }
+
+        public bool PrefabCurrentLayerOnly
+        {
+            get => !_editorData.PrefabAllMatchingLayers;
+            set
+            {
+                if (value) SetPrefabAllMatchingLayers(false);
+            }
+        }
+
+        public bool PrefabAllMatchingLayers
+        {
+            get => _editorData.PrefabAllMatchingLayers;
+            set
+            {
+                if (value) SetPrefabAllMatchingLayers(true);
+            }
+        }
         
         public MapFile MapFile
         {
@@ -176,6 +218,19 @@ namespace Ssit.CrossX2.Editor.ViewModels
 
             ExtractPrefabCommand = new AsyncRelayCommand(ExtractPrefab, CanExtractPrefab);
 
+            // The menu items' IsChecked is two-way bound as well; the command makes a click work even if the
+            // menu item doesn't toggle itself.
+            SetPrefabDefaultCommand = new RelayCommand<string>(mode =>
+            {
+                switch (mode)
+                {
+                    case nameof(PrefabTilesAndObjects): PrefabTilesAndObjects = true; break;
+                    case nameof(PrefabTilesOnly): PrefabTilesOnly = true; break;
+                    case nameof(PrefabCurrentLayerOnly): PrefabCurrentLayerOnly = true; break;
+                    case nameof(PrefabAllMatchingLayers): PrefabAllMatchingLayers = true; break;
+                }
+            });
+
             _instances.Tools.GetTool<RegionSelectionTool>().PropertyChanged += (_, e) =>
             {
                 if (e.PropertyName == nameof(RegionSelectionTool.Region))
@@ -193,6 +248,7 @@ namespace Ssit.CrossX2.Editor.ViewModels
             }
 
             TilesetSelectorViewModel = services.Create<TilesetSelectorViewModel>();
+            PrefabLibrary = services.Create<PrefabLibraryViewModel>();
             TilesetsContainer = instances.TilesetsContainer;
 
             Menu = GenerateMenu();
@@ -209,6 +265,41 @@ namespace Ssit.CrossX2.Editor.ViewModels
 
             await _windowService.ShowDialog<ExtractPrefabDialogViewModel>(
                 new ExtractPrefabDialogViewModel.Parameters(tool.Region.Value, tool.Layer));
+
+            // Show the new prefab (and the folder it was saved to) in the library.
+            PrefabLibrary.Refresh();
+
+            // The dialog remembers its choices as the new defaults.
+            NotifyPrefabDefaultsChanged();
+        }
+
+        private void SetPrefabTilesOnly(bool value)
+        {
+            if (_editorData.PrefabTilesOnly == value) return;
+
+            _editorData.PrefabTilesOnly = value;
+            _editorData.RequestSave();
+            NotifyPrefabDefaultsChanged();
+        }
+
+        private void SetPrefabAllMatchingLayers(bool value)
+        {
+            if (_editorData.PrefabAllMatchingLayers == value) return;
+
+            _editorData.PrefabAllMatchingLayers = value;
+            _editorData.RequestSave();
+            NotifyPrefabDefaultsChanged();
+        }
+
+        private void NotifyPrefabDefaultsChanged()
+        {
+            OnPropertyChanged(nameof(PrefabTilesAndObjects));
+            OnPropertyChanged(nameof(PrefabTilesOnly));
+            OnPropertyChanged(nameof(PrefabCurrentLayerOnly));
+            OnPropertyChanged(nameof(PrefabAllMatchingLayers));
+
+            // The region selection tool outlines other layers' objects depending on these.
+            _instances.Editor?.Redraw();
         }
 
         /// <summary>Folder of the current (or last) map, so map pickers don't open in the prefab folder.</summary>

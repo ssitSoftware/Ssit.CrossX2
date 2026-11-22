@@ -7,6 +7,7 @@ using Avalonia.Input;
 using SkiaSharp;
 using Ssit.CrossX2.Editor.Helpers;
 using Ssit.CrossX2.Editor.Input;
+using Ssit.CrossX2.Editor.Models;
 using Ssit.CrossX2.Editor.Service;
 using Ssit.CrossX2.Framework;
 using Ssit.CrossX2.Framework.Games.Map;
@@ -18,6 +19,8 @@ namespace Ssit.CrossX2.Editor.Tools;
 /// that intersect it (they become the editor's object selection). This is the source for extracting a prefab.
 /// Drag with the left button to select, Delete clears the tiles of the region and deletes the selected objects,
 /// Escape (or changing the layer) drops the selection.
+/// When the Extract prefab default is "all layers with the same speed" (and not tiles only), image objects of the
+/// other matching layers that intersect the region are outlined too - display only, they are not selected.
 /// </summary>
 public class RegionSelectionTool : EditorTool
 {
@@ -29,6 +32,13 @@ public class RegionSelectionTool : EditorTool
 
     private readonly List<MapObjectInfo> _objectsBuffer = new();
     private readonly SKFont _font = new() { Size = 12 };
+
+    private readonly EditorData _editorData;
+    private readonly PrefabBuilder _prefabBuilder;
+
+    // Bounds (in tiles of the selected layer) of the objects of other matching layers that intersect the region.
+    // Replaced as a whole on the UI thread, read by Render.
+    private IReadOnlyList<RectangleF> _otherLayersObjects = Array.Empty<RectangleF>();
 
     private SKPointI? _dragStart;
     private string _layerId;
@@ -49,9 +59,14 @@ public class RegionSelectionTool : EditorTool
     /// <summary>True when there is a region on the layer that is currently selected in the editor.</summary>
     public bool HasSelection => Layer is not null && Layer == Editor?.SelectedLayer;
 
-    public RegionSelectionTool(IEditorInstances instances) : base(Name, instances)
+    public RegionSelectionTool(IEditorInstances instances, EditorData editorData) : base(Name, instances)
     {
+        _editorData = editorData;
+        _prefabBuilder = new PrefabBuilder(instances);
     }
+
+    /// <summary>Outline the objects of other matching layers (the extract defaults would include them).</summary>
+    private bool ShowOtherLayersObjects => _editorData.PrefabAllMatchingLayers && !_editorData.PrefabTilesOnly;
 
     public override void Reset()
     {
@@ -162,7 +177,10 @@ public class RegionSelectionTool : EditorTool
 
         if (HasSelection)
         {
-            RenderRegion(skCanvas, Region.Value, ts);
+            var otherLayersObjects = ShowOtherLayersObjects ? _otherLayersObjects : Array.Empty<RectangleF>();
+
+            RenderOtherLayersObjects(skCanvas, otherLayersObjects, ts);
+            RenderRegion(skCanvas, Region.Value, ts, otherLayersObjects.Count);
         }
 
         SkPaint.PathEffect = null;
@@ -171,7 +189,25 @@ public class RegionSelectionTool : EditorTool
         SkPaint.Color = SKColors.White;
     }
 
-    private void RenderRegion(SKCanvas skCanvas, Rectangle region, float ts)
+    private void RenderOtherLayersObjects(SKCanvas skCanvas, IReadOnlyList<RectangleF> bounds, float ts)
+    {
+        if (bounds.Count == 0) return;
+
+        SkPaint.IsStroke = true;
+        SkPaint.StrokeWidth = 1;
+        SkPaint.Color = RegionColor.WithAlpha(180);
+        SkPaint.PathEffect = DashEffect;
+
+        foreach (var rect in bounds)
+        {
+            var pos = Editor.MapToScreen(new Vector2(rect.X, rect.Y));
+            skCanvas.DrawRect(SKRect.Create(pos.X, pos.Y, rect.Width * ts, rect.Height * ts), SkPaint);
+        }
+
+        SkPaint.PathEffect = null;
+    }
+
+    private void RenderRegion(SKCanvas skCanvas, Rectangle region, float ts, int otherLayersObjects)
     {
         var pos = Editor.MapToScreen(new Vector2(region.X, region.Y));
         var rect = SKRect.Create(pos.X, pos.Y, region.Width * ts, region.Height * ts);
@@ -190,6 +226,11 @@ public class RegionSelectionTool : EditorTool
         var objects = Editor.SelectedObjects.Count;
         var label = string.Create(CultureInfo.InvariantCulture,
             $"{region.Width} x {region.Height} tiles, {objects} object{(objects == 1 ? "" : "s")}");
+
+        if (otherLayersObjects > 0)
+        {
+            label += string.Create(CultureInfo.InvariantCulture, $" (+{otherLayersObjects} on other layers)");
+        }
 
         var labelWidth = _font.MeasureText(label);
         var labelRect = SKRect.Create(rect.Left, rect.Top - _font.Size - 8, labelWidth + 8, _font.Size + 6);
@@ -228,6 +269,36 @@ public class RegionSelectionTool : EditorTool
 
         Editor.GetMapObjects(_objectsBuffer, screenRect);
         Editor.SetSelectedObjects(_objectsBuffer.Select(o => o.Object.Id).ToList());
+
+        _otherLayersObjects = FindOtherLayersObjects(region, Editor.SelectedLayer);
+    }
+
+    /// <summary>
+    /// Bounds of the objects of the other layers with the same speed that intersect the region, converted to
+    /// tiles of <paramref name="selectedLayer"/> (the same objects Extract prefab takes from those layers).
+    /// </summary>
+    private IReadOnlyList<RectangleF> FindOtherLayersObjects(Rectangle region, MapLayer selectedLayer)
+    {
+        var result = new List<RectangleF>();
+
+        foreach (var layer in _prefabBuilder.GetMatchingLayers(selectedLayer))
+        {
+            if (layer == selectedLayer) continue;
+
+            // Layers with the same speed are aligned to their bottom edge (see PrefabBuilder.Build).
+            var offsetY = layer.Height - selectedLayer.Height;
+            var area = new RectangleF(region.X, region.Y + offsetY, region.Width, region.Height);
+
+            foreach (var obj in layer.Objects)
+            {
+                var bounds = _prefabBuilder.GetObjectBounds(obj);
+                if (!bounds.HasValue || !bounds.Value.IsIntersecting(area)) continue;
+
+                result.Add(bounds.Value.Offset(new Vector2(0, -offsetY)));
+            }
+        }
+
+        return result;
     }
 
     private SKPointI? GetTileUnderMouse(bool clamp)
@@ -262,6 +333,7 @@ public class RegionSelectionTool : EditorTool
 
     private void ClearRegion()
     {
+        _otherLayersObjects = Array.Empty<RectangleF>();
         Region = null;
         _dragStart = null;
         _layerId = null;
