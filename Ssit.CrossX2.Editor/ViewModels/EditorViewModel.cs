@@ -151,7 +151,11 @@ namespace Ssit.CrossX2.Editor.ViewModels
 
         public IEditorTools Tools { get; }
 
-        private readonly List<MapObjectInfo> _currentObjects = new();
+        // Objects drawn on the selected layer with their screen bounds. A frame fills _currentObjects (render
+        // thread) and publishes it as _lastFrameObjects once all layers are drawn; hit tests (clicks on the UI
+        // thread) read only the published list, so they never see a frame that is half drawn.
+        private List<MapObjectInfo> _currentObjects = new();
+        private volatile List<MapObjectInfo> _lastFrameObjects = new();
 
         public bool IsFullscreen
         {
@@ -172,14 +176,38 @@ namespace Ssit.CrossX2.Editor.ViewModels
             set
             {
                 var tool = Tools.GetTool(value);
+
+                // Switching to the selection tool keeps the selected objects (from the region selection, or
+                // placed from a prefab) so they can be moved; choosing it while it's active (Escape) clears them.
+                var keepSelection = tool is SelectionTool && Tools.Current is not SelectionTool;
+
                 tool.Reset();
-                SelectedObject = 0;
+                if (!keepSelection)
+                {
+                    SelectedObject = 0;
+                }
                 Tools.Current = tool;
                 OnPropertyChanged();
             }
         }
 
         public ICommand SetToolCommand { get; }
+
+        /// <summary>A region selection also selects objects on the other layers with the same speed.</summary>
+        public bool SelectObjectsOnAllLayers
+        {
+            get => _editorData.SelectObjectsOnAllLayers;
+            set
+            {
+                if (_editorData.SelectObjectsOnAllLayers == value) return;
+
+                _editorData.SelectObjectsOnAllLayers = value;
+                _editorData.RequestSave();
+                OnPropertyChanged();
+
+                Tools.GetTool<SelectionTool>().RefreshRegionSelection();
+            }
+        }
 
         public bool ShowLinks
         {
@@ -349,7 +377,10 @@ namespace Ssit.CrossX2.Editor.ViewModels
             
             Tools.PropertyChanged += (_,_) =>
             {
-                SelectedObject = 0;
+                if (Tools.Current is not SelectionTool)
+                {
+                    SelectedObject = 0;
+                }
                 OnPropertyChanged(nameof(SelectedTool));
             };
             
@@ -391,7 +422,8 @@ namespace Ssit.CrossX2.Editor.ViewModels
         {
             EnsurePanInBounds();
         
-            _currentObjects.Clear();
+            // A new list: the published one may still be read by a hit test.
+            _currentObjects = new List<MapObjectInfo>(_lastFrameObjects.Count);
             
             _currentSize = new Vector2(width, height);
 
@@ -488,6 +520,9 @@ namespace Ssit.CrossX2.Editor.ViewModels
             }
 
             _skPaint.Color = SKColors.White;
+
+            // All objects of the frame are known now (the tool's own rendering hit-tests them, too).
+            _lastFrameObjects = _currentObjects;
 
             Tools.Current.Render(skCanvas, grContext, width, height);
 
@@ -999,24 +1034,28 @@ namespace Ssit.CrossX2.Editor.ViewModels
 
         public void GetMapObjects(IList<MapObjectInfo> buffer, Vector2 screenPosition)
         {
+            var objects = _lastFrameObjects;
+
             buffer.Clear();
-            for (var idx = 0; idx < _currentObjects.Count; ++idx)
+            for (var idx = 0; idx < objects.Count; ++idx)
             {
-                if (_currentObjects[idx].ScreenBounds.Contains(screenPosition))
+                if (objects[idx].ScreenBounds.Contains(screenPosition))
                 {
-                    buffer.Add(_currentObjects[idx]);
+                    buffer.Add(objects[idx]);
                 }
             }
         }
 
         public void GetMapObjects(IList<MapObjectInfo> buffer, RectangleF screenRect)
         {
+            var objects = _lastFrameObjects;
+
             buffer.Clear();
-            for (var idx = 0; idx < _currentObjects.Count; ++idx)
+            for (var idx = 0; idx < objects.Count; ++idx)
             {
-                if (_currentObjects[idx].ScreenBounds.IsIntersecting(screenRect))
+                if (objects[idx].ScreenBounds.IsIntersecting(screenRect))
                 {
-                    buffer.Add(_currentObjects[idx]);
+                    buffer.Add(objects[idx]);
                 }
             }
         }

@@ -31,7 +31,6 @@ public class EditorTools: BindableModel, IEditorTools
         
         _tools.Add(services.Create<EmptyTool>());
         _tools.Add(services.Create<SelectionTool>());
-        _tools.Add(services.Create<RegionSelectionTool>());
         _tools.Add(services.Create<InsertTilesTool>());
         _tools.Add(services.Create<EraserTool>());
         _tools.Add(services.Create<InsertObjectTool>());

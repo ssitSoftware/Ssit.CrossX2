@@ -117,8 +117,8 @@ public class ExtractPrefabDialogViewModel : BindableModel, IDialog
 
         var matching = _builder.GetMatchingLayers(parameters.Layer);
 
-        CurrentLayerLabel = $"Current layer only ({parameters.Layer.Name})";
-        MatchingLayersLabel = $"All layers with the same speed ({string.Join(", ", matching.Select(l => l.Name))})";
+        CurrentLayerLabel = "Current layer only";
+        MatchingLayersLabel = "All layers with the same speed";
         CanUseMatchingLayers = matching.Count > 1;
 
         CancelCommand = new RelayCommand(() => RequestClose?.Invoke());
@@ -196,7 +196,7 @@ public class ExtractPrefabDialogViewModel : BindableModel, IDialog
             : $"{prefab.Width} x {prefab.Height} tiles, {objects} object{(objects == 1 ? "" : "s")}.";
 
         return prefab.IsLayerBound
-            ? $"{size} Parts on {prefab.Layers.Count} layers ({string.Join(", ", prefab.Layers.Select(l => l.Name))}): " +
+            ? $"{size} Parts on {prefab.Layers.Count} layers: " +
               "placing the prefab puts each part back on its layer."
             : $"{size} Single layer: the prefab can be placed on any layer.";
     }

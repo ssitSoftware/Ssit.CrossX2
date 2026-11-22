@@ -49,11 +49,6 @@
             CommandParameter="{x:Static tools:EraserTool.Name}"
             HotKey="{x:Static helpers:HotKeys.ToolsEraser}" />
 
-        <Button
-            Command="{Binding EditorViewModel.SetToolCommand}"
-            CommandParameter="{x:Static tools:RegionSelectionTool.Name}"
-            HotKey="{x:Static helpers:HotKeys.ToolsRegionSelection}" />
-
 
     </StackPanel>
 </UserControl>

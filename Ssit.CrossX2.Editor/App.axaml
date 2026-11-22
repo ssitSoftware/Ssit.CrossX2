@@ -11,6 +11,7 @@
         <Color x:Key="HeaderBackground">#303030</Color>
         <Color x:Key="EmptyBackground">#402040</Color>
         <Color x:Key="TilesBackground">#ff80ff</Color>
+        <SolidColorBrush x:Key="DialogBackground" Color="{StaticResource ControlBackground}" />
         <converters:InvertBoolConverter x:Key="InvertBoolConverter" />
         <converters:InvalidPropertyConverter x:Key="InvalidPropertyConverter" />
         <converters:RgbaColorConverter x:Key="RgbaColorConverter" />
@@ -19,6 +20,11 @@
 
     <Application.Styles>
         <FluentTheme />
+
+        <!--  Dialogs (and any new window) use the panels' background.  -->
+        <Style Selector=":is(Window)">
+            <Setter Property="Background" Value="{StaticResource DialogBackground}" />
+        </Style>
 
         <Style Selector="TabStripItem">
             <Setter Property="Padding" Value="1,1,1,5" />

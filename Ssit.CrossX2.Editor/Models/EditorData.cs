@@ -19,6 +19,9 @@ public class EditorData: IZoomData, IDisposable
     /// <summary>Folder the last prefab was saved to, kept apart from the maps' folder.</summary>
     [JsonProperty] public string PrefabFolder { get; set; }
 
+    /// <summary>Selection tool: a region selection also selects objects on the other layers with the same speed.</summary>
+    [JsonProperty] public bool SelectObjectsOnAllLayers { get; set; }
+
     /// <summary>Extract prefab default: tiles only (true) or tiles and objects (false).</summary>
     [JsonProperty] public bool PrefabTilesOnly { get; set; }
 

@@ -47,68 +47,26 @@
 
                     <Label Classes="Toolbar" Content="Tools:" />
 
-                    <controls1:SelectionToggleButton
-                        Classes="Toolbar"
-                        Icon="mdi-button-cursor"
-                        SelectedValue="{Binding EditorViewModel.SelectedTool}"
-                        ToolTip.Tip="Selection tool&#13;Ctrl/Cmd + click to select multiple objects"
-                        Value="{x:Static tools:SelectionTool.Name}" />
-
-                    <controls1:SelectionToggleButton
-                        Classes="Toolbar"
-                        Icon="mdi-select-drag"
-                        SelectedValue="{Binding EditorViewModel.SelectedTool}"
-                        ToolTip.Tip="Region selection tool&#13;Drag to select tiles and the objects they touch"
-                        Value="{x:Static tools:RegionSelectionTool.Name}" />
-
                     <StackPanel Orientation="Horizontal">
-                        <Button
+                        <controls1:SelectionToggleButton
                             Classes="Toolbar"
-                            Command="{Binding ExtractPrefabCommand}"
-                            ToolTip.ShowOnDisabled="True"
-                            ToolTip.Tip="Extract selection as prefab&#13;Select a region with the region selection tool first"
-                            i:Attached.Icon="mdi-package-variant-plus" />
+                            Icon="mdi-button-cursor"
+                            SelectedValue="{Binding EditorViewModel.SelectedTool}"
+                            ToolTip.Tip="Selection tool&#13;Click an object to select it, drag to move the selection&#13;Drag on empty space to select a region (tiles and objects)&#13;Ctrl/Cmd + click to add objects"
+                            Value="{x:Static tools:SelectionTool.Name}" />
 
-                        <!--  Defaults for Extract prefab; stays enabled without a selection.  -->
                         <DropDownButton
                             Height="36"
                             Padding="2,0"
-                            ToolTip.Tip="Extract prefab defaults"
+                            ToolTip.Tip="Selection options"
                             Width="22">
                             <DropDownButton.Flyout>
-                                <MenuFlyout Placement="BottomEdgeAlignedLeft">
-                                    <MenuItem Header="Content" IsEnabled="False" />
-                                    <MenuItem
-                                        Command="{Binding SetPrefabDefaultCommand}"
-                                        CommandParameter="PrefabTilesAndObjects"
-                                        GroupName="PrefabContent"
-                                        Header="Tiles and objects"
-                                        IsChecked="{Binding PrefabTilesAndObjects, Mode=TwoWay}"
-                                        ToggleType="Radio" />
-                                    <MenuItem
-                                        Command="{Binding SetPrefabDefaultCommand}"
-                                        CommandParameter="PrefabTilesOnly"
-                                        GroupName="PrefabContent"
-                                        Header="Tiles only"
-                                        IsChecked="{Binding PrefabTilesOnly, Mode=TwoWay}"
-                                        ToggleType="Radio" />
-                                    <Separator />
-                                    <MenuItem Header="Layers" IsEnabled="False" />
-                                    <MenuItem
-                                        Command="{Binding SetPrefabDefaultCommand}"
-                                        CommandParameter="PrefabCurrentLayerOnly"
-                                        GroupName="PrefabLayers"
-                                        Header="Current layer only"
-                                        IsChecked="{Binding PrefabCurrentLayerOnly, Mode=TwoWay}"
-                                        ToggleType="Radio" />
-                                    <MenuItem
-                                        Command="{Binding SetPrefabDefaultCommand}"
-                                        CommandParameter="PrefabAllMatchingLayers"
-                                        GroupName="PrefabLayers"
-                                        Header="All layers with the same speed"
-                                        IsChecked="{Binding PrefabAllMatchingLayers, Mode=TwoWay}"
-                                        ToggleType="Radio" />
-                                </MenuFlyout>
+                                <Flyout Placement="BottomEdgeAlignedLeft">
+                                    <CheckBox
+                                        Content="Select objects on all layers"
+                                        IsChecked="{Binding EditorViewModel.SelectObjectsOnAllLayers}"
+                                        ToolTip.Tip="A region selection also selects objects on the other layers with the same speed" />
+                                </Flyout>
                             </DropDownButton.Flyout>
                         </DropDownButton>
                     </StackPanel>
@@ -158,6 +116,23 @@
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
                     </ComboBox>
+
+                    <Border Classes="ToolbarSeparator" />
+                </StackPanel>
+
+                <StackPanel
+                    Margin="0,1,4,1"
+                    Orientation="Horizontal"
+                    Spacing="4">
+
+                    <Label Classes="Toolbar" Content="Actions:" />
+
+                    <Button
+                        Classes="Toolbar"
+                        Command="{Binding ExtractPrefabCommand}"
+                        ToolTip.ShowOnDisabled="True"
+                        ToolTip.Tip="Extract selection as prefab&#13;Select a region first: drag on empty space with the selection tool"
+                        i:Attached.Icon="mdi-package-variant-plus" />
 
                     <Border Classes="ToolbarSeparator" />
                 </StackPanel>
