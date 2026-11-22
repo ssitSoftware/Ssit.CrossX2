@@ -29,7 +29,12 @@ namespace Ssit.CrossX2.Editor.Tools
         
         public virtual void OnHotkeyAction(HotkeyActions action)
         {
-            
+
+        }
+
+        /// <summary>Called on the current tool after the editor's selected layer has changed.</summary>
+        public virtual void OnLayerChanged()
+        {
         }
         
         public virtual void Render(SKCanvas skCanvas, GRContext grContext, int width, int height)

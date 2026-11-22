@@ -51,8 +51,15 @@
                         Classes="Toolbar"
                         Icon="mdi-button-cursor"
                         SelectedValue="{Binding EditorViewModel.SelectedTool}"
-                        ToolTip.Tip="Selection tool"
+                        ToolTip.Tip="Selection tool&#13;Ctrl/Cmd + click to select multiple objects"
                         Value="{x:Static tools:SelectionTool.Name}" />
+
+                    <controls1:SelectionToggleButton
+                        Classes="Toolbar"
+                        Icon="mdi-select-drag"
+                        SelectedValue="{Binding EditorViewModel.SelectedTool}"
+                        ToolTip.Tip="Region selection tool&#13;Drag to select tiles and the objects they touch"
+                        Value="{x:Static tools:RegionSelectionTool.Name}" />
 
                     <controls1:SelectionToggleButton
                         Classes="Toolbar"

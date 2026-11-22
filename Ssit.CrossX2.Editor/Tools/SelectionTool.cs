@@ -12,25 +12,40 @@ using Ssit.CrossX2.Framework.Games.Map;
 
 namespace Ssit.CrossX2.Editor.Tools
 {
+    /// <summary>
+    /// Selects and moves objects. Click selects one object (repeated clicks cycle through overlapping objects).
+    /// Ctrl/Cmd + click adds objects to the selection (or removes them, if all objects under the cursor are
+    /// already selected and the mouse is released without moving). Dragging moves all selected objects together,
+    /// Delete removes all of them.
+    /// </summary>
     public class SelectionTool: EditorTool
     {
         public new const string Name = "Selection";
 
         private readonly List<MapObjectInfo> _objectsBuffer = new();
 
+        // Separate from _objectsBuffer, which Render fills on the render thread.
+        private readonly List<MapObjectInfo> _clickBuffer = new();
+
+        // Objects moved by the current drag, with their positions when the drag started.
+        private readonly Dictionary<MapObject, Vector2> _draggedObjects = new();
+
+        // Objects to remove from the selection on button up, if the mouse was not moved (Ctrl/Cmd + click).
+        private readonly List<int> _objectsToDeselectAfter = new();
+
         private bool _initialMove;
 
-        private Vector2 _initialMousePosition; 
-        private Vector2 _initialObjectPosition;
-        private MapObject _draggedObject;
+        private Vector2 _initialMousePosition;
+        private Vector2 _anchorInitialPosition;
+        private MapObject _anchorObject;
         private int _objectToSelectAfter;
 
         private bool _canMoveObject;
-        
+
         private Type _searchedType;
         private TaskCompletionSource<MapObject> _findObjectSource;
         private MapObject _matchingObject;
-        
+
         public SelectionTool(IEditorInstances instances) : base(Name, instances)
         {
         }
@@ -43,18 +58,20 @@ namespace Ssit.CrossX2.Editor.Tools
             }
             _findObjectSource = new TaskCompletionSource<MapObject>();
             _searchedType = type;
-            
+
             return _findObjectSource.Task;
         }
-        
+
         public override void Reset()
         {
             base.Reset();
-            
+
             _searchedType = null;
             _findObjectSource?.TrySetCanceled();
             _findObjectSource = null;
             _matchingObject = null;
+
+            EndDrag();
         }
 
         public override void OnHotkeyAction(HotkeyActions action)
@@ -62,11 +79,16 @@ namespace Ssit.CrossX2.Editor.Tools
             switch (action)
             {
                 case HotkeyActions.Delete:
-                    if (Editor.SelectedObject != 0)
+                    if (Editor.SelectedObjects.Count > 0)
                     {
                         Instances.UndoRedoServices.PushState();
-                        Instances.Map.DeleteObject(Editor.SelectedObject);
-                        Editor.SelectedObject = 0;
+
+                        foreach (var id in Editor.SelectedObjects.ToList())
+                        {
+                            Instances.Map.DeleteObject(id);
+                        }
+
+                        Editor.SetSelectedObjects(Array.Empty<int>());
                         Editor.Redraw();
                     }
                     break;
@@ -77,12 +99,12 @@ namespace Ssit.CrossX2.Editor.Tools
         {
             base.OnMouseMove(input);
 
-            if (_draggedObject != null && input.MouseButtons.HasFlag(MouseButton.Left))
+            if (_anchorObject != null && input.MouseButtons.HasFlag(MouseButton.Left))
             {
                 if (!MousePosition.HasValue) return;
-                
+
                 var pos = Editor.ScreenToMap(MousePosition.Value);
-                
+
                 var offset = pos - _initialMousePosition;
 
                 if (!_canMoveObject)
@@ -93,7 +115,7 @@ namespace Ssit.CrossX2.Editor.Tools
                         offset = Vector2.Zero;
                     }
                 }
-                
+
                 if (offset.LengthSquared() > 0)
                 {
                     _canMoveObject = true;
@@ -102,10 +124,11 @@ namespace Ssit.CrossX2.Editor.Tools
                         Instances.UndoRedoServices.PushState();
                         _initialMove = false;
                         _objectToSelectAfter = 0;
+                        _objectsToDeselectAfter.Clear();
                     }
 
-                    var position = _initialObjectPosition + offset;
-                    
+                    var position = _anchorInitialPosition + offset;
+
                     if (input.Modifiers.HasFlag(KeyModifiers.Control))
                     {
                         int x = (int) (position.X * 2);
@@ -114,11 +137,18 @@ namespace Ssit.CrossX2.Editor.Tools
                         position = new Vector2(x / 2f, y / 2f);
                     }
 
-                    _draggedObject.Position = position;
+                    // The clicked object snaps, the rest of the selection keeps its distance to it.
+                    var delta = position - _anchorInitialPosition;
+
+                    foreach (var (obj, initialPosition) in _draggedObjects)
+                    {
+                        obj.Position = initialPosition + delta;
+                    }
+
                     Instances.Map.OnModified();
                 }
             }
-            
+
             Editor.Redraw();
         }
 
@@ -131,68 +161,137 @@ namespace Ssit.CrossX2.Editor.Tools
                 Editor.SelectedObject = _objectToSelectAfter;
                 Editor.Redraw();
             }
-            
-            _draggedObject = null;
-            _objectToSelectAfter = 0;
+            else if (_objectsToDeselectAfter.Count > 0)
+            {
+                Editor.SetSelectedObjects(Editor.SelectedObjects.Except(_objectsToDeselectAfter));
+                Editor.Redraw();
+            }
+
+            EndDrag();
         }
 
         public override void OnButtonDown(MouseInputInfo input)
         {
             base.OnButtonDown(input);
             if (!MousePosition.HasValue) return;
-            
-            if (input.ActionButton == MouseButton.Left)
+            if (input.ActionButton != MouseButton.Left) return;
+
+            if (_findObjectSource != null)
             {
-                if (_findObjectSource != null)
+                _findObjectSource.TrySetResult(_matchingObject);
+                Reset();
+                return;
+            }
+
+            Editor.GetMapObjects(_clickBuffer, MousePosition.Value);
+
+            if (Platform.IsMultiSelect(input.Modifiers))
+            {
+                OnMultiSelectButtonDown();
+                return;
+            }
+
+            if (_clickBuffer.Count == 0)
+            {
+                Editor.SelectedObject = 0;
+                return;
+            }
+
+            // Clicked an object of a multi-selection: drag the whole selection. Released without moving,
+            // only the clicked object stays selected.
+            if (Editor.SelectedObjects.Count > 1)
+            {
+                var member = _clickBuffer.FirstOrDefault(o => Editor.IsObjectSelected(o.Object.Id)).Object;
+                if (member != null)
                 {
-                    _findObjectSource.TrySetResult(_matchingObject);
-                    Reset();
+                    BeginDrag(member);
+                    _objectToSelectAfter = member.Id;
                     return;
                 }
-                
-                Editor.GetMapObjects(_objectsBuffer, MousePosition.Value);
+            }
 
-                var index = _objectsBuffer.FindIndex(o => o.Object.Id == Editor.SelectedObject) + 1;
-                index %= Math.Max(1, _objectsBuffer.Count);
-                
-                if (index < _objectsBuffer.Count)
-                {
-                    var obj = _objectsBuffer[index].Object;
+            var index = _clickBuffer.FindIndex(o => o.Object.Id == Editor.SelectedObject) + 1;
+            index %= _clickBuffer.Count;
 
-                    if (Editor.SelectedObject == 0 || null == _objectsBuffer.FirstOrDefault( o=>o.Object.Id == Editor.SelectedObject).Object)
-                    {
-                        Editor.SelectedObject = obj.Id;
-                    }
-                    else
-                    {
-                        _objectToSelectAfter = obj.Id;
-                        obj = Instances.Map.FindObject(Editor.SelectedObject);
-                    }
-                    
-                    _initialMove = true;
-                    _initialMousePosition = Editor.ScreenToMap(MousePosition.Value);
-                    _initialObjectPosition = obj.Position;
-                    _draggedObject = obj;
-                    _canMoveObject = false;
-                    
-                    Editor.Redraw();
-                }
-                else
+            var obj = _clickBuffer[index].Object;
+
+            if (Editor.SelectedObject == 0 || _clickBuffer.All(o => o.Object.Id != Editor.SelectedObject))
+            {
+                Editor.SelectedObject = obj.Id;
+                BeginDrag(obj);
+            }
+            else
+            {
+                // Drag the selected object; select the next overlapping one if released without moving.
+                var selected = Instances.Map.FindObject(Editor.SelectedObject);
+                BeginDrag(selected);
+                _objectToSelectAfter = obj.Id;
+            }
+        }
+
+        private void OnMultiSelectButtonDown()
+        {
+            // Ctrl/Cmd + click on empty space keeps the selection.
+            if (_clickBuffer.Count == 0) return;
+
+            var notSelected = _clickBuffer.FirstOrDefault(o => !Editor.IsObjectSelected(o.Object.Id)).Object;
+
+            if (notSelected != null)
+            {
+                Editor.AddToSelection(notSelected.Id);
+                BeginDrag(notSelected);
+                return;
+            }
+
+            // Everything under the cursor is selected already: dragging still moves the selection (so Ctrl
+            // + drag snapping keeps working), a click without moving removes these objects from it.
+            BeginDrag(_clickBuffer[0].Object);
+            _objectsToDeselectAfter.AddRange(_clickBuffer.Select(o => o.Object.Id));
+        }
+
+        private void BeginDrag(MapObject anchor)
+        {
+            EndDrag();
+
+            if (anchor is null) return;
+
+            foreach (var id in Editor.SelectedObjects)
+            {
+                var obj = Instances.Map.FindObject(id);
+                if (obj != null)
                 {
-                    Editor.SelectedObject = 0;
+                    _draggedObjects[obj] = obj.Position;
                 }
             }
+
+            _draggedObjects[anchor] = anchor.Position;
+
+            _initialMove = true;
+            _initialMousePosition = Editor.ScreenToMap(MousePosition.Value);
+            _anchorInitialPosition = anchor.Position;
+            _anchorObject = anchor;
+            _canMoveObject = false;
+
+            Editor.Redraw();
+        }
+
+        private void EndDrag()
+        {
+            _anchorObject = null;
+            _draggedObjects.Clear();
+            _objectToSelectAfter = 0;
+            _objectsToDeselectAfter.Clear();
         }
 
         public override void Render(SKCanvas skCanvas, GRContext grContext, int width, int height)
         {
             var template = Instances.Template;
-        
+
             base.Render(skCanvas, grContext, width, height);
             var ts = template.TileSize * Editor.Zoom.Value;
 
             if (!MousePosition.HasValue) return;
-            
+
             Editor.GetMapObjects(_objectsBuffer, MousePosition.Value);
 
             for (var idx = 0; idx < _objectsBuffer.Count; ++idx)
@@ -207,7 +306,7 @@ namespace Ssit.CrossX2.Editor.Tools
                     _matchingObject = _objectsBuffer[idx].Object;
                     return;
                 }
-                
+
                 SkPaint.IsStroke = true;
                 SkPaint.StrokeWidth = 2;
                 SkPaint.Color = SKColors.HotPink.WithAlpha(96);
@@ -216,10 +315,10 @@ namespace Ssit.CrossX2.Editor.Tools
 
             SkPaint.StrokeWidth = 1;
             SkPaint.Color = SKColors.White;
-            
+
             if (_objectsBuffer.Count > 0)
                 return;
-            
+
             var pos = Editor.ScreenToMap(MousePosition.Value);
 
             if (pos.X >= 0 && pos.Y >= 0 && pos.X < Editor.SelectedLayer.Width && pos.Y < Editor.SelectedLayer.Height)

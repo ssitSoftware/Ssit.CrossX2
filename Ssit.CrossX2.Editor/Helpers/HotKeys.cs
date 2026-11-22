@@ -21,6 +21,7 @@ namespace Ssit.CrossX2.Editor.Helpers
     
         public static KeyGesture ToolsInsertTiles { get; private set; }
         public static KeyGesture ToolsEraser { get; private set; }
+        public static KeyGesture ToolsRegionSelection { get; private set; }
         
         public static KeyGesture HorizontalFlip { get; private set; }
 
@@ -49,6 +50,7 @@ namespace Ssit.CrossX2.Editor.Helpers
             
             ToolsInsertTiles = KeyGesture.Parse("Ctrl+Shift+T");
             ToolsEraser = KeyGesture.Parse("Ctrl+Shift+E");
+            ToolsRegionSelection = KeyGesture.Parse("Ctrl+Shift+R");
         
             EditorZoomIn = KeyGesture.Parse("Ctrl++");
             EditorZoomOut = KeyGesture.Parse("Ctrl+-");
@@ -70,6 +72,7 @@ namespace Ssit.CrossX2.Editor.Helpers
             
             ToolsInsertTiles = KeyGesture.Parse("Meta+Shift+T");
             ToolsEraser = KeyGesture.Parse("Meta+Shift+E");
+            ToolsRegionSelection = KeyGesture.Parse("Meta+Shift+R");
         
             EditorZoomIn = KeyGesture.Parse("Meta++");
             EditorZoomOut = KeyGesture.Parse("Meta+-");

@@ -51,17 +51,48 @@ namespace Ssit.CrossX2.Editor.ViewModels
             set => Tools.GetTool<SetMaterialTool>().MaterialIndex = value;
         }
 
+        // Replaced as a whole on every change (never mutated), so the render thread can read it safely.
+        private HashSet<int> _selectedObjects = new();
+
         public int SelectedObject
         {
-            get;
-            set
+            get
             {
-                if (SetField(ref field, value))
-                {
-                    PropertiesView.MapFile = _instances.Map;
-                }
+                var selection = _selectedObjects;
+                return selection.Count == 1 ? selection.First() : 0;
             }
+            set => SetSelectedObjects(value == 0 ? Array.Empty<int>() : new[] { value });
         }
+
+        public IReadOnlyCollection<int> SelectedObjects => _selectedObjects;
+
+        public bool IsObjectSelected(int id) => id != 0 && _selectedObjects.Contains(id);
+
+        public void SetSelectedObjects(IEnumerable<int> ids)
+        {
+            var selection = new HashSet<int>(ids);
+            selection.Remove(0);
+
+            if (selection.SetEquals(_selectedObjects))
+                return;
+
+            _selectedObjects = selection;
+
+            OnPropertyChanged(nameof(SelectedObject));
+            OnPropertyChanged(nameof(SelectedObjects));
+
+            // With several objects selected SelectedObject is 0, so the properties show the map and layer only.
+            if (PropertiesView is not null)
+            {
+                PropertiesView.MapFile = _instances.Map;
+            }
+
+            Redraw();
+        }
+
+        public void AddToSelection(int id) => SetSelectedObjects(_selectedObjects.Append(id));
+
+        public void RemoveFromSelection(int id) => SetSelectedObjects(_selectedObjects.Where(o => o != id));
 
         public MapLayer SelectedLayer
         {
@@ -92,6 +123,7 @@ namespace Ssit.CrossX2.Editor.ViewModels
                     }
 
                     UpdateMousePosition(_mouseScreenPosition);
+                    Tools?.Current?.OnLayerChanged();
                     Redraw();
                 }
             }
@@ -843,7 +875,7 @@ namespace Ssit.CrossX2.Editor.ViewModels
                 skCanvas.DrawImage(img, srcRect, destRect, skPaint);
             }
             
-            if (SelectedObject == mapObject?.Id)
+            if (mapObject is not null && IsObjectSelected(mapObject.Id))
             {
                 skPaint.ColorFilter = null;
                 skPaint.Color = SKColors.Orange.WithAlpha(192);
@@ -971,6 +1003,18 @@ namespace Ssit.CrossX2.Editor.ViewModels
             for (var idx = 0; idx < _currentObjects.Count; ++idx)
             {
                 if (_currentObjects[idx].ScreenBounds.Contains(screenPosition))
+                {
+                    buffer.Add(_currentObjects[idx]);
+                }
+            }
+        }
+
+        public void GetMapObjects(IList<MapObjectInfo> buffer, RectangleF screenRect)
+        {
+            buffer.Clear();
+            for (var idx = 0; idx < _currentObjects.Count; ++idx)
+            {
+                if (_currentObjects[idx].ScreenBounds.IsIntersecting(screenRect))
                 {
                     buffer.Add(_currentObjects[idx]);
                 }
