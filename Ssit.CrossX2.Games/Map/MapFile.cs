@@ -141,6 +141,10 @@ public class MapFile: BindableModel
                 layer.RemapTilesets(mapping);
             }
         }
+
+        // LoadRaw sets the colors through their setters, which mark the map modified.
+        // A map just read from a file has no changes yet.
+        mapFile.IsModified = false;
         
         return mapFile;
     }

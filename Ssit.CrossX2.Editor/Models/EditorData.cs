@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using Newtonsoft.Json;
 using Ssit.CrossX2.Framework.Games.Template;
@@ -14,7 +16,15 @@ public interface IZoomData
 
 public class EditorData: IZoomData, IDisposable
 {
+    public const int MaxRecentMaps = 10;
+
     [JsonProperty] public string RecentMapPath { get; set; }
+
+    /// <summary>Folder the last map was opened from or saved to, kept apart from the prefabs' folder.</summary>
+    [JsonProperty] public string MapFolder { get; set; }
+
+    /// <summary>Recently opened or saved maps, newest first.</summary>
+    [JsonProperty] public List<string> RecentMaps { get; set; } = new();
 
     /// <summary>Folder the last prefab was saved to, kept apart from the maps' folder.</summary>
     [JsonProperty] public string PrefabFolder { get; set; }
@@ -76,6 +86,54 @@ public class EditorData: IZoomData, IDisposable
         var data = JsonConvert.DeserializeObject<EditorData>(json);
         data._appName = appName;
         return data;
+    }
+
+    /// <summary>Moves the map to the top of the recent list and remembers its folder.</summary>
+    public void AddRecentMap(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return;
+
+        lock (_lock)
+        {
+            RecentMaps ??= new List<string>();
+            RecentMaps.RemoveAll(p => string.Equals(p, path, StringComparison.OrdinalIgnoreCase));
+            RecentMaps.Insert(0, path);
+
+            if (RecentMaps.Count > MaxRecentMaps)
+            {
+                RecentMaps.RemoveRange(MaxRecentMaps, RecentMaps.Count - MaxRecentMaps);
+            }
+
+            MapFolder = Path.GetDirectoryName(path);
+            _shouldSave = true;
+        }
+    }
+
+    public void RemoveRecentMap(string path)
+    {
+        lock (_lock)
+        {
+            RecentMaps?.RemoveAll(p => string.Equals(p, path, StringComparison.OrdinalIgnoreCase));
+            _shouldSave = true;
+        }
+    }
+
+    public void ClearRecentMaps()
+    {
+        lock (_lock)
+        {
+            RecentMaps?.Clear();
+            _shouldSave = true;
+        }
+    }
+
+    /// <summary>Snapshot of the recent list, safe to enumerate while the timer saves.</summary>
+    public string[] GetRecentMaps()
+    {
+        lock (_lock)
+        {
+            return RecentMaps?.ToArray() ?? [];
+        }
     }
 
     public void RequestSave()

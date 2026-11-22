@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -40,6 +41,11 @@ namespace Ssit.CrossX2.Editor.ViewModels
 
         public ICommand NewCommand { get; }
         public ICommand OpenCommand { get; }
+        public IAsyncRelayCommand<string> OpenRecentCommand { get; }
+        public ICommand ClearRecentCommand { get; }
+
+        // Items of File > Recent Files; the menu follows this collection.
+        private readonly ObservableCollection<MenuItemModel> _recentFilesMenu = new();
 
         public ICommand EscapeCommand { get; }
         public ICommand HotkeyCommand { get; }
@@ -146,6 +152,12 @@ namespace Ssit.CrossX2.Editor.ViewModels
 
             NewCommand = new AsyncRelayCommand(New);
             OpenCommand = new AsyncRelayCommand(Open);
+            OpenRecentCommand = new AsyncRelayCommand<string>(OpenRecent);
+            ClearRecentCommand = new RelayCommand(() =>
+            {
+                _editorData.ClearRecentMaps();
+                UpdateRecentFilesMenu();
+            });
             SaveCommand = new AsyncRelayCommand(Save);
             SaveAsCommand = new AsyncRelayCommand(SaveAs);
 
@@ -221,6 +233,7 @@ namespace Ssit.CrossX2.Editor.ViewModels
             PrefabLibrary = services.Create<PrefabLibraryViewModel>();
             TilesetsContainer = instances.TilesetsContainer;
 
+            UpdateRecentFilesMenu();
             Menu = GenerateMenu();
         }
 
@@ -273,11 +286,14 @@ namespace Ssit.CrossX2.Editor.ViewModels
             PrefabLibrary.Refresh();
         }
 
-        /// <summary>Folder of the current (or last) map, so map pickers don't open in the prefab folder.</summary>
+        /// <summary>Folder the last map was opened from or saved to, so map pickers don't open in the prefab folder.</summary>
         private string MapFolder
         {
             get
             {
+                if (!string.IsNullOrWhiteSpace(_editorData.MapFolder))
+                    return _editorData.MapFolder;
+
                 var path = _filePath ?? _editorData.RecentMapPath;
                 return string.IsNullOrWhiteSpace(path) ? null : Path.GetDirectoryName(path);
             }
@@ -354,6 +370,8 @@ namespace Ssit.CrossX2.Editor.ViewModels
                 {
                     new MenuItemModel("New", NewCommand),
                     new MenuItemModel("Open", OpenCommand),
+                    new MenuItemModel("Recent Files", _recentFilesMenu),
+                    new MenuItemModel(),
                     new MenuItemModel("Save", SaveCommand),
                     new MenuItemModel("Save As...", SaveAsCommand),
                 }),
@@ -370,6 +388,54 @@ namespace Ssit.CrossX2.Editor.ViewModels
             };
         }
         
+        /// <summary>Rebuilds File > Recent Files from the stored list.</summary>
+        private void UpdateRecentFilesMenu()
+        {
+            _recentFilesMenu.Clear();
+
+            var recent = _editorData.GetRecentMaps();
+
+            if (recent.Length == 0)
+            {
+                _recentFilesMenu.Add(new MenuItemModel("No Recent Files", new RelayCommand(() => { }, () => false)));
+                return;
+            }
+
+            for (var idx = 0; idx < recent.Length; ++idx)
+            {
+                var path = recent[idx];
+                var header = $"{idx + 1}. {Path.GetFileNameWithoutExtension(path)}  ({Path.GetDirectoryName(path)})";
+                _recentFilesMenu.Add(new MenuItemModel(header, OpenRecentCommand, path));
+            }
+
+            _recentFilesMenu.Add(new MenuItemModel());
+            _recentFilesMenu.Add(new MenuItemModel("Clear Recent Files", ClearRecentCommand));
+        }
+
+        private async Task OpenRecent(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return;
+
+            if (!File.Exists(path))
+            {
+                await _windowService.ShowMessageBox("Map not found",
+                    $"The file no longer exists and was removed from Recent Files:\n{path}", MessageBoxType.Ok);
+
+                _editorData.RemoveRecentMap(path);
+                UpdateRecentFilesMenu();
+                return;
+            }
+
+            if (!await CheckIfSave())
+                return;
+
+            if (!LoadMap(path))
+            {
+                await _windowService.ShowMessageBox("Map not opened",
+                    $"The map could not be opened with this game template:\n{path}", MessageBoxType.Ok);
+            }
+        }
+
         private async Task Open()
         {
             try
@@ -460,7 +526,9 @@ namespace Ssit.CrossX2.Editor.ViewModels
         {
             try
             {
-                var path = await _fileService.ChooseFile(false, "Save Map File", "Map File (.map)", MapFolder);
+                var suggestedName = _filePath is null ? "Map" : Path.GetFileNameWithoutExtension(_filePath);
+                var path = await _fileService.ChooseFile(false, "Save Map File", "Map File (.map)", MapFolder,
+                    suggestedName);
                 _filePath = path;
                 await Save();
             }
@@ -485,7 +553,8 @@ namespace Ssit.CrossX2.Editor.ViewModels
                     UpdateLayers();
 
                     _editorData.RecentMapPath = path;
-                    _editorData.RequestSave();
+                    _editorData.AddRecentMap(path);
+                    UpdateRecentFilesMenu();
 
                     return true;
                 }
@@ -565,6 +634,12 @@ namespace Ssit.CrossX2.Editor.ViewModels
                 //using var gzipStream = new GZipStream(stream, CompressionLevel.SmallestSize);
                 MapFile.Save(stream);
             }
+
+            // Saving (also Save As) makes this the last map and its folder the map folder.
+            _editorData.RecentMapPath = _filePath;
+            _editorData.AddRecentMap(_filePath);
+            UpdateRecentFilesMenu();
+            UpdateTitle();
         }
 
         private bool _forceClose;

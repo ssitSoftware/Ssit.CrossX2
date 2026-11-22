@@ -22,7 +22,8 @@ namespace Ssit.CrossX2.Editor.Models
         public MenuItemModel(string header, IEnumerable<MenuItemModel> subItems)
         {
             Header = header;
-            Items = subItems?.ToArray();
+            // A live collection (e.g. Recent Files) is kept as is, so the menu follows its changes.
+            Items = subItems as IList<MenuItemModel> ?? subItems?.ToArray();
         }
 
         public MenuItemModel()

@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using Avalonia.Controls;
 using Ssit.CrossX2.Editor.Models;
 
@@ -32,13 +33,26 @@ namespace Ssit.CrossX2.Editor.Helpers
 
             var nativeMenuItem = new NativeMenuItem(el.Header);
             nativeMenuItem.Menu = new NativeMenu();
-        
-            foreach (var it in el.Items)
+
+            FillNativeMenu(nativeMenuItem.Menu, el);
+
+            // Live sub menus (Recent Files) are rebuilt when their items change.
+            if (el.Items is INotifyCollectionChanged observable)
             {
-                nativeMenuItem.Menu.Add(GenerateNativeItem(it));
+                observable.CollectionChanged += (_, _) => FillNativeMenu(nativeMenuItem.Menu, el);
             }
 
             return nativeMenuItem;
+        }
+
+        private static void FillNativeMenu(NativeMenu menu, MenuItemModel el)
+        {
+            menu.Items.Clear();
+
+            foreach (var it in el.Items)
+            {
+                menu.Add(GenerateNativeItem(it));
+            }
         }
     }
 }
