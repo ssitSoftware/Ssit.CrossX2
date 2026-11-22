@@ -38,11 +38,13 @@ public class PrefabBuilder
 
     /// <summary>
     /// Copies the tiles of <paramref name="region"/> (in tiles of <paramref name="sourceLayer"/>) and, unless
-    /// <paramref name="includeObjects"/> is false, the objects intersecting it. Layers with nothing extracted are
+    /// <paramref name="includeObjects"/> is false, the objects intersecting it - or, with
+    /// <paramref name="containedObjectsOnly"/>, only the objects fully inside it. Layers with nothing extracted are
     /// left out. With more than one part left the prefab is bound to the layers it came from, otherwise it's
     /// layer-agnostic.
     /// </summary>
-    public PrefabFile Build(Rectangle region, MapLayer sourceLayer, bool allMatchingLayers, bool includeObjects = true)
+    public PrefabFile Build(Rectangle region, MapLayer sourceLayer, bool allMatchingLayers, bool includeObjects = true,
+        bool containedObjectsOnly = false)
     {
         var map = _instances.Map;
         var layers = allMatchingLayers ? GetMatchingLayers(sourceLayer) : new[] { sourceLayer };
@@ -56,7 +58,7 @@ public class PrefabBuilder
             var x0 = region.X;
             var y0 = region.Y + layer.Height - sourceLayer.Height;
 
-            var part = ExtractPart(layer, x0, y0, region.Width, region.Height, includeObjects);
+            var part = ExtractPart(layer, x0, y0, region.Width, region.Height, includeObjects, containedObjectsOnly);
             if (part is not null)
             {
                 prefab.Layers.Add(part);
@@ -67,7 +69,8 @@ public class PrefabBuilder
         return prefab;
     }
 
-    private MapLayer ExtractPart(MapLayer layer, int x0, int y0, int width, int height, bool includeObjects)
+    private MapLayer ExtractPart(MapLayer layer, int x0, int y0, int width, int height, bool includeObjects,
+        bool containedObjectsOnly)
     {
         var part = new MapLayer(layer.Id, width, height, _instances.Template)
         {
@@ -107,7 +110,7 @@ public class PrefabBuilder
         foreach (var obj in objects)
         {
             var bounds = GetObjectBounds(obj);
-            var inside = bounds.HasValue ? bounds.Value.IsIntersecting(area) : area.Contains(obj.Position);
+            var inside = bounds.HasValue ? IsInArea(bounds.Value, area, containedObjectsOnly) : area.Contains(obj.Position);
 
             if (!inside) continue;
 
@@ -121,6 +124,17 @@ public class PrefabBuilder
         part.SortObjects();
 
         return hasContent ? part : null;
+    }
+
+    /// <summary>
+    /// True when object <paramref name="bounds"/> (in tiles) count as inside <paramref name="area"/>: intersecting it,
+    /// or with <paramref name="containedOnly"/> fully inside it (with a small tolerance at the edges).
+    /// </summary>
+    public static bool IsInArea(RectangleF bounds, RectangleF area, bool containedOnly)
+    {
+        const float tolerance = 0.001f;
+
+        return containedOnly ? area.Inflate(tolerance).ContainsRect(bounds) : bounds.IsIntersecting(area);
     }
 
     /// <summary>

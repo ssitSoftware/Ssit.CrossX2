@@ -13,6 +13,10 @@ namespace Ssit.CrossX2.Editor.Helpers
         
         public static SKPoint ToSkia(this Vector2 v) => new(v.X, v.Y);
 
+        /// <summary>True when <paramref name="inner"/> lies entirely within <paramref name="outer"/> (edges may touch).</summary>
+        public static bool ContainsRect(this RectangleF outer, RectangleF inner) =>
+            inner.X >= outer.X && inner.Y >= outer.Y && inner.Right <= outer.Right && inner.Bottom <= outer.Bottom;
+
         /// <summary>
         /// Converts CamelCase identifier into display text, e.g. "MovingPlatform" -> "Moving Platform".
         /// Acronyms are kept together: "UIScale" -> "UI Scale".

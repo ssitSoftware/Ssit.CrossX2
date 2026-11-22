@@ -419,8 +419,9 @@ namespace Ssit.CrossX2.Editor.Tools
         }
 
         /// <summary>
-        /// Selects the objects intersecting the region: on the selected layer, and with "select objects on all
-        /// layers" also on the other layers with the same speed (the objects Extract prefab takes from them).
+        /// Selects the objects intersecting the region (or only those fully inside it, with "select only contained
+        /// objects"): on the selected layer, and with "select objects on all layers" also on the other layers with
+        /// the same speed - the same objects Extract prefab takes.
         /// </summary>
         private void UpdateRegionSelection()
         {
@@ -434,7 +435,9 @@ namespace Ssit.CrossX2.Editor.Tools
 
             var screenRect = new RectangleF(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
 
-            Editor.GetMapObjects(_clickBuffer, screenRect);
+            var containedOnly = _editorData.SelectOnlyContainedObjects;
+
+            Editor.GetMapObjects(_clickBuffer, screenRect, containedOnly);
             var ids = _clickBuffer.Select(o => o.Object.Id).ToList();
 
             if (_editorData.SelectObjectsOnAllLayers)
@@ -450,7 +453,7 @@ namespace Ssit.CrossX2.Editor.Tools
                     foreach (var obj in layer.Objects)
                     {
                         var bounds = _prefabBuilder.GetObjectBounds(obj);
-                        if (bounds.HasValue && bounds.Value.IsIntersecting(area))
+                        if (bounds.HasValue && PrefabBuilder.IsInArea(bounds.Value, area, containedOnly))
                         {
                             ids.Add(obj.Id);
                         }

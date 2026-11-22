@@ -20,7 +20,9 @@ public interface IEditor
     ZoomViewModel Zoom { get; }
     IList<SKImage> GetTileSetImages(GRContext context);
     void GetMapObjects(IList<MapObjectInfo> buffer, Vector2 screenPosition);
-    void GetMapObjects(IList<MapObjectInfo> buffer, RectangleF screenRect);
+    /// <param name="containedOnly">Only objects fully inside <paramref name="screenRect"/>; otherwise every object
+    /// intersecting it.</param>
+    void GetMapObjects(IList<MapObjectInfo> buffer, RectangleF screenRect, bool containedOnly = false);
 
     /// <summary>The selected object when exactly one is selected; 0 when none or several are selected.
     /// Setting it replaces the whole selection.</summary>

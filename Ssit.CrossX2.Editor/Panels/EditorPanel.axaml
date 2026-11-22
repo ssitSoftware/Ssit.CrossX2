@@ -62,10 +62,16 @@
                             Width="22">
                             <DropDownButton.Flyout>
                                 <Flyout Placement="BottomEdgeAlignedLeft">
-                                    <CheckBox
-                                        Content="Select objects on all layers"
-                                        IsChecked="{Binding EditorViewModel.SelectObjectsOnAllLayers}"
-                                        ToolTip.Tip="A region selection also selects objects on the other layers with the same speed" />
+                                    <StackPanel Spacing="4">
+                                        <CheckBox
+                                            Content="Select objects on all layers"
+                                            IsChecked="{Binding EditorViewModel.SelectObjectsOnAllLayers}"
+                                            ToolTip.Tip="A region selection also selects objects on the other layers with the same speed" />
+                                        <CheckBox
+                                            Content="Select only contained objects"
+                                            IsChecked="{Binding EditorViewModel.SelectOnlyContainedObjects}"
+                                            ToolTip.Tip="A region selection (and Extract prefab) takes only objects fully inside the region, not every object it touches" />
+                                    </StackPanel>
                                 </Flyout>
                             </DropDownButton.Flyout>
                         </DropDownButton>

@@ -161,7 +161,8 @@ public class ExtractPrefabDialogViewModel : BindableModel, IDialog
 
     private void Rebuild()
     {
-        _prefab = _builder.Build(_parameters.Region, _parameters.Layer, _allMatchingLayers, includeObjects: !_tilesOnly);
+        _prefab = _builder.Build(_parameters.Region, _parameters.Layer, _allMatchingLayers, includeObjects: !_tilesOnly,
+            containedObjectsOnly: _editorData.SelectOnlyContainedObjects);
 
         try
         {

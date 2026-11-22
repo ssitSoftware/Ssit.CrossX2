@@ -73,6 +73,13 @@ namespace Ssit.CrossX2.Editor.ViewModels
             var selection = new HashSet<int>(ids);
             selection.Remove(0);
 
+            // Objects with logic are hidden while "Show objects" is off, and hidden objects can't be selected -
+            // whichever way they got here (region on all layers, placed prefab, an earlier selection).
+            if (!ShowObjects)
+            {
+                selection.RemoveWhere(id => _instances.Map?.FindObject(id)?.HasLogic == true);
+            }
+
             if (selection.SetEquals(_selectedObjects))
                 return;
 
@@ -192,6 +199,23 @@ namespace Ssit.CrossX2.Editor.ViewModels
         }
 
         public ICommand SetToolCommand { get; }
+
+        /// <summary>A region selection (and Extract prefab) takes only objects fully inside the region, not every
+        /// object touching it.</summary>
+        public bool SelectOnlyContainedObjects
+        {
+            get => _editorData.SelectOnlyContainedObjects;
+            set
+            {
+                if (_editorData.SelectOnlyContainedObjects == value) return;
+
+                _editorData.SelectOnlyContainedObjects = value;
+                _editorData.RequestSave();
+                OnPropertyChanged();
+
+                Tools.GetTool<SelectionTool>().RefreshRegionSelection();
+            }
+        }
 
         /// <summary>A region selection also selects objects on the other layers with the same speed.</summary>
         public bool SelectObjectsOnAllLayers
@@ -357,6 +381,13 @@ namespace Ssit.CrossX2.Editor.ViewModels
                     _editorData.RequestSave();
                     
                     OnPropertyChanged();
+
+                    // Hidden objects can't stay selected (SetSelectedObjects leaves them out).
+                    if (!value)
+                    {
+                        SetSelectedObjects(_selectedObjects);
+                    }
+
                     Redraw();
                 }
             }
@@ -1046,14 +1077,19 @@ namespace Ssit.CrossX2.Editor.ViewModels
             }
         }
 
-        public void GetMapObjects(IList<MapObjectInfo> buffer, RectangleF screenRect)
+        public void GetMapObjects(IList<MapObjectInfo> buffer, RectangleF screenRect, bool containedOnly = false)
         {
             var objects = _lastFrameObjects;
+
+            // Half a pixel of tolerance, so objects lying exactly on the area's edge count as contained.
+            var containingRect = screenRect.Inflate(0.5f);
 
             buffer.Clear();
             for (var idx = 0; idx < objects.Count; ++idx)
             {
-                if (objects[idx].ScreenBounds.IsIntersecting(screenRect))
+                var bounds = objects[idx].ScreenBounds;
+
+                if (containedOnly ? containingRect.ContainsRect(bounds) : bounds.IsIntersecting(screenRect))
                 {
                     buffer.Add(objects[idx]);
                 }

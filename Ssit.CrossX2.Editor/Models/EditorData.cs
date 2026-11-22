@@ -22,6 +22,9 @@ public class EditorData: IZoomData, IDisposable
     /// <summary>Selection tool: a region selection also selects objects on the other layers with the same speed.</summary>
     [JsonProperty] public bool SelectObjectsOnAllLayers { get; set; }
 
+    /// <summary>Region selection and Extract prefab take only objects fully inside the region (not all touching it).</summary>
+    [JsonProperty] public bool SelectOnlyContainedObjects { get; set; }
+
     /// <summary>Extract prefab default: tiles only (true) or tiles and objects (false).</summary>
     [JsonProperty] public bool PrefabTilesOnly { get; set; }
 
