@@ -65,6 +65,10 @@ public class EditorSprite
     private readonly Dictionary<string, Sprite.SpriteSequence> _sequences = new();
     private readonly Dictionary<string, float> _sequenceTime = new();
 
+    /// <summary>CPU image, for drawing outside the editor view (e.g. prefab previews); <see cref="Get"/>
+    /// returns a GPU texture once the editor view has drawn the sprite.</summary>
+    public SKImage RasterImage => _image;
+
     public EditorSprite(SKImage image, Vector2 origin, Sprite.SpriteSequence[] sequences)
     {
         _image = image;

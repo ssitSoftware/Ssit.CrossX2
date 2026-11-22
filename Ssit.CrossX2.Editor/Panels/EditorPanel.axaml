@@ -61,6 +61,13 @@
                         ToolTip.Tip="Region selection tool&#13;Drag to select tiles and the objects they touch"
                         Value="{x:Static tools:RegionSelectionTool.Name}" />
 
+                    <Button
+                        Classes="Toolbar"
+                        Command="{Binding ExtractPrefabCommand}"
+                        ToolTip.ShowOnDisabled="True"
+                        ToolTip.Tip="Extract selection as prefab&#13;Select a region with the region selection tool first"
+                        i:Attached.Icon="mdi-package-variant-plus" />
+
                     <controls1:SelectionToggleButton
                         Classes="Toolbar"
                         Icon="mdi-wall"

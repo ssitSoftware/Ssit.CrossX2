@@ -46,6 +46,7 @@ namespace Ssit.CrossX2.Editor.ViewModels
         public IAsyncRelayCommand SaveCommand { get; }
         public IAsyncRelayCommand SaveAsCommand { get; }
         public ICommand HorizontalFlipCommand { get; }
+        public IAsyncRelayCommand ExtractPrefabCommand { get; }
         
         public MapFile MapFile
         {
@@ -173,6 +174,16 @@ namespace Ssit.CrossX2.Editor.ViewModels
                 EditorViewModel.Redraw();
             });
 
+            ExtractPrefabCommand = new AsyncRelayCommand(ExtractPrefab, CanExtractPrefab);
+
+            _instances.Tools.GetTool<RegionSelectionTool>().PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(RegionSelectionTool.Region))
+                {
+                    ExtractPrefabCommand.NotifyCanExecuteChanged();
+                }
+            };
+
             EditorViewModel = services.Create<EditorViewModel>();
 
             if (string.IsNullOrWhiteSpace(_editorData.RecentMapPath) || 
@@ -188,6 +199,27 @@ namespace Ssit.CrossX2.Editor.ViewModels
         }
 
         private bool CanRun() => !_isRunningGame && EditorRunner.RunAssembly != null;
+
+        private bool CanExtractPrefab() => _instances.Tools.GetTool<RegionSelectionTool>().HasSelection;
+
+        private async Task ExtractPrefab()
+        {
+            var tool = _instances.Tools.GetTool<RegionSelectionTool>();
+            if (!tool.HasSelection) return;
+
+            await _windowService.ShowDialog<ExtractPrefabDialogViewModel>(
+                new ExtractPrefabDialogViewModel.Parameters(tool.Region.Value, tool.Layer));
+        }
+
+        /// <summary>Folder of the current (or last) map, so map pickers don't open in the prefab folder.</summary>
+        private string MapFolder
+        {
+            get
+            {
+                var path = _filePath ?? _editorData.RecentMapPath;
+                return string.IsNullOrWhiteSpace(path) ? null : Path.GetDirectoryName(path);
+            }
+        }
 
         private async Task Run()
         {
@@ -276,7 +308,7 @@ namespace Ssit.CrossX2.Editor.ViewModels
         {
             try
             {
-                var path = await _fileService.ChooseFile(true, "Open Map File", "Map File (.map)");
+                var path = await _fileService.ChooseFile(true, "Open Map File", "Map File (.map)", MapFolder);
 
                 if (path == null)
                     return;
@@ -362,7 +394,7 @@ namespace Ssit.CrossX2.Editor.ViewModels
         {
             try
             {
-                var path = await _fileService.ChooseFile(false, "Save Map File", "Map File (.map)");
+                var path = await _fileService.ChooseFile(false, "Save Map File", "Map File (.map)", MapFolder);
                 _filePath = path;
                 await Save();
             }

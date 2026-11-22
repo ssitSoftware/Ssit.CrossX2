@@ -35,7 +35,11 @@ public class RegionSelectionTool : EditorTool
     private MapFile _regionMap;
 
     /// <summary>Selected region, in tiles of <see cref="Layer"/>; null when nothing is selected.</summary>
-    public Rectangle? Region { get; private set; }
+    public Rectangle? Region
+    {
+        get;
+        private set => SetField(ref field, value);
+    }
 
     /// <summary>Layer the region was selected on; null when nothing is selected.</summary>
     public MapLayer Layer => Region.HasValue && _regionMap == Instances.Map

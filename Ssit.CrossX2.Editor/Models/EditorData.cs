@@ -15,6 +15,9 @@ public interface IZoomData
 public class EditorData: IZoomData, IDisposable
 {
     [JsonProperty] public string RecentMapPath { get; set; }
+
+    /// <summary>Folder the last prefab was saved to, kept apart from the maps' folder.</summary>
+    [JsonProperty] public string PrefabFolder { get; set; }
     [JsonProperty] public bool ShowAllLayers { get; set; }
     [JsonProperty] public bool ShowGrid { get; set; } = true;
     [JsonProperty] public bool OnionMode { get; set; }

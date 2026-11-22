@@ -19,6 +19,9 @@ namespace Ssit.CrossX2.Editor.Service
 
     public interface IFileService
     {
-        Task<string> ChooseFile(bool open, string title, string filters);
+        /// <param name="startFolder">Folder the picker opens in, if it exists.</param>
+        /// <param name="suggestedFileName">Initial file name (save picker only).</param>
+        Task<string> ChooseFile(bool open, string title, string filters, string startFolder = null,
+            string suggestedFileName = null);
     }
 }

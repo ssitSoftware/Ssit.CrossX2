@@ -18,6 +18,10 @@ namespace Ssit.CrossX2.Editor.Helpers
 
         public TilesetMeta Meta { get; }
 
+        /// <summary>CPU image, for drawing outside the editor view (e.g. prefab previews); <see cref="Get"/>
+        /// returns a GPU texture once the editor view has drawn the tile set.</summary>
+        public SKImage RasterImage => _image;
+
         public bool HasMeta => Meta != null;
         public bool HasMask => _mask != null;
 

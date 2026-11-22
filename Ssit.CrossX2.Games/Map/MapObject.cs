@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Reflection;
+using System.Text;
 using Newtonsoft.Json;
 using Ssit.CrossX2.Framework.Games.Editor;
 using Ssit.CrossX2.Framework.Games.Template;
@@ -100,6 +101,22 @@ public class MapObject
         writer.Write(ZOrder);
     }
     
+    /// <summary>Deep copy (parameters included), made by saving and loading the object.</summary>
+    public MapObject Clone(IGameTemplate gameTemplate)
+    {
+        using var stream = new MemoryStream();
+
+        using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
+        {
+            Save(writer);
+        }
+
+        stream.Position = 0;
+
+        using var reader = new BinaryReader(stream, Encoding.UTF8);
+        return Load(reader, gameTemplate);
+    }
+
     public void UpdateLinks()
     {
         if (ParametersObject is null)

@@ -1,0 +1,91 @@
+<Window
+    CanResize="False"
+    SizeToContent="WidthAndHeight"
+    Title="{Binding Title}"
+    WindowStartupLocation="CenterOwner"
+    d:DesignHeight="520"
+    d:DesignWidth="560"
+    mc:Ignorable="d"
+    x:Class="Ssit.CrossX2.Editor.Views.ExtractPrefabDialog"
+    x:DataType="viewModels:ExtractPrefabDialogViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:viewModels="clr-namespace:Ssit.CrossX2.Editor.ViewModels">
+
+    <StackPanel
+        Margin="16"
+        Spacing="10"
+        Width="520">
+
+        <TextBlock FontWeight="SemiBold" Text="Layers" />
+
+        <RadioButton
+            Content="{Binding CurrentLayerLabel}"
+            GroupName="PrefabLayers"
+            IsChecked="{Binding CurrentLayerOnly}" />
+
+        <RadioButton
+            Content="{Binding MatchingLayersLabel}"
+            GroupName="PrefabLayers"
+            IsChecked="{Binding AllMatchingLayers}"
+            IsEnabled="{Binding CanUseMatchingLayers}" />
+
+        <TextBlock FontWeight="SemiBold" Margin="0,6,0,0" Text="Content" />
+
+        <RadioButton
+            Content="Tiles and objects"
+            GroupName="PrefabContent"
+            IsChecked="{Binding TilesAndObjects}" />
+
+        <RadioButton
+            Content="Tiles only"
+            GroupName="PrefabContent"
+            IsChecked="{Binding TilesOnly}" />
+
+        <TextBlock FontWeight="SemiBold" Margin="0,6,0,0" Text="Preview" />
+
+        <Border
+            Background="#181818"
+            BorderBrush="#404040"
+            BorderThickness="1"
+            ClipToBounds="True"
+            CornerRadius="4"
+            Height="300">
+            <Grid>
+                <Image
+                    Margin="8"
+                    Source="{Binding Preview}"
+                    Stretch="Uniform"
+                    StretchDirection="DownOnly" />
+
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    IsVisible="{Binding !CanSave}"
+                    Opacity="0.6"
+                    Text="Nothing to extract"
+                    VerticalAlignment="Center" />
+            </Grid>
+        </Border>
+
+        <TextBlock
+            Opacity="0.8"
+            Text="{Binding Info}"
+            TextWrapping="Wrap" />
+
+        <Grid ColumnDefinitions="*, Auto, 8, Auto" Margin="0,6,0,0">
+            <Button
+                Command="{Binding CancelCommand}"
+                Content="Cancel"
+                Grid.Column="1"
+                IsCancel="True" />
+
+            <Button
+                Command="{Binding SaveCommand}"
+                Content="Save..."
+                Grid.Column="3"
+                IsDefault="True" />
+        </Grid>
+    </StackPanel>
+</Window>
