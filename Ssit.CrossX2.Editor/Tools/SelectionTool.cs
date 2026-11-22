@@ -25,7 +25,8 @@ namespace Ssit.CrossX2.Editor.Tools
     /// <item>Press on empty space and drag to select a region: its tiles (the source for Extract prefab) and the
     /// objects intersecting it - on the selected layer, and with <see cref="EditorData.SelectObjectsOnAllLayers"/>
     /// also on the other layers with the same speed. Moving the selection drops the region frame.</item>
-    /// <item>Delete removes the selected objects, and with a region also clears its tiles on the selected layer.</item>
+    /// <item>Delete removes the selected objects, and with a region also clears its tiles - on the selected layer,
+    /// or with "select objects on all layers" on all layers with the same speed. Copy / cut take the same.</item>
     /// </list>
     /// </summary>
     public class SelectionTool: EditorTool
@@ -137,26 +138,75 @@ namespace Ssit.CrossX2.Editor.Tools
 
         public override void OnHotkeyAction(HotkeyActions action)
         {
-            if (action != HotkeyActions.Delete) return;
+            if (action == HotkeyActions.Delete)
+            {
+                DeleteSelection();
+            }
+        }
 
-            var regionLayer = HasRegion ? Layer : null;
+        /// <summary>True when there is something to copy, cut or delete.</summary>
+        public bool HasSelectedElements => HasRegion || Editor?.SelectedObjects.Count > 0;
 
-            if (regionLayer is null && Editor.SelectedObjects.Count == 0) return;
+        /// <summary>
+        /// Layers the selection's tiles come from: the selected layer, or with "select objects on all layers" all
+        /// layers with the same speed (objects are selected on those too).
+        /// </summary>
+        private IReadOnlyList<MapLayer> GetSelectionLayers()
+        {
+            var selectedLayer = Editor.SelectedLayer;
+
+            return _editorData.SelectObjectsOnAllLayers
+                ? _prefabBuilder.GetMatchingLayers(selectedLayer)
+                : new[] { selectedLayer };
+        }
+
+        /// <summary>
+        /// Copy of the selected elements for the clipboard - the region's tiles (if there is a region) and the selected
+        /// objects, with their parameters, z-order and flip. Null when nothing is selected.
+        /// </summary>
+        public PrefabFile CopySelection()
+        {
+            if (!HasSelectedElements) return null;
+
+            var selectedLayer = Editor.SelectedLayer;
+            var layers = GetSelectionLayers();
+
+            // Objects-only selections may include objects of other layers with the same speed (e.g. a placed prefab).
+            if (!HasRegion)
+            {
+                layers = _prefabBuilder.GetMatchingLayers(selectedLayer);
+            }
+
+            return _prefabBuilder.BuildFromSelection(selectedLayer, HasRegion ? Region : null, layers,
+                Editor.SelectedObjects);
+        }
+
+        /// <summary>Deletes the selected objects and clears the region's tiles; one undo step.</summary>
+        public void DeleteSelection()
+        {
+            if (!HasSelectedElements) return;
 
             Instances.UndoRedoServices.PushState();
 
-            if (regionLayer is not null)
+            if (HasRegion)
             {
                 var region = Region.Value;
+                var selectedLayer = Editor.SelectedLayer;
 
-                var right = Math.Min(region.Right, regionLayer.Width);
-                var bottom = Math.Min(region.Bottom, regionLayer.Height);
-
-                for (var x = Math.Max(0, region.X); x < right; ++x)
+                foreach (var layer in GetSelectionLayers())
                 {
-                    for (var y = Math.Max(0, region.Y); y < bottom; ++y)
+                    // Layers with the same speed are aligned to their bottom edge (see PrefabBuilder.Build).
+                    var offsetY = layer.Height - selectedLayer.Height;
+
+                    var right = Math.Min(region.Right, layer.Width);
+                    var bottom = Math.Min(region.Bottom + offsetY, layer.Height);
+
+                    for (var x = Math.Max(0, region.X); x < right; ++x)
                     {
-                        regionLayer.Tiles[x, y] = Tile.Empty;
+                        for (var y = Math.Max(0, region.Y + offsetY); y < bottom; ++y)
+                        {
+                            layer.Tiles[x, y] = Tile.Empty;
+                        }
                     }
                 }
             }

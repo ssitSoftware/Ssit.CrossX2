@@ -91,6 +91,13 @@ namespace Ssit.CrossX2.Editor.ViewModels
 
         public ICommand UndoCommand { get; }
         public ICommand RedoCommand { get; }
+
+        public ICommand CopyCommand { get; }
+        public ICommand CutCommand { get; }
+        public ICommand PasteCommand { get; }
+
+        // Copied or cut selection (tiles and objects), pasted with the place prefab tool.
+        private PrefabFile _clipboard;
         public AsyncCommand RunCommand { get; }
 
         private string _filePath;
@@ -144,6 +151,21 @@ namespace Ssit.CrossX2.Editor.ViewModels
 
             UndoCommand = new RelayCommand(() => _instances.UndoRedoServices.Undo());
             RedoCommand = new RelayCommand(() => _instances.UndoRedoServices.Redo());
+
+            CopyCommand = new RelayCommand(() =>
+            {
+                if (!IsTextInputFocused()) CopySelection();
+            });
+
+            CutCommand = new RelayCommand(() =>
+            {
+                if (!IsTextInputFocused() && CopySelection())
+                {
+                    _instances.Tools.GetTool<SelectionTool>().DeleteSelection();
+                }
+            });
+
+            PasteCommand = new RelayCommand(Paste);
 
             EscapeCommand = new RelayCommand(() =>
             {
@@ -205,6 +227,39 @@ namespace Ssit.CrossX2.Editor.ViewModels
         private bool CanRun() => !_isRunningGame && EditorRunner.RunAssembly != null;
 
         private bool CanExtractPrefab() => _instances.Tools.GetTool<SelectionTool>().HasRegion;
+
+        /// <summary>Copies the selected tiles and objects to the clipboard; false when nothing is selected.</summary>
+        private bool CopySelection()
+        {
+            var copy = _instances.Tools.GetTool<SelectionTool>().CopySelection();
+            if (copy is null) return false;
+
+            _clipboard = copy;
+            return true;
+        }
+
+        /// <summary>Shows the clipboard under the cursor; a click places it (with new object ids).</summary>
+        private void Paste()
+        {
+            if (IsTextInputFocused() || _clipboard is null) return;
+
+            var tool = _instances.Tools.GetTool<PlacePrefabTool>();
+            tool.StartPlacing(_clipboard, "Paste", isPaste: true);
+
+            _instances.Tools.Current = tool;
+            _instances.Editor?.Redraw();
+        }
+
+        /// <summary>Copy, cut and paste hotkeys belong to a text box while one has the focus.</summary>
+        private static bool IsTextInputFocused()
+        {
+            if (Avalonia.Application.Current?.ApplicationLifetime is not
+                Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+                return false;
+
+            var window = desktop.Windows.FirstOrDefault(w => w.IsActive) ?? desktop.MainWindow;
+            return window?.FocusManager?.GetFocusedElement() is Avalonia.Controls.TextBox;
+        }
 
         private async Task ExtractPrefab()
         {
@@ -305,7 +360,11 @@ namespace Ssit.CrossX2.Editor.ViewModels
                 new MenuItemModel("Edit", new[]
                 {
                     new MenuItemModel("Undo", null),
-                    new MenuItemModel("Redo", null)
+                    new MenuItemModel("Redo", null),
+                    new MenuItemModel(),
+                    new MenuItemModel("Cut", CutCommand),
+                    new MenuItemModel("Copy", CopyCommand),
+                    new MenuItemModel("Paste", PasteCommand)
                 }),
                 new MenuItemModel("Window", null)
             };

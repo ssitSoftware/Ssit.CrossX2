@@ -29,6 +29,9 @@
         <Button Command="{Binding UndoCommand}" HotKey="{x:Static helpers:HotKeys.EditUndo}" />
         <Button Command="{Binding RedoCommand}" HotKey="{x:Static helpers:HotKeys.EditRedo}" />
         <Button Command="{Binding RedoCommand}" HotKey="{x:Static helpers:HotKeys.EditRedoAlt}" />
+        <Button Command="{Binding CopyCommand}" HotKey="{x:Static helpers:HotKeys.EditCopy}" />
+        <Button Command="{Binding CutCommand}" HotKey="{x:Static helpers:HotKeys.EditCut}" />
+        <Button Command="{Binding PasteCommand}" HotKey="{x:Static helpers:HotKeys.EditPaste}" />
 
         <!--  Tools  -->
         <Button Command="{Binding EscapeCommand}" HotKey="Escape" />

@@ -79,7 +79,7 @@ public class PrefabLibraryViewModel : BindableModel
         // Picking the same prefab again after using another tool should work, so drop the selection then.
         _instances.Tools.PropertyChanged += (_, _) =>
         {
-            if (_instances.Tools.Current is not PlacePrefabTool && SelectedPrefab is not null)
+            if (_instances.Tools.Current is not PlacePrefabTool { IsPaste: false } && SelectedPrefab is not null)
             {
                 _clearingSelection = true;
                 SelectedPrefab = null;
@@ -204,8 +204,7 @@ public class PrefabLibraryViewModel : BindableModel
         }
 
         var tool = _instances.Tools.GetTool<PlacePrefabTool>();
-        tool.PrefabName = item.Name;
-        tool.Prefab = prefab;
+        tool.StartPlacing(prefab, item.Name, isPaste: false);
 
         _instances.Tools.Current = tool;
         _instances.Editor?.Redraw();

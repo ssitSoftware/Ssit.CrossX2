@@ -58,7 +58,9 @@ public class PrefabBuilder
             var x0 = region.X;
             var y0 = region.Y + layer.Height - sourceLayer.Height;
 
-            var part = ExtractPart(layer, x0, y0, region.Width, region.Height, includeObjects, containedObjectsOnly);
+            var part = ExtractPart(layer, x0, y0, region.Width, region.Height, includeTiles: true,
+                (obj, area) => includeObjects && IsInObjectArea(obj, area, containedObjectsOnly));
+
             if (part is not null)
             {
                 prefab.Layers.Add(part);
@@ -69,8 +71,91 @@ public class PrefabBuilder
         return prefab;
     }
 
-    private MapLayer ExtractPart(MapLayer layer, int x0, int y0, int width, int height, bool includeObjects,
-        bool containedObjectsOnly)
+    /// <summary>
+    /// Copies exactly what is selected (for the clipboard): the tiles of <paramref name="region"/> - in tiles of
+    /// <paramref name="selectedLayer"/>, null for an objects-only selection - on <paramref name="layers"/>, and the
+    /// objects with ids in <paramref name="objectIds"/> on those layers. Without a region the copy covers the
+    /// selected objects' bounds. Returns null when nothing is selected.
+    /// </summary>
+    public PrefabFile BuildFromSelection(MapLayer selectedLayer, Rectangle? region, IReadOnlyList<MapLayer> layers,
+        IReadOnlyCollection<int> objectIds)
+    {
+        var map = _instances.Map;
+        var area = region ?? GetObjectsArea(selectedLayer, layers, objectIds);
+
+        if (!area.HasValue) return null;
+
+        var copy = area.Value;
+        var prefab = new PrefabFile(map.TemplateId, map.TileSize, map.Tilesets, copy.Width, copy.Height);
+
+        foreach (var layer in layers)
+        {
+            // Same bottom-edge alignment of layers with the same speed as in Build.
+            var x0 = copy.X;
+            var y0 = copy.Y + layer.Height - selectedLayer.Height;
+
+            var part = ExtractPart(layer, x0, y0, copy.Width, copy.Height, includeTiles: region.HasValue,
+                (obj, _) => objectIds.Contains(obj.Id));
+
+            if (part is not null)
+            {
+                prefab.Layers.Add(part);
+            }
+        }
+
+        prefab.IsLayerBound = prefab.Layers.Count > 1;
+        return prefab.Layers.Count > 0 ? prefab : null;
+    }
+
+    /// <summary>Whole tiles (in tiles of <paramref name="selectedLayer"/>) covering the given objects; null if none.</summary>
+    private Rectangle? GetObjectsArea(MapLayer selectedLayer, IReadOnlyList<MapLayer> layers,
+        IReadOnlyCollection<int> objectIds)
+    {
+        var minX = float.MaxValue;
+        var minY = float.MaxValue;
+        var maxX = float.MinValue;
+        var maxY = float.MinValue;
+
+        foreach (var layer in layers)
+        {
+            var offsetY = layer.Height - selectedLayer.Height;
+
+            foreach (var obj in layer.Objects)
+            {
+                if (!objectIds.Contains(obj.Id)) continue;
+
+                var bounds = GetObjectBounds(obj) ?? new RectangleF(obj.Position.X, obj.Position.Y, 0, 0);
+
+                minX = MathF.Min(minX, bounds.X);
+                minY = MathF.Min(minY, bounds.Y - offsetY);
+                maxX = MathF.Max(maxX, bounds.Right);
+                maxY = MathF.Max(maxY, bounds.Bottom - offsetY);
+            }
+        }
+
+        if (minX > maxX) return null;
+
+        var x = (int)MathF.Floor(minX);
+        var y = (int)MathF.Floor(minY);
+
+        return new Rectangle(x, y,
+            Math.Max(1, (int)MathF.Ceiling(maxX) - x),
+            Math.Max(1, (int)MathF.Ceiling(maxY) - y));
+    }
+
+    private bool IsInObjectArea(MapObject obj, RectangleF area, bool containedOnly)
+    {
+        var bounds = GetObjectBounds(obj);
+        return bounds.HasValue ? IsInArea(bounds.Value, area, containedOnly) : area.Contains(obj.Position);
+    }
+
+    /// <summary>
+    /// One part (layer) of a prefab: optionally the tiles of the area at (<paramref name="x0"/>, <paramref name="y0"/>),
+    /// and copies of the objects <paramref name="includeObject"/> accepts (given the area in tiles), positioned
+    /// relative to the area. Null when the part would be empty.
+    /// </summary>
+    private MapLayer ExtractPart(MapLayer layer, int x0, int y0, int width, int height, bool includeTiles,
+        Func<MapObject, RectangleF, bool> includeObject)
     {
         var part = new MapLayer(layer.Id, width, height, _instances.Template)
         {
@@ -93,7 +178,7 @@ public class PrefabBuilder
             {
                 var sy = y0 + y;
 
-                var tile = sx >= 0 && sy >= 0 && sx < layer.Width && sy < layer.Height
+                var tile = includeTiles && sx >= 0 && sy >= 0 && sx < layer.Width && sy < layer.Height
                     ? layer.Tiles[sx, sy]
                     : Tile.Empty;
 
@@ -105,15 +190,11 @@ public class PrefabBuilder
         var area = new RectangleF(x0, y0, width, height);
         var origin = new Vector2(x0, y0);
 
-        var objects = includeObjects ? layer.Objects : Enumerable.Empty<MapObject>();
-
-        foreach (var obj in objects)
+        foreach (var obj in layer.Objects)
         {
-            var bounds = GetObjectBounds(obj);
-            var inside = bounds.HasValue ? IsInArea(bounds.Value, area, containedObjectsOnly) : area.Contains(obj.Position);
+            if (!includeObject(obj, area)) continue;
 
-            if (!inside) continue;
-
+            // Clone keeps parameters, z-order and flip; placing gives the copy a new id.
             var copy = obj.Clone(_instances.Template);
             copy.Position -= origin;
 

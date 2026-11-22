@@ -20,6 +20,8 @@ namespace Ssit.CrossX2.Editor.Tools;
 /// as the layer it came from; a multi-layer prefab puts each part on the layer it was extracted from, so the
 /// selected layer has to be one of them. Empty prefab tiles keep the map's tiles. Placed objects get new ids;
 /// links between them are kept, links to objects outside the prefab are cleared.
+/// Also pastes the clipboard (<see cref="IsPaste"/>): a single-layer paste goes on any layer (objects with logic
+/// only on Main), and after placing it the selection tool takes over with the pasted objects selected.
 /// </summary>
 public class PlacePrefabTool : EditorTool
 {
@@ -51,6 +53,28 @@ public class PlacePrefabTool : EditorTool
 
     /// <summary>Prefab name, for messages.</summary>
     public string PrefabName { get; set; }
+
+    /// <summary>Placing the clipboard (paste) rather than a prefab from the library.</summary>
+    public bool IsPaste { get; private set; }
+
+    /// <summary>Starts placing <paramref name="prefab"/>: a library prefab, or the clipboard when
+    /// <paramref name="isPaste"/>.</summary>
+    public void StartPlacing(PrefabFile prefab, string name, bool isPaste)
+    {
+        IsPaste = isPaste;
+        PrefabName = name;
+
+        if (Prefab == prefab)
+        {
+            // Same instance (pasting the same clipboard again): the setter wouldn't re-check the rules.
+            UpdatePlacementCheck();
+            Editor?.Redraw();
+        }
+        else
+        {
+            Prefab = prefab;
+        }
+    }
 
     public PlacePrefabTool(IEditorInstances instances) : base(Name, instances)
     {
@@ -93,6 +117,12 @@ public class PlacePrefabTool : EditorTool
         if (_anchor.HasValue && Prefab is not null && _blockReason is null)
         {
             Place(Prefab, _anchor.Value);
+
+            if (IsPaste)
+            {
+                // Back to selecting, with the pasted objects still selected so they can be moved.
+                Instances.Tools.Current = Instances.Tools.GetTool<SelectionTool>();
+            }
         }
 
         Editor.Redraw();
@@ -125,6 +155,13 @@ public class PlacePrefabTool : EditorTool
         if (!prefab.IsLayerBound)
         {
             var part = prefab.Layers[0];
+
+            if (IsPaste)
+            {
+                return part.Objects.Any(o => o.HasLogic) && !IsMainLayer(selectedLayer.Id)
+                    ? "Objects with logic can only be pasted on the Main layer"
+                    : null;
+            }
 
             if (IsMainLayer(part.Id) != IsMainLayer(selectedLayer.Id))
             {

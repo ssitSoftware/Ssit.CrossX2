@@ -12,6 +12,9 @@ namespace Ssit.CrossX2.Editor.Helpers
         public static KeyGesture EditUndo { get; private set; }
         public static KeyGesture EditRedo { get; private set; }
         public static KeyGesture EditRedoAlt { get; private set; }
+        public static KeyGesture EditCopy { get; private set; }
+        public static KeyGesture EditCut { get; private set; }
+        public static KeyGesture EditPaste { get; private set; }
     
         public static KeyGesture EditorZoomIn { get; private set; }
         public static KeyGesture EditorZoomOut { get; private set; }
@@ -46,6 +49,9 @@ namespace Ssit.CrossX2.Editor.Helpers
             EditUndo = KeyGesture.Parse("Ctrl+Z");
             EditRedo = KeyGesture.Parse("Ctrl+Y");
             EditRedoAlt = KeyGesture.Parse("Ctrl+Shift+Z");
+            EditCopy = KeyGesture.Parse("Ctrl+C");
+            EditCut = KeyGesture.Parse("Ctrl+X");
+            EditPaste = KeyGesture.Parse("Ctrl+V");
             
             ToolsInsertTiles = KeyGesture.Parse("Ctrl+Shift+T");
             ToolsEraser = KeyGesture.Parse("Ctrl+Shift+E");
@@ -67,6 +73,9 @@ namespace Ssit.CrossX2.Editor.Helpers
             EditUndo = KeyGesture.Parse("Meta+Z");
             EditRedo = KeyGesture.Parse("Meta+Y");
             EditRedoAlt = KeyGesture.Parse("Meta+Shift+Z");
+            EditCopy = KeyGesture.Parse("Meta+C");
+            EditCut = KeyGesture.Parse("Meta+X");
+            EditPaste = KeyGesture.Parse("Meta+V");
             
             ToolsInsertTiles = KeyGesture.Parse("Meta+Shift+T");
             ToolsEraser = KeyGesture.Parse("Meta+Shift+E");
