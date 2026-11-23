@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Diagnostics;
 using System.Reflection;
 using Ssit.CrossX2.Framework.Audio;
@@ -314,6 +315,11 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
         if (_camera is Camera camera)
         {
             camera.VisibleBounds = MapRenderer.GetVisibleBounds(_mapDisplayElement, _camera.LookAt, renderSize, _gameTemplate.TileSize);
+
+            var mainLayerSize = _mapDisplayElement.Layers.First(o => o.IsMain).SourceSize;
+            camera.SetMapClampArea(
+                new Vector2(mainLayerSize.Width, mainLayerSize.Height),
+                renderSize.ToVector() / _gameTemplate.TileSize);
         }
         
         MapRenderer.Render(renderer, _mapDisplayElement, Simulation, _camera.LookAt, 

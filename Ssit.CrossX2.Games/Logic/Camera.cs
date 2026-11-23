@@ -19,7 +19,8 @@ internal class Camera(IGameTemplate template, IInputMappings inputMappings): ICa
     private float _temporaryFollowFactor;
     
     private IPositionObject PositionObject => _temporaryTarget ?? _primaryTarget;
-    private Vector2 Offset => _temporaryTarget != null ? _temporaryOffset : _primaryOffset + _cameraMove * 6;
+    private Vector2 BaseOffset => _temporaryTarget != null ? _temporaryOffset : _primaryOffset;
+    private Vector2 StickOffset => _temporaryTarget != null ? Vector2.Zero : _cameraMove * 6;
     private float FollowFactor => _temporaryTarget != null ? _temporaryFollowFactor : _primaryFollowFactor;
     
     private Action _onTemporaryTargetFocused;
@@ -56,6 +57,33 @@ internal class Camera(IGameTemplate template, IInputMappings inputMappings): ICa
 
     private int? _cameraWindowWidth;
     private int? _cameraWindowHeight;
+
+    private Vector2? _mapSize;
+    private Vector2 _viewSize;
+
+    /// <summary>
+    /// Set by the game instance on every render. Lets the camera clamp its target to the map edges
+    /// the same way <see cref="Rendering.Map.MapRenderer"/> does, before the right-stick offset is applied.
+    /// </summary>
+    internal void SetMapClampArea(Vector2 mapSize, Vector2 viewSize)
+    {
+        _mapSize = mapSize;
+        _viewSize = viewSize;
+    }
+
+    private Vector2 ClampToMap(Vector2 lookAt)
+    {
+        if (!_mapSize.HasValue)
+            return lookAt;
+
+        var map = _mapSize.Value;
+        var half = _viewSize / 2;
+
+        // Mirrors MapRenderer.GetLayerRenderParameters (X: [half, mapW - half], Y: [half, mapH - half]).
+        lookAt.X = MathF.Min(MathF.Max(half.X, lookAt.X), map.X - half.X);
+        lookAt.Y = MathF.Min(MathF.Max(half.Y, lookAt.Y), map.Y - half.Y);
+        return lookAt;
+    }
     
     private Vector2 GetLookAt()
     {
@@ -127,7 +155,11 @@ internal class Camera(IGameTemplate template, IInputMappings inputMappings): ICa
         var dir = new Vector2(moveX, moveY);
         _cameraMove = dir;
 
-        var target = PositionObject.Position + Offset;
+        // Clamp the followed position first, then add the stick offset and clamp again.
+        // Otherwise, near a map edge the unclamped target lies far outside the visible range
+        // and a stick offset pointing back into the map is swallowed by the render clamp.
+        var target = ClampToMap(PositionObject.Position + BaseOffset);
+        target = ClampToMap(target + StickOffset);
         _lastTargetPositions.Add(target);
 
         while (_lastTargetPositions.Count > 10)

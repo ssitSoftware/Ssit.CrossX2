@@ -20,6 +20,13 @@ public class BoxHitDetector(Vector2 offset, SizeF size, ColliderType colliderTyp
     /// </summary>
     public BoxHitDetector Fallback { get; init; }
 
+    /// <summary>
+    /// When true, non-static colliders (dynamic bodies, triggers) are searched for a hittable first, and only when none is
+    /// found the regular nearest-first search runs (static colliders included). So a wall between the attacker and a target
+    /// that's still inside the box doesn't swallow the hit.
+    /// </summary>
+    public bool PreferDynamic { get; init; }
+
     public HitTestResult Detect(IBody body, bool faceLeft, ulong collidesWith, Func<IBody, IHittable, bool> filter = null, ColliderSides bodylessSides = ColliderSides.All)
     {
         filter ??= DefaultFilter;
@@ -37,13 +44,22 @@ public class BoxHitDetector(Vector2 offset, SizeF size, ColliderType colliderTyp
     {
         QueryAndSort(body, faceLeft, collidesWith);
 
+        if (PreferDynamic)
+        {
+            // Dynamic first: the nearest hittable that isn't on a static collider wins, even if a wall is closer.
+            foreach (var collider in _colliderBuffer)
+            {
+                if ((collider.Type & ColliderType.Static) != 0 || !IsCandidate(collider))
+                    continue;
+
+                if (collider.AttachedBody?.Owner is IHittable { Alive: true } hittable && filter(body, hittable))
+                    return new HitTestResult { HitAnything = true, Collider = collider, Hittable = hittable };
+            }
+        }
+
         foreach (var collider in _colliderBuffer)
         {
-            if (!collider.IsActive)
-                continue;
-
-            if (triggerGroups != 0 && (collider.Type & ColliderType.Trigger) != 0
-                && (triggerGroups & IMaterial.Bit(collider.Material.ColliderGroup)) == 0)
+            if (!IsCandidate(collider))
                 continue;
             
             if (collider.AttachedBody?.Owner is IHittable { Alive: true } hittable && filter(body, hittable))
@@ -54,6 +70,15 @@ public class BoxHitDetector(Vector2 offset, SizeF size, ColliderType colliderTyp
         }
 
         return HitTestResult.None;
+    }
+
+    private bool IsCandidate(ICollider collider)
+    {
+        if (!collider.IsActive)
+            return false;
+
+        return triggerGroups == 0 || (collider.Type & ColliderType.Trigger) == 0
+            || (triggerGroups & IMaterial.Bit(collider.Material.ColliderGroup)) != 0;
     }
 
     public Aabb GetAabb(IBody body, bool faceLeft)

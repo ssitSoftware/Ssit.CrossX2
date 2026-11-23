@@ -64,7 +64,7 @@
                                 <Flyout Placement="BottomEdgeAlignedLeft">
                                     <StackPanel Spacing="4">
                                         <CheckBox
-                                            Content="Select objects on all layers"
+                                            Content="Select elements on all layers"
                                             IsChecked="{Binding EditorViewModel.SelectObjectsOnAllLayers}"
                                             ToolTip.Tip="A region selection also selects objects on the other layers with the same speed" />
                                         <CheckBox
