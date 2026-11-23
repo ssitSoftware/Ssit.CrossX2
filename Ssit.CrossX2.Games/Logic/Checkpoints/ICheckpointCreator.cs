@@ -11,8 +11,8 @@ public interface ICheckpointCreator
     bool CanCreateCheckpoint { get; }
 
     /// <summary>
-    /// True when the creator is at an existing checkpoint - a single press of the save button saves there
-    /// immediately, without holding.
+    /// True when the creator is at an existing checkpoint - holding the save button for half of the hold time
+    /// (the time needed to start creating a new checkpoint) saves there, without entering the creating state.
     /// </summary>
     bool IsAtCheckpoint => false;
     

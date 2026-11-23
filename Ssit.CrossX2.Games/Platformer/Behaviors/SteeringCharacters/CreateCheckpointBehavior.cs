@@ -11,6 +11,8 @@ namespace Ssit.CrossX2.Framework.Games.Platformer.Behaviors.SteeringCharacters;
 /// <see cref="ICheckpointCreator.CanCreateCheckpoint"/> is false. The button has to be released before the next save.
 /// After half of the hold time the character enters <paramref name="creatingState"/>; it returns to
 /// <paramref name="returnState"/> when the button is released, saving becomes impossible or the checkpoint is saved.
+/// At an existing checkpoint (<see cref="ICheckpointCreator.IsAtCheckpoint"/>) the checkpoint is saved after half of
+/// the hold time - when creating a new one would start - without entering <paramref name="creatingState"/>.
 /// Add the behavior (first) to the states the save can start from and to <paramref name="creatingState"/>.
 /// The hold timer is stored per object, so it keeps running across these states.
 /// </summary>
@@ -47,18 +49,21 @@ public class CreateCheckpointBehavior(float holdTime = 1f, string controlName = 
         if (parameters.Created)
             return LeaveCreatingState(obj, creator);
 
-        // At an existing checkpoint a single press saves right away.
-        if (button == ButtonState.JustPressed && creator.IsAtCheckpoint && creator.CanCreateCheckpoint)
-        {
-            parameters.Created = true;
-            creator.CreateCheckpoint();
-            return false;
-        }
-        
         parameters.HeldTime += dt;
 
         if (!creator.CanCreateCheckpoint)
             return LeaveCreatingState(obj, creator);
+
+        // At an existing checkpoint a shorter hold saves - only the time needed to start creating a new one.
+        if (creator.IsAtCheckpoint && !IsInCreatingState(obj))
+        {
+            if (parameters.HeldTime < holdTime / 2)
+                return false;
+
+            parameters.Created = true;
+            creator.CreateCheckpoint();
+            return false;
+        }
 
         if (parameters.HeldTime < holdTime)
         {
