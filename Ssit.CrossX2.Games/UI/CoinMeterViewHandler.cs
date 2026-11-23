@@ -87,6 +87,27 @@ internal class CoinMeterViewHandler: BackgroundHandler<CoinMeterView>
 
     private Size TextSize => Font.TextSize(_text);
 
+    // The text is drawn with no extra line spacing, so the line box starts exactly at the draw position.
+    private const int TextLineSpacing = 0;
+
+    /// <summary>
+    /// Vertical ink bounds of the digits ("0" glyph), in font pixels: Top is relative to the text draw position,
+    /// Height is the glyph's real height. Used instead of the line height so the digits - not the whole line box
+    /// (ascender, descender, line gap) - are centered to the icon.
+    /// </summary>
+    private static (float Top, int Height) DigitBounds(IFont font)
+    {
+        if (font is IGlyphFont glyphFont && glyphFont.GetGlyph('0') is { Source.Height: > 0 } glyph)
+        {
+            // Same placement as GlyphFontRenderer for top-left aligned text:
+            // y = position - Ascender + lineSpacing + glyph.Offset.Y.
+            return (glyph.Offset.Y - glyphFont.Metrics.Ascender + TextLineSpacing, glyph.Source.Height);
+        }
+
+        // No glyph metrics - fall back to the line box.
+        return (0, font.TextSize("0").Height);
+    }
+
     private void UpdateText(int value)
     {
         // "D<n>" pads with leading zeros to at least n digits (sign is kept in front).
@@ -121,6 +142,7 @@ internal class CoinMeterViewHandler: BackgroundHandler<CoinMeterView>
 
         var iconSize = IconSize;
         var textSize = TextSize;
+        var digitHeight = DigitBounds(Font).Height;
 
         if (width.IsAuto)
         {
@@ -133,7 +155,7 @@ internal class CoinMeterViewHandler: BackgroundHandler<CoinMeterView>
         {
             height = verticalAlign == Align.Fill
                 ? Length.Fill
-                : (Length)Math.Max(iconSize.Height, textSize.Height);
+                : (Length)Math.Max(iconSize.Height, digitHeight);
         }
     }
 
@@ -151,18 +173,21 @@ internal class CoinMeterViewHandler: BackgroundHandler<CoinMeterView>
         var font = Font;
         var iconSize = IconSize;
         var textSize = font.TextSize(_text);
+        var (digitTop, digitHeight) = DigitBounds(font);
 
         var iconWidth = iconSize.Width * scale;
         var iconHeight = iconSize.Height * scale;
         var textWidth = textSize.Width * scale;
         var spacing = AttachedView.Spacing.Calculate(scale, ScreenBounds.Width);
 
-        var contentHeight = Math.Max(iconSize.Height, textSize.Height) * scale;
+        var contentHeight = Math.Max(iconSize.Height, digitHeight) * scale;
         var top = ScreenBounds.Y + (ScreenBounds.Height - contentHeight) / 2;
 
-        // Icon and text centered to each other, snapped to whole design pixels.
+        // Icon and digits centered to each other, snapped to whole design pixels.
+        // The digits' ink ("0" glyph) is centered, then shifted back by its offset inside the line box.
         var iconY = top + MathF.Floor((contentHeight / scale - iconSize.Height) / 2) * scale;
-        var textY = top + MathF.Floor((contentHeight / scale - textSize.Height) / 2) * scale;
+        var digitY = top + MathF.Floor((contentHeight / scale - digitHeight) / 2) * scale;
+        var textY = digitY - digitTop * scale;
 
         float iconX, textX;
         if (AttachedView.TextOnRight)
@@ -189,6 +214,7 @@ internal class CoinMeterViewHandler: BackgroundHandler<CoinMeterView>
             position: new Vector2(textX, textY),
             align: ContentAlign.Left,
             scale: scale,
+            lineSpacing: TextLineSpacing,
             color: (TextColor(renderer) ?? RgbaColor.Transparent) * opacity,
             outlineColor: (TextOutlineColor(renderer) ?? RgbaColor.Transparent) * opacity);
     }
