@@ -16,4 +16,10 @@ public class GameInfoData
     /// (<see cref="IGameClock.TotalGameTime"/>).
     /// </summary>
     public double TotalGameTime { get; set; }
+
+    /// <summary>
+    /// How many times the player has died in the slot - counted at each death, even though the game is then restored
+    /// from the last checkpoint.
+    /// </summary>
+    public int DeathCount { get; set; }
 }
