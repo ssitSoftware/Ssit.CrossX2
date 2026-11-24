@@ -5,6 +5,9 @@ namespace Ssit.CrossX2.Framework.UI.Common.Services;
 
 internal class Translator : ITranslator
 {
+    private const string LangIdKey = "#LangId";
+    private const string DefaultExtension = ".tsv";
+    
     private readonly Dictionary<string, SharedStringValue> _strings = new();
 
     private readonly Dictionary<string, string>[] _languages;
@@ -26,41 +29,80 @@ internal class Translator : ITranslator
         
         foreach (var path in paths)
         {
-            using var stream = filesProvider.Open(path);
-            var text = new StreamReader(stream).ReadToEnd();
-
-            var lines = text.Split('\n', '\r');
-            
-            foreach (var line in lines)
-            {
-                if (string.IsNullOrWhiteSpace(line)) continue;
-                ParseLine(line, list);
-            }
+            LoadWithLanguageFiles(filesProvider, path, list);
         }
+
+        FillMissingTranslations(list);
 
         _languages = list.ToArray();
         UpdateLanguage(_languages[_language]);
     }
     
-    public Translator(IFilesProvider filesProvider, string path)
+    public Translator(IFilesProvider filesProvider, string path) : this(filesProvider, [path])
     {
-        using var stream = filesProvider.Open(path);
-        var text = new StreamReader(stream).ReadToEnd();
-        
-        var lines = text.Split('\n', '\r');
-        var list = new List<Dictionary<string, string>>();
-
-        foreach (var line in lines)
-        {
-            if (string.IsNullOrWhiteSpace(line)) continue;
-            ParseLine(line, list);
-        }
-
-        _languages = list.ToArray();
-        UpdateLanguage(_languages[_language]);
     }
 
-    private void ParseLine(string line, List<Dictionary<string, string>> list)
+    private static void LoadWithLanguageFiles(IFilesProvider filesProvider, string path, List<Dictionary<string, string>> list)
+    {
+        var loaded = false;
+
+        // Original file (optional) - fills all columns.
+        if (filesProvider.FileExists(path))
+        {
+            foreach (var line in ReadLines(filesProvider, path))
+            {
+                ParseLine(line, list);
+            }
+            loaded = true;
+        }
+
+        // Per language files: {name}.{langId}.tsv - override single column.
+        for (var langIdx = 0; langIdx < list.Count; langIdx++)
+        {
+            if (!list[langIdx].TryGetValue(LangIdKey, out var langId) || string.IsNullOrWhiteSpace(langId)) continue;
+
+            var langPath = GetLanguageFilePath(path, langId.Trim());
+            if (!filesProvider.FileExists(langPath)) continue;
+
+            foreach (var line in ReadLines(filesProvider, langPath))
+            {
+                ParseLanguageLine(line, list[langIdx]);
+            }
+            loaded = true;
+        }
+
+        if (!loaded)
+        {
+            throw new FileNotFoundException($"Translation file {path} not found (neither the file nor any of its .{{langId}}{DefaultExtension} variants).");
+        }
+    }
+
+    private static string[] ReadLines(IFilesProvider filesProvider, string path)
+    {
+        using var stream = filesProvider.Open(path);
+        using var reader = new StreamReader(stream);
+        var text = reader.ReadToEnd();
+
+        return text
+            .Split('\n', '\r')
+            .Where(line => !string.IsNullOrWhiteSpace(line))
+            .ToArray();
+    }
+
+    private static string GetLanguageFilePath(string path, string langId)
+    {
+        var slash = Math.Max(path.LastIndexOf('/'), path.LastIndexOf('\\'));
+        var dot = path.LastIndexOf('.');
+
+        if (dot <= slash)
+        {
+            return $"{path}.{langId}{DefaultExtension}";
+        }
+
+        return $"{path[..dot]}.{langId}{path[dot..]}";
+    }
+
+    private static void ParseLine(string line, List<Dictionary<string, string>> list)
     {
         var parts = line.Split('\t');
         var key = parts[0];
@@ -75,6 +117,34 @@ internal class Translator : ITranslator
                 list.Add(new Dictionary<string, string>());
             }
             list[listId].Add(key, value.Replace('|', '\n'));
+        }
+    }
+
+    private static void ParseLanguageLine(string line, Dictionary<string, string> language)
+    {
+        var parts = line.Split('\t');
+        if (parts.Length < 2) return;
+
+        language[parts[0]] = parts[1].Replace('|', '\n');
+    }
+
+    private static void FillMissingTranslations(List<Dictionary<string, string>> list)
+    {
+        var keys = list.SelectMany(o => o.Keys).Distinct().ToArray();
+
+        foreach (var key in keys)
+        {
+            // Fallback: first language (in column order) that has the key.
+            string fallback = null;
+            foreach (var language in list)
+            {
+                if (language.TryGetValue(key, out fallback)) break;
+            }
+
+            foreach (var language in list)
+            {
+                language.TryAdd(key, fallback ?? key);
+            }
         }
     }
 

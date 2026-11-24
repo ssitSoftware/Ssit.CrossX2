@@ -62,7 +62,8 @@ public sealed class ImageSource<TTexture> : IImageSource<TTexture> where TTextur
         {
             if (_texture == null || _reload)
             {
-                if (_loadTextureTask == null)
+                // Nothing to load (e.g. an empty source waiting for SetSource) - don't start a load that can only fail.
+                if (_loadTextureTask == null && HasSourceToLoad)
                 {
                     _cancellationTokenSource = new CancellationTokenSource();
                     _loadTextureTask = LoadTextureFromParameters(container, _cancellationTokenSource.Token);
@@ -87,6 +88,11 @@ public sealed class ImageSource<TTexture> : IImageSource<TTexture> where TTextur
     }
 
     public Rectangle? SourceRect { get; private set; }
+
+    /// <summary>
+    /// True when a path, stream or uri is waiting to be loaded. Call under <see cref="_lock"/>.
+    /// </summary>
+    private bool HasSourceToLoad => _resourcePath is not null || _resourceStream is not null || _resourceUri is not null;
 
     public void SetSource(string path, Rectangle? sourceRect = null)
     {
