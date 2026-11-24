@@ -153,6 +153,7 @@ internal class UiAppBuilder(IIoCContainer container, IRenderHost renderHost) : I
             .AddMapping<Frame, FrameHandler>()
             .AddMapping<Label, LabelHandler<Label>>()
             .AddMapping<Views.Text, TextHandler>()
+            .AddMapping<CutsceneText, CutsceneTextHandler>()
             .AddMapping<BlinkingLabel, BlinkingLabelHandler<BlinkingLabel>>()
             .AddMapping<LabelButton, LabelButtonHandler<LabelButton>>()
             .AddMapping<LabelButtonEx, LabelButtonExHandler>()

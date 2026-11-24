@@ -10,6 +10,12 @@ public readonly struct TextSource
     private readonly int _start;
 
     public int Length { get; }
+
+    /// <summary>
+    /// Index of the first character in the underlying string (builder, provider) - a part of a text (e.g. a laid-out
+    /// line) knows where it is in the whole text.
+    /// </summary>
+    internal int Start => _start;
     
     public TextSource(string str, int start = 0, int length = -1) 
     {

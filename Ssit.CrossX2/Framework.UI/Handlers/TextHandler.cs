@@ -13,7 +13,15 @@ namespace Ssit.CrossX2.Framework.UI.Handlers;
 /// it line by line.
 /// </summary>
 public class TextHandler(ViewHandler.CreateHandlerParameters parameters, IFontsManager fontsManager)
-    : TextBaseHandler<Views.Text>(parameters, fontsManager)
+    : TextHandler<Views.Text>(parameters, fontsManager);
+
+/// <summary>
+/// Base of the handlers of <see cref="Views.Text"/> and the views derived from it: lays the text out wrapped to the text
+/// rectangle width (in font units) once when the text (or the width) changes, and draws it line by line
+/// (<see cref="DrawText"/>).
+/// </summary>
+public class TextHandler<TText>(ViewHandler.CreateHandlerParameters parameters, IFontsManager fontsManager)
+    : TextBaseHandler<TText>(parameters, fontsManager) where TText : Views.Text
 {
     // Wrap width (font units) of the current layout; -1 = not laid out yet.
     private int _layoutWidth = -1;
@@ -24,11 +32,21 @@ public class TextHandler(ViewHandler.CreateHandlerParameters parameters, IFontsM
     /// <summary>
     /// Word of a justified line: its text and its x offset from the line start (font units).
     /// </summary>
-    private readonly record struct JustifiedWord(TextSource Text, float X);
+    protected readonly record struct JustifiedWord(TextSource Text, float X);
 
     // Words of the justified lines, and per laid-out line the range of its words (Count 0 = drawn as a whole line).
     private readonly List<JustifiedWord> _justifiedWords = [];
     private readonly List<(int First, int Count)> _justifiedLines = [];
+
+    /// <summary>
+    /// Words of the justified lines (see <see cref="JustifiedLines"/>).
+    /// </summary>
+    protected IReadOnlyList<JustifiedWord> JustifiedWords => _justifiedWords;
+
+    /// <summary>
+    /// Per laid-out line the range of its words in <see cref="JustifiedWords"/>; Count 0 = the line is drawn as a whole.
+    /// </summary>
+    protected IReadOnlyList<(int First, int Count)> JustifiedLines => _justifiedLines;
 
     protected override void OnTextChanged()
     {
@@ -198,18 +216,21 @@ public class TextHandler(ViewHandler.CreateHandlerParameters parameters, IFontsM
         if (GetFont() is not IGlyphFont font)
             return;
 
-        var color = TextColor(renderer) ?? RgbaColor.Transparent;
-        var outlineColor = TextOutlineColor(renderer) ?? RgbaColor.Transparent;
+        DrawText(renderer, font);
+    }
 
-        var spacing = AttachedView.TextSpacing ?? TextSpacing.Normal;
-        var align = AttachedView.TextAlign ?? ContentAlign.Left | ContentAlign.Top;
+    /// <summary>
+    /// Position of the laid-out text: y of its top, and x of the line anchor - the left edge, the center or the right edge
+    /// of the text rectangle by the horizontal align of <paramref name="align"/>.
+    /// </summary>
+    protected void CalculateTextOrigin(ContentAlign align, out float x, out float y)
+    {
         var horizontalAlign = align & (ContentAlign.Center | ContentAlign.Right);
 
-        var scale = TextScale;
         var rect = TextRectangle;
-        var totalHeight = TextRenderingContext.Height * scale;
+        var totalHeight = TextRenderingContext.Height * TextScale;
 
-        var y = rect.Y;
+        y = rect.Y;
 
         if ((align & ContentAlign.VCenter) == ContentAlign.VCenter)
         {
@@ -220,7 +241,7 @@ public class TextHandler(ViewHandler.CreateHandlerParameters parameters, IFontsM
             y = rect.Bottom - totalHeight;
         }
 
-        var x = rect.X;
+        x = rect.X;
 
         if ((horizontalAlign & ContentAlign.Center) == ContentAlign.Center)
         {
@@ -230,6 +251,24 @@ public class TextHandler(ViewHandler.CreateHandlerParameters parameters, IFontsM
         {
             x = rect.Right;
         }
+    }
+
+    /// <summary>
+    /// Draws the laid-out lines (<see cref="TextBaseHandler{TTextView}.TextRenderingContext"/>, <see cref="JustifiedLines"/>).
+    /// </summary>
+    protected virtual void DrawText(IRenderer renderer, IGlyphFont font)
+    {
+        var color = TextColor(renderer) ?? RgbaColor.Transparent;
+        var outlineColor = TextOutlineColor(renderer) ?? RgbaColor.Transparent;
+
+        var spacing = AttachedView.TextSpacing ?? TextSpacing.Normal;
+        var align = AttachedView.TextAlign ?? ContentAlign.Left | ContentAlign.Top;
+        var horizontalAlign = align & (ContentAlign.Center | ContentAlign.Right);
+
+        var scale = TextScale;
+        var rect = TextRectangle;
+
+        CalculateTextOrigin(align, out var x, out var y);
 
         var lines = TextRenderingContext.Lines;
 

@@ -5,7 +5,8 @@ using Ssit.CrossX2.Framework.UI.Values;
 namespace Ssit.CrossX2.Framework.Utils.CutScenes;
 
 /// <summary>
-/// Plays the cut scenes one after another: types the (translated) text of the scene letter by letter and shows its image.
+/// Plays the cut scenes one after another: sets the whole (translated) text of the scene, types it letter by letter by
+/// increasing <see cref="VisibleCharacters"/> (for a <c>CutsceneText</c> view) and shows the image of the scene.
 /// Each scene lasts the longer of its own <see cref="CsScene.Time"/> and the time its text needs - the typing time
 /// (letters / <c>lettersPerSecond</c>) plus <c>displayFullTextTime</c> for reading the fully typed text.
 /// The first <see cref="Update"/> starts the first scene; <c>onFinished</c> is invoked once after the last scene.
@@ -18,13 +19,11 @@ public class CutScenesPlayer(ITranslator translator, IReadOnlyList<CsScene> scen
     private const double SkipToNextSceneDelay = 0.5;
     
     private readonly IReadOnlyList<CsScene> _scenes = scenes ?? [];
-    private readonly float _lettersPerSecond = lettersPerSecond;
-    private readonly Action _onFinished = onFinished;
 
     // Translated text and times of the scenes.
     private readonly SceneTiming[] _timings = CalculateTimings(translator, scenes ?? [], lettersPerSecond, displayFullTextTime);
     
-    private readonly TypewriterString _text = new();
+    private readonly SharedStringValue _text = new();
     private readonly SharedBoolMutable _hasImage = new(false);
 
     private int _sceneIndex = -1;
@@ -42,9 +41,14 @@ public class CutScenesPlayer(ITranslator translator, IReadOnlyList<CsScene> scen
     public SharedBool HasImage => _hasImage;
 
     /// <summary>
-    /// Typed part of the text of the current scene.
+    /// Whole text of the current scene - set once when the scene starts.
     /// </summary>
     public SharedString Text => _text;
+
+    /// <summary>
+    /// Number of the typed characters of <see cref="Text"/>. Stops at the text length when the whole text is typed.
+    /// </summary>
+    public SharedValue<int> VisibleCharacters { get; } = new(0);
     
     /// <summary>
     /// Index of the current scene; -1 before the first <see cref="Update"/>.
@@ -126,7 +130,17 @@ public class CutScenesPlayer(ITranslator translator, IReadOnlyList<CsScene> scen
         _sceneIndex = index;
         _sceneTime = sceneTime;
         
-        _text.SetSource(_timings[index].Text);
+        // Nothing visible before the new text is set - the old count would show a part of it at once.
+        VisibleCharacters.Value = 0;
+
+        if (_timings[index].Text is { } text)
+        {
+            _text.SetText(text);
+        }
+        else
+        {
+            _text.SetText(string.Empty);
+        }
 
         var imagePath = _scenes[index].Image?.Path;
         
@@ -149,17 +163,20 @@ public class CutScenesPlayer(ITranslator translator, IReadOnlyList<CsScene> scen
         if (IsFinished)
             return;
         
-        var letters = _lettersPerSecond > 0
-            ? (int)Math.Min(_sceneTime * _lettersPerSecond, int.MaxValue)
-            : int.MaxValue;
+        var length = _text.Length;
         
-        _text.SetVisibleLength(letters);
+        // Clamped to the text length - the count doesn't change after the whole text is typed (the cursor blinks then).
+        var letters = lettersPerSecond > 0
+            ? (int)Math.Min(_sceneTime * lettersPerSecond, length)
+            : length;
+        
+        VisibleCharacters.Value = letters;
     }
 
     private void Finish()
     {
         IsFinished = true;
-        _onFinished?.Invoke();
+        onFinished?.Invoke();
     }
 
     /// <summary>
@@ -192,35 +209,4 @@ public class CutScenesPlayer(ITranslator translator, IReadOnlyList<CsScene> scen
     /// <param name="TypedTime">Time from the start of the scene when all the letters of the text are typed.</param>
     /// <param name="Time">Total time of the scene.</param>
     private readonly record struct SceneTiming(SharedString Text, double TypedTime, double Time);
-
-    /// <summary>
-    /// First <c>visibleLength</c> characters of the source text.
-    /// </summary>
-    private sealed class TypewriterString : SharedString
-    {
-        private SharedString _source;
-        private int _visibleLength;
-
-        public override int Length => _source is null ? 0 : Math.Min(_visibleLength, _source.Length);
-
-        public override char this[int index] => index < 0 || index >= Length ? ' ' : _source[index];
-
-        public void SetSource(SharedString source)
-        {
-            _source = source;
-            _visibleLength = 0;
-            RaiseTextChanged();
-        }
-
-        public void SetVisibleLength(int length)
-        {
-            var oldLength = Length;
-            _visibleLength = length;
-            
-            if (Length != oldLength)
-            {
-                RaiseTextChanged();
-            }
-        }
-    }
 }
