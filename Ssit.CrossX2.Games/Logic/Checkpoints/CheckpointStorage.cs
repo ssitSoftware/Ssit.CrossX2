@@ -13,6 +13,8 @@ namespace Ssit.CrossX2.Framework.Games.Logic.Checkpoints;
 /// <item><c>GameState</c> - <see cref="GameStateData"/>: map the game continues on, game state flags, player state;</item>
 /// <item>one file per map, "{MapId}State" (<see cref="MapStateFileName"/>) - <see cref="MapStateData"/>;</item>
 /// <item><c>Preview.jpg</c> - screen preview of the last checkpoint (<see cref="CheckpointData.Preview"/>);</item>
+/// <item><c>GameInfo.json</c> (<see cref="GameInfoFileName"/>) - <see cref="GameInfoData"/>: total game time of the slot.
+/// Not part of the save data - plain JSON, not signed, not restored with checkpoints (see <see cref="GameInfoService"/>);</item>
 /// <item><c>Immediate</c> subdirectory (<see cref="ImmediateDirectory"/>) - the current state of the game since the
 /// last checkpoint: states of the maps the player has left through map links and the game state. Moved into the slot
 /// directory when a checkpoint is written, deleted when the game is left without saving.</item>
@@ -83,6 +85,12 @@ public class CheckpointStorage
     /// </summary>
     public const string PreviewFileName = "Preview.jpg";
 
+    /// <summary>
+    /// Name of the game info file in the slot directory (<see cref="GameInfoData"/>). Plain JSON, not signed - it isn't
+    /// part of the save data.
+    /// </summary>
+    public const string GameInfoFileName = "GameInfo.json";
+
     private enum ReadResult
     {
         Valid,
@@ -148,6 +156,12 @@ public class CheckpointStorage
     /// the game continues from the last checkpoint.
     /// </summary>
     public Task DeleteImmediateAsync(int slot) => Enqueue(() => DeleteImmediate(slot));
+
+    /// <summary>
+    /// Writes the game info (<see cref="GameInfoFileName"/>) into the slot directory in the background,
+    /// after the previously requested writes. The checkpoint files are not changed.
+    /// </summary>
+    public Task WriteGameInfoAsync(int slot, GameInfoData data) => Enqueue(() => WriteGameInfo(slot, data));
     
     /// <summary>
     /// Writes the checkpoint into the slot directory. First the map states of the Immediate directory are moved over
@@ -208,6 +222,18 @@ public class CheckpointStorage
             _storage.WriteData(FilePath(directory, GameStateFileName), gameStateBytes);
         }
     }
+
+    private void WriteGameInfo(int slot, GameInfoData data)
+    {
+        var json = JsonConvert.SerializeObject(data, Formatting.Indented);
+
+        lock (_lock)
+        {
+            _storage.WriteText(GameInfoPath(slot), json);
+        }
+    }
+
+    private static string GameInfoPath(int slot) => Path.Combine(SlotDirectory(slot), GameInfoFileName);
 
     private void DeleteImmediate(int slot)
     {
@@ -352,6 +378,29 @@ public class CheckpointStorage
     {
         WaitForWrites();
         return ReadFile<GameStateData>(FilePath(slot, GameStateFileName), GameStateData.CurrentVersion);
+    }
+
+    /// <summary>
+    /// Reads the game info of the slot (<see cref="GameInfoFileName"/>). Returns null if there is none or it can't be read.
+    /// </summary>
+    public GameInfoData ReadGameInfo(int slot)
+    {
+        WaitForWrites();
+
+        lock (_lock)
+        {
+            var path = GameInfoPath(slot);
+
+            try
+            {
+                return _storage.Exists(path) ? JsonConvert.DeserializeObject<GameInfoData>(_storage.ReadText(path)) : null;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Failed to read game info '{path}': {e.Message}");
+                return null;
+            }
+        }
     }
 
     /// <summary>

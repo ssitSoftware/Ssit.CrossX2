@@ -85,7 +85,7 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
     public IMessenger Messenger => this;
     
     private readonly IGameTimer _timer;
-    private readonly IGameClock _clock = new GameClock();
+    private readonly IGameClock _clock;
 
     private readonly IActionScheduler _scheduler;
     private readonly IGameTemplate _gameTemplate;
@@ -139,6 +139,10 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
         _internalStopwatch.Start();
         
         Slot = parameters.Slot;
+        
+        // The total game time of the slot is shared by its game instances (registered in the application services).
+        container.TryGet<GameInfoService>(out var gameInfo);
+        _clock = new GameClock(gameInfo, Slot);
         
         _scheduler = scheduler;
         _gameTemplate = gameTemplate;

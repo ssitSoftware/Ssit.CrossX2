@@ -41,6 +41,7 @@ public interface ICheckpointService
     /// in the application storage - the map states of the Immediate directory (maps visited since the last checkpoint),
     /// the map state into the file of the current map, the game state with <paramref name="playerState"/> into the
     /// GameState file and the preview; the Immediate directory is deleted (see <see cref="CheckpointStorage"/>).
+    /// The total game time is written into the GameInfo file of the slot (<see cref="GameInfoService.Save"/>).
     /// The files are written in the background.
     /// </summary>
     CheckpointData Save(int slot, object playerState);
@@ -49,7 +50,8 @@ public interface ICheckpointService
     /// Stores the current state of the game without saving a checkpoint: captures the state (without a preview) and
     /// writes the map state and the game state with <paramref name="playerState"/> into the Immediate directory of the
     /// <paramref name="slot"/> (<see cref="CheckpointStorage.WriteImmediateAsync"/>) - the last checkpoint in the slot
-    /// directory stays as it is. The files are written in the background.
+    /// directory stays as it is. The total game time is written into the GameInfo file of the slot
+    /// (<see cref="GameInfoService.Save"/>). The files are written in the background.
     /// With <paramref name="targetMapPath"/> the game state points to the target map, so the game continues there
     /// (see <see cref="Capture"/>), e.g. when the player leaves the map through a map link.
     /// </summary>

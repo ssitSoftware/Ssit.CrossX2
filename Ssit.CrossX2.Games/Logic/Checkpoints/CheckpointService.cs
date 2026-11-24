@@ -48,6 +48,7 @@ public class CheckpointService : ICheckpointService
     private readonly IIoCContainer _container;
     private readonly IRenderHost _renderHost;
     private readonly ISnapshotService _snapshotService;
+    private readonly GameInfoService _gameInfo;
     private readonly bool _storePreview;
     private readonly float _previewDownSize;
     private readonly string _mapPathPrefix;
@@ -60,9 +61,10 @@ public class CheckpointService : ICheckpointService
 
     public CheckpointService(IMapObjects mapObjects, ISimulation simulation, CheckpointStorage storage, ICamera camera,
         IIoCContainer container, Parameters parameters, IGameState gameState = null, IGameClock clock = null,
-        IRenderHost renderHost = null, ISnapshotService snapshotService = null)
+        IRenderHost renderHost = null, ISnapshotService snapshotService = null, GameInfoService gameInfo = null)
     {
         _clock = clock;
+        _gameInfo = gameInfo;
         _renderHost = renderHost;
         _snapshotService = snapshotService;
         _storePreview = parameters.StorePreview;
@@ -193,6 +195,7 @@ public class CheckpointService : ICheckpointService
     {
         var data = Capture(playerState, null, true);
         _storage.WriteAsync(slot, data);
+        _gameInfo?.Save(slot);
         return data;
     }
 
@@ -200,6 +203,7 @@ public class CheckpointService : ICheckpointService
     {
         var data = Capture(playerState, targetMapPath, false);
         _storage.WriteImmediateAsync(slot, data);
+        _gameInfo?.Save(slot);
         return data;
     }
 
