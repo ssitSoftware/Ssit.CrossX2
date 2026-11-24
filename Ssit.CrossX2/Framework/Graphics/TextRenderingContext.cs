@@ -109,6 +109,40 @@ public class TextRenderingContext
     }
 
     /// <summary>
+    /// Width in screen pixels at the <paramref name="scale"/>, rounded up to a whole pixel.
+    /// </summary>
+    public float GetPixelWidth(float scale) => MathF.Ceiling(Width * scale);
+
+    /// <summary>
+    /// Height in screen pixels at the <paramref name="scale"/> - exactly as the lines are drawn: every line moves by
+    /// its whole-pixel spacing and line height (see <see cref="PixelHeight"/>).
+    /// </summary>
+    public float GetPixelHeight(float scale)
+    {
+        lock (this)
+        {
+            return PixelHeight(Lines, _font, scale);
+        }
+    }
+
+    /// <summary>
+    /// Height of the lines in screen pixels when every line step is rounded on its own: the line spacing and the line
+    /// height, each rounded to whole pixels - so all the gaps are equal and the size matches what is drawn.
+    /// </summary>
+    internal static float PixelHeight(IReadOnlyList<LineDefinition> lines, IGlyphFont font, float scale)
+    {
+        var lineHeight = MathF.Round((font?.Metrics?.LineHeight ?? 0) * scale);
+        var height = 0f;
+
+        for (var idx = 0; idx < lines.Count; idx++)
+        {
+            height += MathF.Round(lines[idx].Spacing * scale) + lineHeight;
+        }
+
+        return height;
+    }
+
+    /// <summary>
     /// When enabled, a copy of the text is kept and compared character by character in <see cref="IsValid"/>;
     /// otherwise only hash code and length are compared (cheaper, may miss rare changes).
     /// </summary>

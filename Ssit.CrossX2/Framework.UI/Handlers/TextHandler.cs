@@ -228,7 +228,7 @@ public class TextHandler<TText>(ViewHandler.CreateHandlerParameters parameters, 
         var horizontalAlign = align & (ContentAlign.Center | ContentAlign.Right);
 
         var rect = TextRectangle;
-        var totalHeight = TextRenderingContext.Height * TextScale;
+        var totalHeight = TextRenderingContext.GetPixelHeight(TextScale);
 
         y = rect.Y;
 
@@ -240,6 +240,9 @@ public class TextHandler<TText>(ViewHandler.CreateHandlerParameters parameters, 
         {
             y = rect.Bottom - totalHeight;
         }
+
+        // The first line on a whole pixel - the next ones move by whole pixels (see DrawText).
+        y = MathF.Round(y);
 
         x = rect.X;
 
@@ -276,7 +279,9 @@ public class TextHandler<TText>(ViewHandler.CreateHandlerParameters parameters, 
         for (var lineIdx = 0; lineIdx < lines.Count; lineIdx++)
         {
             var line = lines[lineIdx];
-            y += line.Spacing * scale;
+            // Whole pixels per step - every line moves by the same amount (rounding each line's position on its own would
+            // make the gaps alternate, e.g. 15.5 -> 16, 15, 16).
+            y += MathF.Round(line.Spacing * scale);
 
             var (firstWord, wordCount) = lineIdx < _justifiedLines.Count ? _justifiedLines[lineIdx] : (0, 0);
 
@@ -314,7 +319,7 @@ public class TextHandler<TText>(ViewHandler.CreateHandlerParameters parameters, 
                     lineSpacing: 0);
             }
 
-            y += font.Metrics.LineHeight * scale;
+            y += MathF.Round(font.Metrics.LineHeight * scale);
         }
     }
 }

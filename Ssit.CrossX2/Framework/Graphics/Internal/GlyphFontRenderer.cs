@@ -47,13 +47,13 @@ internal static class GlyphFontRenderer
         if (font.OutlineSheet is not null && outlineColor.A > 0)
         {
             RenderText(quadsRenderer.Draw, font.OutlineSheet, font, context.Lines, position, align, scale,
-                outlineColor, spacing, context.Width, context.Height);
+                outlineColor, spacing, context.Width);
         }
 
         if (color.A > 0)
         {
             RenderText(quadsRenderer.Draw, font.FontSheet, font, context.Lines, position, align, scale, 
-                color, spacing, context.Width, context.Height);
+                color, spacing, context.Width);
         }
     }
 
@@ -95,13 +95,13 @@ internal static class GlyphFontRenderer
         if (font.OutlineSheet is not null && outlineColor.A > 0)
         {
             RenderText(quadsRenderer.Draw, font.OutlineSheet, font, context.Lines, position, align, scale,
-                outlineColor, spacing, context.Width, context.Height);
+                outlineColor, spacing, context.Width);
         }
 
         if (color.A > 0)
         {
             RenderText(quadsRenderer.Draw, font.FontSheet, font, context.Lines, position, align, scale,
-                color, spacing, context.Width, context.Height);
+                color, spacing, context.Width);
         }
     }
 
@@ -222,16 +222,18 @@ internal static class GlyphFontRenderer
     }
 
     internal static void RenderText(DrawTextureQuadDelegate drawDelegate, ITexture texture, IGlyphFont font, IReadOnlyList<TextRenderingContext.LineDefinition> lines, 
-        Vector2 position, ContentAlign align, float scale, RgbaColor color, TextSpacing spacing, float justifyWidth, float height)
+        Vector2 position, ContentAlign align, float scale, RgbaColor color, TextSpacing spacing, float justifyWidth)
     {
         var additionalSpacing = (int)(spacing - 50) * font.Metrics.WhitespaceWidth / 50f;
-        var posY = CalculateYPosition(font, position.Y, height, align, scale);
+        // Whole pixels: the first line, and then the same whole step per line - so the gaps between lines are all equal
+        // (rounding each line's position on its own would make them alternate, e.g. 15.5 -> 16, 15, 16).
+        var posY = MathF.Round(CalculateYPosition(font, position.Y, TextRenderingContext.PixelHeight(lines, font, scale), align, scale));
 
         for (var idx = 0; idx < lines.Count; ++idx)
         {
             var line = lines[idx];
             var posX = CalculateXPosition(position.X, align, line.Width * scale);
-            posY += line.Spacing * scale;
+            posY += MathF.Round(line.Spacing * scale);
 
             var whitespaceSize = (font.Metrics.WhitespaceWidth + additionalSpacing) * scale;
 
@@ -264,14 +266,21 @@ internal static class GlyphFontRenderer
 
                 posX += glyph.GetKerning(previousCharacter) * scale;
             
-                var target = new RectangleF(posX + glyph.Offset.X * scale, posY + glyph.Offset.Y * scale, glyph.Source.Width * scale, glyph.Source.Height * scale);
+                // Whole pixels - a line (or a justified space) may start between pixels (interline, centering, stretched
+                // spaces, fractional scale), which would blur the glyphs. Edges are rounded so the size stays consistent.
+                var left = MathF.Round(posX + glyph.Offset.X * scale);
+                var top = MathF.Round(posY + glyph.Offset.Y * scale);
+                var right = MathF.Round(posX + (glyph.Offset.X + glyph.Source.Width) * scale);
+                var bottom = MathF.Round(posY + (glyph.Offset.Y + glyph.Source.Height) * scale);
+
+                var target = new RectangleF(left, top, right - left, bottom - top);
                 drawDelegate(texture, target, glyph.Source, color: color);
 
                 posX += (glyph.Advance + additionalSpacing) * scale;
                 previousCharacter = c;
             }
 
-            posY += font.Metrics.LineHeight * scale;
+            posY += MathF.Round(font.Metrics.LineHeight * scale);
         }
     }
 
@@ -290,16 +299,19 @@ internal static class GlyphFontRenderer
         return positionX;
     }
 
-    private static float CalculateYPosition(IGlyphFont font, float positionY, float height, ContentAlign align, float scale)
+    /// <param name="pixelHeight">Height of the text in screen pixels as drawn (<see cref="TextRenderingContext.PixelHeight"/>).</param>
+    private static float CalculateYPosition(IGlyphFont font, float positionY, float pixelHeight, ContentAlign align, float scale)
     {
+        var lineHeight = MathF.Round(font.Metrics.LineHeight * scale);
+        
         if ((align & ContentAlign.VCenter) == ContentAlign.VCenter)
         {
-            return MathF.Ceiling(positionY - (height/ 2f - font.Metrics.LineHeight / 2f) * scale + font.Metrics.XHeight / 2f * scale);
+            return MathF.Ceiling(positionY - (pixelHeight - lineHeight) / 2f + font.Metrics.XHeight / 2f * scale);
         }
         
         if ((align & ContentAlign.Bottom) == ContentAlign.Bottom)
         {
-            return MathF.Ceiling(positionY - (height - font.Metrics.LineHeight) * scale );
+            return MathF.Ceiling(positionY - (pixelHeight - lineHeight));
         }
 
         return positionY - font.Metrics.Ascender * scale;

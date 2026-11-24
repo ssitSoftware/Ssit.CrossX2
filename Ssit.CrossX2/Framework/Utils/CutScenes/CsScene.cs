@@ -4,6 +4,11 @@ public record CsScene(CsTime? Time, string Text, CsImage Image, params CsSound[]
 {
     public CsTextParameters TextParameters { get; init; }
 
+    /// <summary>
+    /// Name of the music playlist to switch to when the scene starts. Null = the music doesn't change.
+    /// </summary>
+    public string Playlist { get; init; }
+
     public static implicit operator CsScene((CsTime Time, string Text) scene) =>
         new(scene.Time, scene.Text, null);
     

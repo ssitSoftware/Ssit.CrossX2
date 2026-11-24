@@ -3,6 +3,7 @@ namespace Ssit.CrossX2.Framework.UI.Transitions;
 [Flags]
 public enum TransitionType
 {
+    None = 0,
     NavigateTo = 1,
     NavigateFrom = 2,
     NavigateBackTo = 4,

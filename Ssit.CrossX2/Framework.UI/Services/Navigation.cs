@@ -353,7 +353,7 @@ internal class Navigation: INavigation, IDisposable
                 {
                     CurrentPage.OnTransitionToFinished();
                     CurrentPage.TransitionProgress = 0;
-                    CurrentPage.TransitionType = 0;
+                    CurrentPage.TransitionType = TransitionType.None;
                 }
             }
             

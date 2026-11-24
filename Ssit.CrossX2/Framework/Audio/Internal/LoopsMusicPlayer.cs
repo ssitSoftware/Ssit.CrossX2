@@ -128,6 +128,18 @@ public class LoopsMusicPlayer : IMusicPlayer, IUpdatable, IDisposable
         
         var songs = playlist.List;
 
+        // An empty playlist means silence - fade out what is playing. (A music provider can't be made without songs.)
+        if (songs.Count == 0)
+        {
+            foreach (var player in _players)
+            {
+                player.FadeOut(fadeTimeMs);
+            }
+
+            _currentMusicProvider = null;
+            return;
+        }
+
         Task.Run(() =>
         {
             var songIndex = _currentPlaylist?.CurrentSong ?? 0;
@@ -146,6 +158,10 @@ public class LoopsMusicPlayer : IMusicPlayer, IUpdatable, IDisposable
 
             _scheduler.Schedule(() =>
             {
+                // The playlist was changed again (or the music paused) while this one was loading - don't start it.
+                if (!ReferenceEquals(_currentPlaylist, playlist))
+                    return;
+
                 foreach (var player in _players)
                 {
                     player.FadeOut(fadeTimeMs);

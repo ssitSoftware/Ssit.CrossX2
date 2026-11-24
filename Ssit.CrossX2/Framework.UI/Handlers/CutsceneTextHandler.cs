@@ -84,7 +84,9 @@ public class CutsceneTextHandler : TextHandler<CutsceneText>
             if (lineStart > visible && lineIdx > 0)
                 break;
 
-            y += line.Spacing * scale;
+            // Whole pixels per step - every line moves by the same amount (rounding each line's position on its own would
+            // make the gaps alternate, e.g. 15.5 -> 16, 15, 16).
+            y += MathF.Round(line.Spacing * scale);
 
             var (firstWord, wordCount) = lineIdx < JustifiedLines.Count ? JustifiedLines[lineIdx] : (0, 0);
             float cursorX;
@@ -124,7 +126,7 @@ public class CutsceneTextHandler : TextHandler<CutsceneText>
             }
 
             cursorPosition = new Vector2(cursorX, y);
-            y += font.Metrics.LineHeight * scale;
+            y += MathF.Round(font.Metrics.LineHeight * scale);
         }
 
         // No laid-out line (an empty text) - the cursor at the start of the text.

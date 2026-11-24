@@ -149,13 +149,14 @@ public abstract class TextBaseHandler<TTextView> : BackgroundHandler<TTextView> 
         
         if (width.IsAuto)
         {
-            width = new Length(pixels: TextRenderingContext.Width * TextScale);
+            width = new Length(pixels: TextRenderingContext.GetPixelWidth(TextScale));
             width = CalculateLengthWithPadding(width, AttachedView.Padding?.Left, AttachedView.Padding?.Right);
         }
 
         if (height.IsAuto)
         {
-            height = new Length(pixels: TextRenderingContext.Height * TextScale);
+            // Whole pixels, exactly as the lines are drawn.
+            height = new Length(pixels: TextRenderingContext.GetPixelHeight(TextScale));
             height = CalculateLengthWithPadding(height, AttachedView.Padding?.Top, AttachedView.Padding?.Bottom);
         }
     }
