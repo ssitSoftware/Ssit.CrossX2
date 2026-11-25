@@ -59,6 +59,8 @@ public class ScrollViewHandler<TScrollView> : BackgroundHandler<TScrollView>, IV
 
     public override void Update(float dt)
     {
+        base.Update(dt);
+
         if (!_trackingPointerId.HasValue)
         {
             if (_autoScrollPausedTimer > 0)

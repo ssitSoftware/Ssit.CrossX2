@@ -1,6 +1,7 @@
 using System.Numerics;
 using Ssit.CrossX2.Framework.Graphics;
 using Ssit.CrossX2.Framework.UI.Parameters;
+using Ssit.CrossX2.Framework.UI.Transitions;
 using Ssit.CrossX2.Framework.UI.Views;
 
 namespace Ssit.CrossX2.Framework.UI.Handlers;
@@ -24,6 +25,14 @@ public abstract class ViewHandler: IDisposable
     public RectangleF ScreenBounds { get; private set; }
 
     protected float CurrentScale => Parent.GetParent<IPage>().Scale;
+
+    // Last known value of View.Visible - a composed SharedBool raises ValueChanged even when its value stays.
+    private bool _visible;
+
+    // Show / Hide transition started by a change of View.Visible: its type (None = no transition runs) and progress
+    // in the page transition convention - 0 = fully shown, 1 = fully hidden (Show goes 1 -> 0, Hide 0 -> 1).
+    private TransitionType _visibilityTransitionType;
+    private float _visibilityTransition;
     
     protected ViewHandler(Type type, CreateHandlerParameters parameters)
     {
@@ -34,15 +43,90 @@ public abstract class ViewHandler: IDisposable
         if (((IHandlerView)View).Handler != null) throw new InvalidOperationException();
         View.Handler = this;
 
+        // Already visible when created - no Show transition.
+        _visible = View.Visible.Value;
         View.Visible.ValueChanged += OnVisibleChanged;
     }
 
     /// <summary>
-    /// Showing / hiding a view changes the layout of its parents (hidden views take no space in stacks).
+    /// Showing / hiding a view starts its Show / Hide transition and changes the layout of its parents (hidden views
+    /// take no space in stacks).
     /// </summary>
     private void OnVisibleChanged()
     {
+        var visible = View.Visible.Value;
+
+        if (visible != _visible)
+        {
+            _visible = visible;
+            StartVisibilityTransition(visible);
+        }
+
         Parent?.GetParent<IPage>(true)?.RecalculateLayout();
+    }
+
+    /// <summary>
+    /// Starts the Show (<paramref name="visible"/>) or Hide transition - or shows / hides the view at once when it has
+    /// no transition of that type. A transition reversed half way continues from where the running one is.
+    /// </summary>
+    private void StartVisibilityTransition(bool visible)
+    {
+        var type = visible ? TransitionType.Show : TransitionType.Hide;
+
+        if (View.VisibilityTransitionTime <= 0 || !HasTransition(type))
+        {
+            _visibilityTransitionType = TransitionType.None;
+            _visibilityTransition = 0;
+            return;
+        }
+
+        if (_visibilityTransitionType == TransitionType.None)
+        {
+            _visibilityTransition = visible ? 1 : 0;
+        }
+
+        _visibilityTransitionType = type;
+    }
+
+    private bool HasTransition(TransitionType type)
+    {
+        if (View.Transitions is null)
+            return false;
+
+        foreach (var transition in View.Transitions)
+        {
+            if ((transition.ForTransitions & type) != 0)
+                return true;
+        }
+
+        return false;
+    }
+
+    private void UpdateVisibilityTransition(float dt)
+    {
+        if (_visibilityTransitionType == TransitionType.None)
+            return;
+
+        var step = dt / View.VisibilityTransitionTime;
+
+        if (_visibilityTransitionType == TransitionType.Show)
+        {
+            _visibilityTransition -= step;
+
+            if (_visibilityTransition > 0)
+                return;
+        }
+        else
+        {
+            _visibilityTransition += step;
+
+            if (_visibilityTransition < 1)
+                return;
+        }
+
+        // Finished - fully shown, or hidden (not drawn any more).
+        _visibilityTransitionType = TransitionType.None;
+        _visibilityTransition = 0;
     }
 
     protected Length CalculateLengthWithPadding(Length length, Length? pad1, Length? pad2)
@@ -100,7 +184,8 @@ public abstract class ViewHandler: IDisposable
 
     public virtual void Draw(IRenderer renderer)
     {
-        if (View.Visible.Value)
+        // A hidden view is still drawn while its Hide transition runs.
+        if (View.Visible.Value || _visibilityTransitionType == TransitionType.Hide)
         {
             var applyTransitions = View.Transitions?.Length > 0;
             
@@ -118,7 +203,25 @@ public abstract class ViewHandler: IDisposable
                 }
             }
             
+            var applyVisibilityTransitions = _visibilityTransitionType != TransitionType.None;
+
+            if (applyVisibilityTransitions)
+            {
+                for (var idx = 0; idx < View.Transitions.Length; ++idx)
+                {
+                    View.Transitions[idx].Apply(View.Handler, renderer, CurrentScale, _visibilityTransitionType, _visibilityTransition);
+                }
+            }
+
             OnDraw(renderer);
+
+            if (applyVisibilityTransitions)
+            {
+                for (var idx = View.Transitions.Length - 1; idx >= 0; --idx)
+                {
+                    View.Transitions[idx].Finish(renderer);
+                }
+            }
             
             if (applyTransitions)
             {
@@ -139,9 +242,12 @@ public abstract class ViewHandler: IDisposable
                page?.SharedInstancesInTransition.Contains(View.SharedInstance) == true;
     }
 
+    /// <summary>
+    /// Updates the view. Overrides must call the base (it runs the Show / Hide transition).
+    /// </summary>
     public virtual void Update(float dt)
     {
-        
+        UpdateVisibilityTransition(dt);
     }
 
     protected virtual void OnDraw(IRenderer renderer)

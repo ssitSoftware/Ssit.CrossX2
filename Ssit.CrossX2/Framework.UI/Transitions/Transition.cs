@@ -11,7 +11,9 @@ public abstract class Transition : ITransition
     public float ProgressMin { get; set; } = 0;
     public float ProgressMax { get; set; } = 1;
     
-    private bool _applied;
+    // Number of applies not finished yet - a transition can be applied twice in one draw (a page transition and
+    // a Show / Hide transition of the view).
+    private int _applied;
     
     void ITransition.Apply(ViewHandler handler, IRenderer renderer, float scale, TransitionType type, float progress)
     {
@@ -24,16 +26,16 @@ public abstract class Transition : ITransition
         progress = MathF.Pow(progress, Power);
 
         OnApply(handler, renderer, scale, progress);
-        _applied = true;
+        _applied++;
     }
 
     void ITransition.Finish(IRenderer renderer)
     {
-        if (!_applied)
+        if (_applied == 0)
             return;
         
         renderer.StateManager.RestoreState();
-        _applied = false;
+        _applied--;
     }
     
     protected abstract void OnApply(ViewHandler handler, IRenderer renderer, float scale, float progress);

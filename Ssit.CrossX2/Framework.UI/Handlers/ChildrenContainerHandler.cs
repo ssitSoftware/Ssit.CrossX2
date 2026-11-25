@@ -166,6 +166,8 @@ public abstract class ChildrenContainerHandler<TContainer>
 
     public override void Update(float dt)
     {
+        base.Update(dt);
+
         for (var idx = 0; idx < AttachedView.Children.Count; idx++)
         {
             var child = AttachedView.Children[idx];

@@ -52,24 +52,11 @@ public class CutScenesPlayer(CutScenesPlayer.Parameters parameters, ITranslator 
         public string ImagesBaseDirectory { get; init; }
 
         /// <summary>
-        /// Time (seconds) of the image fade out and of the fade in when the image changes - see <see cref="ImageOpacity"/>.
-        /// 0 or less = the images change at once. Default: 0.5 s.
-        /// </summary>
-        public float ImageFadeTime { get; init; } = 0.5f;
-
-        /// <summary>
-        /// Part of the typing of the scene text (0 - 1) after which a new image of the scene starts to show (fade in):
-        /// 0 = when the typing starts, 1 = when the whole text is typed. The previous image fades out right when the
-        /// scene starts; an image the scene shares with the previous one stays. Default: 0.5.
+        /// Part of the typing of the scene text (0 - 1) after which the image of the scene shows (<see cref="HasImage"/>
+        /// becomes true - bind it to the visibility of the image view, its Show transition runs then): 0 = when the
+        /// scene starts, 1 = when the whole text is typed. Default: 0.5.
         /// </summary>
         public float ImageShowAtTypedFraction { get; init; } = 0.5f;
-
-        /// <summary>
-        /// Time (seconds) the text of the previous scene fades out before the text of the new scene starts (see
-        /// <see cref="TextOpacity"/>). The new text doesn't fade in - its cursor shows right away. 0 or less = no fading.
-        /// Default: 0.5 s.
-        /// </summary>
-        public float TextFadeTime { get; init; } = 0.5f;
 
         /// <summary>
         /// Invoked once after the last scene.
@@ -85,9 +72,7 @@ public class CutScenesPlayer(CutScenesPlayer.Parameters parameters, ITranslator 
     private readonly float _lettersPerSecond = parameters.LettersPerSecond;
     private readonly Action _onFinished = parameters.OnFinished;
     private readonly string _imagesBaseDirectory = parameters.ImagesBaseDirectory;
-    private readonly float _imageFadeTime = parameters.ImageFadeTime;
     private readonly float _imageShowAtTypedFraction = Math.Clamp(parameters.ImageShowAtTypedFraction, 0f, 1f);
-    private readonly float _textFadeTime = parameters.TextFadeTime;
     
     private readonly IReadOnlyList<CsScene> _scenes = parameters.Scenes ?? [];
 
@@ -107,36 +92,24 @@ public class CutScenesPlayer(CutScenesPlayer.Parameters parameters, ITranslator 
     // Typing time skipped in the current scene - added to the scene time, so the reading time isn't shortened.
     private double _skippedTime;
 
-    // Fade out time of the previous text at the start of the current scene (0 = none) - the text of the scene is set
-    // (and starts typing) after it.
-    private double _textDelay;
-    private bool _textApplied;
-
     // Path set to Image last (kept loaded while the following scenes use the same image).
     private string _imagePath;
 
-    // Image of the current scene - becomes the target when enough of the text is typed.
+    // Image of the current scene (null = none) - shown when enough of its text is typed.
     private string _sceneImage;
 
-    // Image wanted now and the image displayed now - they differ while the displayed one fades out.
-    private string _targetImage;
-    private string _shownImage;
-
     /// <summary>
-    /// Image of the current scene. Hidden (see <see cref="HasImage"/>) when the scene has no image.
+    /// Image of the current scene. Hidden (see <see cref="HasImage"/>) when the scene has no image or doesn't show it
+    /// yet.
     /// </summary>
     public ImageSource<ITexture> Image { get; } = new();
 
     /// <summary>
-    /// True when the current scene has an image - bind it to the visibility of the image view.
+    /// True when the image of the current scene shows - bind it to the visibility of the image view. Turns false when
+    /// a scene starts and true after <see cref="Parameters.ImageShowAtTypedFraction"/> of its text is typed (when the
+    /// scene has an image) - so the Show transition of the view runs in every scene, even with the same image.
     /// </summary>
     public SharedBool HasImage => _hasImage;
-
-    /// <summary>
-    /// Opacity of the image (0 - 1) - bind it to the opacity of the image view. When the scene changes the image,
-    /// the displayed image fades out and the new one fades in, each in <see cref="Parameters.ImageFadeTime"/>.
-    /// </summary>
-    public SharedValue<float> ImageOpacity { get; } = new(0f);
 
     /// <summary>
     /// Whole text of the current scene - set once when the scene starts.
@@ -147,12 +120,6 @@ public class CutScenesPlayer(CutScenesPlayer.Parameters parameters, ITranslator 
     /// Number of the typed characters of <see cref="Text"/>. Stops at the text length when the whole text is typed.
     /// </summary>
     public SharedValue<int> VisibleCharacters { get; } = new(0);
-
-    /// <summary>
-    /// Opacity of the text (0 - 1) - bind it to the opacity of the text view. When a scene starts, the text of the
-    /// previous scene fades out (<see cref="Parameters.TextFadeTime"/>); the new text is fully opaque from the start.
-    /// </summary>
-    public SharedValue<float> TextOpacity { get; } = new(1f);
     
     /// <summary>
     /// Index of the current scene; -1 before the first <see cref="Update"/>.
@@ -169,7 +136,7 @@ public class CutScenesPlayer(CutScenesPlayer.Parameters parameters, ITranslator 
     /// <summary>
     /// Time of the current scene including the skipped typing time.
     /// </summary>
-    private double CurrentSceneTime => _textDelay + _timings[_sceneIndex].Time + _skippedTime;
+    private double CurrentSceneTime => _timings[_sceneIndex].Time + _skippedTime;
     
     public void Update(float dt)
     {
@@ -199,7 +166,6 @@ public class CutScenesPlayer(CutScenesPlayer.Parameters parameters, ITranslator 
 
         UpdateTypedText();
         UpdateSceneImage();
-        UpdateImage(dt);
     }
 
     /// <summary>
@@ -212,15 +178,7 @@ public class CutScenesPlayer(CutScenesPlayer.Parameters parameters, ITranslator 
         if (IsFinished || _sceneIndex < 0)
             return;
 
-        // Fading out the previous text - jump to the start of the new one (the scene time isn't extended).
-        if (_sceneTime < _textDelay)
-        {
-            _sceneTime = _textDelay;
-            UpdateTypedText();
-            return;
-        }
-
-        var typedTime = _textDelay + _timings[_sceneIndex].TypedTime;
+        var typedTime = _timings[_sceneIndex].TypedTime;
         
         if (_sceneTime < typedTime)
         {
@@ -251,14 +209,17 @@ public class CutScenesPlayer(CutScenesPlayer.Parameters parameters, ITranslator 
         _sceneIndex = index;
         _sceneTime = sceneTime;
         _skippedTime = 0;
+        
+        // Nothing visible before the new text is set - the old count would show a part of it at once.
+        VisibleCharacters.Value = 0;
 
-        // The previous text (if any) fades out first - UpdateTypedText sets the new one after that.
-        _textDelay = _textFadeTime > 0 && _text.Length > 0 ? _textFadeTime : 0;
-        _textApplied = false;
-
-        if (_textDelay <= 0)
+        if (_timings[index].Text is { } text)
         {
-            ApplySceneText();
+            _text.SetText(text);
+        }
+        else
+        {
+            _text.SetText(string.Empty);
         }
 
         if (_scenes[index].Playlist is { } playlist)
@@ -266,105 +227,41 @@ public class CutScenesPlayer(CutScenesPlayer.Parameters parameters, ITranslator 
             musicPlayer?.ChangePlaylist(playlist);
         }
 
-        // The same image stays. Another one (or none): the displayed image fades out now and the new one is shown
-        // by UpdateSceneImage when enough of the text is typed.
+        // Hidden at once; shown again by UpdateSceneImage. Loaded now, while hidden (the same image stays loaded).
+        _hasImage.SetValue(false);
         _sceneImage = ResolveImagePath(_scenes[index].Image?.Path);
-        _targetImage = _sceneImage == _shownImage ? _sceneImage : null;
+
+        if (_sceneImage is not null && _sceneImage != _imagePath)
+        {
+            Image.SetSource(_sceneImage);
+            _imagePath = _sceneImage;
+        }
     }
 
     /// <summary>
-    /// Makes the image of the scene the target (UpdateImage fades it in) once <see cref="Parameters.ImageShowAtTypedFraction"/>
-    /// of the text is typed.
+    /// Shows the image of the scene once <see cref="Parameters.ImageShowAtTypedFraction"/> of its text is typed.
     /// </summary>
     private void UpdateSceneImage()
     {
-        if (IsFinished || _targetImage == _sceneImage || !_textApplied)
+        if (IsFinished || _sceneImage is null || _hasImage.Value)
             return;
 
-        var typingTime = _sceneTime - _textDelay;
-
-        if (typingTime >= _imageShowAtTypedFraction * _timings[_sceneIndex].TypedTime)
+        if (_sceneTime >= _imageShowAtTypedFraction * _timings[_sceneIndex].TypedTime)
         {
-            _targetImage = _sceneImage;
+            _hasImage.SetValue(true);
         }
-    }
-
-    /// <summary>
-    /// Fades the displayed image out while the scene wants another one (or none), then switches to the wanted image
-    /// and fades it in.
-    /// </summary>
-    private void UpdateImage(float dt)
-    {
-        if (IsFinished)
-            return;
-
-        var step = _imageFadeTime > 0 ? dt / _imageFadeTime : 1f;
-
-        if (_shownImage != _targetImage)
-        {
-            var opacity = _shownImage is null ? 0 : Math.Max(0, ImageOpacity.Value - step);
-            ImageOpacity.Value = opacity;
-
-            if (opacity > 0)
-                return;
-
-            _shownImage = _targetImage;
-
-            // The same image as before stays loaded.
-            if (_shownImage is not null && _shownImage != _imagePath)
-            {
-                Image.SetSource(_shownImage);
-                _imagePath = _shownImage;
-            }
-
-            _hasImage.SetValue(_shownImage is not null);
-
-            // Fading in starts with the next update.
-            return;
-        }
-
-        if (_shownImage is not null)
-        {
-            ImageOpacity.Value = Math.Min(1, ImageOpacity.Value + step);
-        }
-    }
-
-    /// <summary>
-    /// Sets the text of the current scene - fully opaque, nothing typed yet (the cursor shows at once).
-    /// </summary>
-    private void ApplySceneText()
-    {
-        _textApplied = true;
-
-        // Nothing visible before the new text is set - the old count would show a part of it at once.
-        VisibleCharacters.Value = 0;
-        _text.SetText(_timings[_sceneIndex].Text is { } text ? text : string.Empty);
-        TextOpacity.Value = 1;
     }
 
     private void UpdateTypedText()
     {
         if (IsFinished)
             return;
-
-        if (!_textApplied)
-        {
-            // Fading out the previous text.
-            if (_sceneTime < _textDelay)
-            {
-                TextOpacity.Value = (float)(1 - _sceneTime / _textDelay);
-                return;
-            }
-
-            ApplySceneText();
-        }
         
         var length = _text.Length;
-        var typingTime = _sceneTime - _textDelay;
         
         // Clamped to the text length - the count doesn't change after the whole text is typed (the cursor blinks then).
         var letters = _lettersPerSecond > 0
-            ? (int)Math.Min(typingTime * _lettersPerSecond, length)
+            ? (int)Math.Min(_sceneTime * _lettersPerSecond, length)
             : length;
 
         var previous = VisibleCharacters.Value;

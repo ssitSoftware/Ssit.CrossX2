@@ -21,7 +21,19 @@ public abstract class View: IHandlerView
 
     public SharedBool Visible { get; set; } = true;
 
+    /// <summary>
+    /// Transitions of the view: page transitions (navigation) and the Show / Hide transitions which run when
+    /// <see cref="Visible"/> changes (see <see cref="VisibilityTransitionTime"/>).
+    /// </summary>
     public ITransition[] Transitions { get; set; }
+
+    /// <summary>
+    /// Duration (seconds) of the Show / Hide transition started by a change of <see cref="Visible"/> - only when
+    /// <see cref="Transitions"/> contain a transition for <see cref="TransitionType.Show"/> (resp.
+    /// <see cref="TransitionType.Hide"/>). Without one the view shows / hides at once. A hidden view is drawn until
+    /// its Hide transition ends. The initial visibility doesn't start a transition. Default: 0.5 s.
+    /// </summary>
+    public float VisibilityTransitionTime { get; set; } = 0.5f;
 
     /// <summary>
     /// Name of the instance shared between pages. When both pages of a navigation contain a view with the same
