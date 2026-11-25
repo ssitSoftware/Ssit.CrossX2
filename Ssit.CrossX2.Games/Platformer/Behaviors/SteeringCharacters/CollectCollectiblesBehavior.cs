@@ -22,7 +22,7 @@ public class CollectCollectiblesBehavior<TObject> : SteeringBehavior<ISteeringCh
             if (!collider.IsActive)
                 continue;
             
-            if (collider.AttachedBody?.Owner is ICollectible collectible)
+            if (collider.AttachedBody?.Owner is ICollectible { CanBeCollected: true } collectible)
             {
                 ((ICollector)obj).Collect(collectible);
             }

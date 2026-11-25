@@ -6,17 +6,24 @@ using Ssit.CrossX2.Framework.Graphics.Sprites;
 
 namespace Ssit.CrossX2.Framework.Games.Logic.Objects;
 
-public abstract class CollectibleObject : SpriteGameObject, ICollectible, SpriteInstance.IHandler
+public abstract class CollectibleObjectBase : SpriteGameObject, ICollectible, SpriteInstance.IHandler
 {
     private readonly string _idleSequence;
     private readonly string _soundId;
     private readonly ICommonSoundContainer _soundContainer;
 
-    protected CollectibleObject(string spritePath, string idleSequence, string soundId, GameObjectsServices services, ObjectCreationParameters parameters, SizeF size = default)
+    /// <summary>Game-defined collectible type, returned by <see cref="ICollectible.Collect"/>.</summary>
+    public byte CollectibleType { get; }
+
+    /// <summary>Not collected yet (the trigger is still active).</summary>
+    public bool CanBeCollected => Body.Colliders[0].IsActive;
+
+    protected CollectibleObjectBase(string spritePath, string idleSequence, string soundId, GameObjectsServices services, ObjectCreationParameters parameters, SizeF size = default, byte collectibleType = 0)
         : base(services, parameters)
     {
         _idleSequence = idleSequence;
         _soundId = soundId;
+        CollectibleType = collectibleType;
 
         _soundContainer = services.CommonSoundContainer;
 
@@ -38,17 +45,18 @@ public abstract class CollectibleObject : SpriteGameObject, ICollectible, Sprite
         Sprite.Advance(Random.Shared.NextSingle() * 10);
     }
 
-    bool ICollectible.Collect()
+    byte ICollectible.Collect()
     {
-        if (!Body.Colliders[0].IsActive)
-            return false;
+        // Collected already - plays the collect animation only once.
+        if (!CanBeCollected)
+            return CollectibleType;
 
         Body.Colliders[0].IsActive = false;
         Sprite.SetSequence($"{_idleSequence} Collect");
 
         _soundContainer.Play(_soundId);
         OnCollect();
-        return true;
+        return CollectibleType;
     }
 
     protected virtual void OnCollect()
