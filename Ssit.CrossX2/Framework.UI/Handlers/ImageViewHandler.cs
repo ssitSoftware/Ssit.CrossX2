@@ -136,10 +136,28 @@ public class ImageViewHandler : BackgroundHandler<ImageView>
             return;
         }
         
+        var color = AttachedView.TintColor;
+
+        if (AttachedView.Opacity is { } opacityValue)
+        {
+            var opacity = Math.Clamp(opacityValue.Value, 0f, 1f);
+
+            if (opacity <= 0)
+            {
+                return;
+            }
+
+            // Premultiplied - all channels scaled, like FadeTransition does.
+            if (opacity < 1)
+            {
+                color = (color ?? RgbaColor.White) * opacity;
+            }
+        }
+        
         var source = AttachedView.Source.SourceRect;
 
         CalculateTargetRects(texture.Resource, source, out var targetRect, out var sourceRect);
-        renderer.SpriteRenderer.Draw(texture.Resource, targetRect, sourceRect, null, 0, AttachedView?.TintColor, AttachedView?.Transform ?? ImageTransform.None);
+        renderer.SpriteRenderer.Draw(texture.Resource, targetRect, sourceRect, null, 0, color, AttachedView.Transform ?? ImageTransform.None);
     }
 
     private void CalculateTargetRects(ITexture texture, Rectangle? source, out RectangleF targetRect, out RectangleF sourceRect)

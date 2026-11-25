@@ -32,6 +32,7 @@ internal class Translator : ITranslator
             LoadWithLanguageFiles(filesProvider, path, list);
         }
 
+        ApplyNoBreakSpaces(list);
         FillMissingTranslations(list);
 
         _languages = list.ToArray();
@@ -126,6 +127,26 @@ internal class Translator : ITranslator
         if (parts.Length < 2) return;
 
         language[parts[0]] = parts[1].Replace('|', '\n');
+    }
+
+    /// <summary>
+    /// Applies the <see cref="NoBreakSpaces"/> rules of each language to all its strings (keys starting with '#',
+    /// like #LangId, are left as they are). Runs before <see cref="FillMissingTranslations"/>, so a fallback keeps
+    /// the rules of the language it comes from.
+    /// </summary>
+    private static void ApplyNoBreakSpaces(List<Dictionary<string, string>> list)
+    {
+        foreach (var language in list)
+        {
+            language.TryGetValue(LangIdKey, out var langId);
+            langId = langId?.Trim();
+
+            foreach (var key in language.Keys.ToArray())
+            {
+                if (key.StartsWith('#')) continue;
+                language[key] = NoBreakSpaces.Apply(language[key], langId);
+            }
+        }
     }
 
     private static void FillMissingTranslations(List<Dictionary<string, string>> list)

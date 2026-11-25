@@ -39,6 +39,13 @@ public record CsScene(CsTime? Time, string Text, CsImage Image, params CsSound[]
     public static implicit operator CsScene((string Text, CsImage Image) scene) =>
         new(null, scene.Text, scene.Image);
 
+    /// <summary>
+    /// Text with an image given by its path (relative to <see cref="CutScenesPlayer.Parameters.ImagesBaseDirectory"/>).
+    /// Without it a (string, string) tuple would convert through (CsTime, string) and parse the text as a time.
+    /// </summary>
+    public static implicit operator CsScene((string Text, string ImagePath) scene) =>
+        new(null, scene.Text, new CsImage(scene.ImagePath));
+
     public static implicit operator CsScene((string Text, CsSound[] Sounds) scene) =>
         new(null, scene.Text, null, scene.Sounds);
 

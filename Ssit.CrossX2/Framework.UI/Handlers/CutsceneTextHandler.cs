@@ -60,6 +60,21 @@ public class CutsceneTextHandler : TextHandler<CutsceneText>
         var color = TextColor(renderer) ?? RgbaColor.Transparent;
         var outlineColor = TextOutlineColor(renderer) ?? RgbaColor.Transparent;
 
+        if (AttachedView.Opacity is { } opacityValue)
+        {
+            var opacity = Math.Clamp(opacityValue.Value, 0f, 1f);
+
+            if (opacity <= 0)
+                return;
+
+            // Premultiplied - all channels scaled, like FadeTransition does.
+            if (opacity < 1)
+            {
+                color *= opacity;
+                outlineColor *= opacity;
+            }
+        }
+
         var spacing = AttachedView.TextSpacing ?? TextSpacing.Normal;
         var align = AttachedView.TextAlign ?? ContentAlign.Left | ContentAlign.Top;
         var horizontalAlign = align & (ContentAlign.Center | ContentAlign.Right);

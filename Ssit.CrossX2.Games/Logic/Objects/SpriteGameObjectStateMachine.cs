@@ -35,7 +35,6 @@ public class SpriteGameObjectStateMachine<TObject, TStateObject> : SpriteInstanc
         }
         
         InternalStateMachine.SetState(state);
-        Debug.WriteLine($"{GetType().Name} Steering State: {stateName}");
     }
     
     /// <summary>

@@ -11,4 +11,9 @@ public class ImageView: Background
     public ImageScalingMode? Scaling { get; set; }
     public ImageTransform? Transform { get; set; }
     public TextureFilter? Filter { get; set; }
+
+    /// <summary>
+    /// Opacity of the image (0 - 1, multiplies <see cref="TintColor"/>). Null = opaque. Doesn't affect the background.
+    /// </summary>
+    public SharedValue<float> Opacity { get; set; }
 }

@@ -26,4 +26,9 @@ public class CutsceneText : Text
     /// change (typing) and starts blinking when they stop.
     /// </summary>
     public float CursorBlinkTime { get; set; } = 0.5f;
+
+    /// <summary>
+    /// Opacity of the text, its outline and the cursor (0 - 1). Null = opaque.
+    /// </summary>
+    public SharedValue<float> Opacity { get; set; }
 }
