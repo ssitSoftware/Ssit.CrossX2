@@ -35,17 +35,20 @@ public class Pushable(GameObjectsServices services, ObjectCreationParameters par
     
     protected Vector2 Origin { get; private set; }
     
-    protected void InitializeSprite(string spritePath)
+    protected void InitializeSprite(string spritePath, string sequence = "Default")
     {
         using var go = Services.ContentManager.Get<SpriteEx>(spritePath);
         var sprite = go.Resource.Sprite;
 
         Origin = go.Resource.Description.Origin;
         _spriteSheet = Services.ContentManager.Get<ITexture>(sprite.SheetName);
-        _sequence = sprite.GetSequence("Default");
+        _sequence = sprite.GetSequence(sequence);
     }
     
-    protected void InitializePhysics(SizeF size, IMaterial material)
+    /// <param name="size">Collider size (in tiles).</param>
+    /// <param name="material">Collider material.</param>
+    /// <param name="center">Collider center relative to the body position (in tiles), zero centers the collider on it.</param>
+    protected void InitializePhysics(SizeF size, IMaterial material, Vector2 center = default)
     {
         var simulation = Services.Simulation;
         
@@ -56,7 +59,7 @@ public class Pushable(GameObjectsServices services, ObjectCreationParameters par
         {
             Active = true,
             AttachToBody = Body,
-            Center = Vector2.Zero,
+            Center = center,
             Size = size,
             Type = ColliderType.Dynamic,
             Material = material
