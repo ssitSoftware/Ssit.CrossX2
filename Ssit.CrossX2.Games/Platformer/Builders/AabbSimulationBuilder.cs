@@ -30,7 +30,11 @@ public class AabbSimulationBuilder
         public IMaterial Empty => null;
     }
 
-    private const float MapBoundsThickness = 0.1f;
+    /// <summary>
+    /// Thickness (tiles) of the map bound colliders added around the map - a safeguard keeping objects inside the map.
+    /// The simulation bounds (<see cref="ISimulation.Bounds"/>) are the map area inflated by it.
+    /// </summary>
+    public const float MapBoundsThickness = 0.1f;
 
     private static readonly IMaterial MapBoundsMaterial = new Material
     {
