@@ -97,6 +97,8 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
     public readonly ISimulation Simulation;
     public readonly IIoCContainer Container;
     private readonly ICamera _camera;
+
+    private bool _isStarted;
     
     public int FilterMode { get; set; } = 0;
     
@@ -367,6 +369,16 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
     {
         if (_isDisposed)
             return;
+
+        if (!_isStarted)
+        {
+            _isStarted = true;
+            var list = Simulation.Bodies.Select(o => o.Owner).Where(o => o is not null).ToList();
+            foreach(var owner in list)
+            { 
+                owner.Start();   
+            }
+        }
 
         _timer.Update(deltaTime);
         _clock.Update(deltaTime);
