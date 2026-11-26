@@ -3,6 +3,19 @@ namespace Ssit.CrossX2.Framework.Games.Logic;
 public class State<TObject>(params Behavior<TObject>[] behaviors)
 {
     public void FixedUpdate(TObject obj, float dt) => OnFixedUpdate(obj, dt);
+    
+    public void Event(TObject obj, object @event) => OnEvent(obj, @event);
+
+    protected virtual void OnEvent(TObject obj, object @event)
+    {
+        for (var idx = 0; idx < behaviors.Length; ++idx)
+        {
+            if (behaviors[idx].Event(obj, @event))
+            {
+                return;
+            }
+        }
+    }
 
     protected virtual void OnFixedUpdate(TObject obj, float dt)
     {

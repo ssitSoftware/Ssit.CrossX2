@@ -47,4 +47,5 @@ public sealed class StateMachine<TObject>(TObject obj, Action<string> onStateCha
     }
 
     public void FixedUpdate(float dt) => _currentState?.FixedUpdate(Object, dt);
+    public void Event(object @event) => _currentState?.Event(Object, @event);
 }

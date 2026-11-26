@@ -13,6 +13,9 @@ public abstract class Behavior<TObject>
     internal bool FixedUpdate(TObject obj, float dt) => OnUpdate(obj, dt);
     internal void EnterState(TObject obj) => OnEnterState(obj);
     internal void LeaveState(TObject obj) => OnLeaveState(obj);
+    internal bool Event(TObject obj, object @event) => OnEvent(obj, @event);
+
+    protected virtual bool OnEvent(TObject o, object @event) => false;
 
     /// <summary>
     /// Called when the owning state is left.
