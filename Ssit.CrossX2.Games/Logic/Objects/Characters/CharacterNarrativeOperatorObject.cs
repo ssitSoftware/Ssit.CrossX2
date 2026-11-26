@@ -17,6 +17,12 @@ public abstract class CharacterNarrativeOperatorObject<TCharacter> : CharacterOb
     private float? _walkToPositionX;
     private TaskCompletionSource _walkToTaskCompletionSource;
 
+    /// <summary>
+    /// Speed of the walk to the talking spot (<see cref="WalkTo"/>, before a conversation) - the run speed, matching the
+    /// Run sequence the "WalkTo" state shows.
+    /// </summary>
+    protected virtual float WalkToSpeed => PhysicsValues.RunSpeed;
+
     protected CharacterNarrativeOperatorObject(GameObjectsServices services, ObjectCreationParameters parameters,
         IActionScheduler actionScheduler, ICamera camera, INarrationSystem narrationSystem, IGameState gameState)
         : base(services, parameters)
@@ -179,7 +185,7 @@ public abstract class CharacterNarrativeOperatorObject<TCharacter> : CharacterOb
         {
             var dt = Services.Simulation.SimulationParameters.TimeDelta;
             
-            var offset = MathF.Min(PhysicsValues.WalkSpeed * dt, MathF.Abs(_walkToPositionX.Value - Body.Position.X));;
+            var offset = MathF.Min(WalkToSpeed * dt, MathF.Abs(_walkToPositionX.Value - Body.Position.X));
             var dir = MathF.Sign(_walkToPositionX.Value - Body.Position.X);
             
             Body.KinematicMove(new Vector2(dir * offset, 0), KinematicMoveMode.Kinematic);
