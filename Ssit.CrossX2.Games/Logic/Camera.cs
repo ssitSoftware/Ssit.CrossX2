@@ -2,12 +2,22 @@ using System.Numerics;
 using Ssit.CrossX2.Framework.Audio;
 using Ssit.CrossX2.Framework.Games.Template;
 using Ssit.CrossX2.Framework.Input;
+using Ssit.CrossX2.Framework.Utils;
 
 namespace Ssit.CrossX2.Framework.Games.Logic;
 
 internal class Camera(IGameTemplate template, IInputMappings inputMappings): ICamera, ISoundListener
 {
+    /// <summary>How often a shake picks a new offset (per second) - stable steps instead of a per-frame jitter.</summary>
+    private const float ShakeRate = 30f;
+
     private Vector2 _lookAt;
+
+    // Shake: max offset (map units) and the time left; the current offset and the time to the next one.
+    private float _shakeAmplitude;
+    private float _shakeTimeLeft;
+    private float _shakeStepTimeLeft;
+    private Vector2 _shakeOffset;
 
     private IPositionObject _primaryTarget;
     private Vector2 _primaryOffset;
@@ -25,7 +35,8 @@ internal class Camera(IGameTemplate template, IInputMappings inputMappings): ICa
     
     private Action _onTemporaryTargetFocused;
 
-    public Vector2 LookAt => GetLookAt();
+    /// <summary>Where the camera looks, with the current shake offset (<see cref="Shake"/>).</summary>
+    public Vector2 LookAt => GetLookAt() + _shakeOffset;
 
     private RectangleF? _visibleBounds;
 
@@ -50,7 +61,8 @@ internal class Camera(IGameTemplate template, IInputMappings inputMappings): ICa
     private List<Vector2> _lastTargetPositions = new();
     private Vector2 _cameraMove;
     
-    public Vector2 Position => LookAt;
+    // The sound listener doesn't shake.
+    public Vector2 Position => GetLookAt();
     public float MaxDistance => VisibleArea * 2;
     public float PanDistance { get; } = (float)template.TargetSize.Width / template.TileSize / 2;
     public float VisibleArea { get; set; } = MathF.Max(template.TargetSize.Width, template.TargetSize.Height) / template.TileSize;
@@ -144,8 +156,53 @@ internal class Camera(IGameTemplate template, IInputMappings inputMappings): ICa
         _cameraWindowHeight = height;
     }
     
+    public void Shake(float amplitude, float duration)
+    {
+        if (amplitude <= 0 || duration <= 0)
+            return;
+
+        // During another shake: the stronger one and the longer remaining time.
+        var shaking = _shakeTimeLeft > 0;
+        _shakeAmplitude = shaking ? MathF.Max(_shakeAmplitude, amplitude) : amplitude;
+        _shakeTimeLeft = MathF.Max(_shakeTimeLeft, duration);
+
+        if (!shaking)
+        {
+            // The first offset right away.
+            _shakeStepTimeLeft = 0;
+        }
+    }
+
+    private void UpdateShake(float dt)
+    {
+        if (_shakeTimeLeft <= 0)
+            return;
+
+        _shakeTimeLeft -= dt;
+        if (_shakeTimeLeft <= 0)
+        {
+            _shakeTimeLeft = 0;
+            _shakeAmplitude = 0;
+            _shakeOffset = Vector2.Zero;
+            return;
+        }
+
+        _shakeStepTimeLeft -= dt;
+        if (_shakeStepTimeLeft > 0)
+            return;
+
+        // Keeps the 30 steps a second also with uneven frame times (at most one new offset per update).
+        _shakeStepTimeLeft = MathF.Max(0, _shakeStepTimeLeft + 1f / ShakeRate);
+
+        var random = MersenneTwister.Shared;
+        _shakeOffset = new Vector2(random.NextSingle() * 2 - 1, random.NextSingle() * 2 - 1) * _shakeAmplitude;
+    }
+
     public void Update(float dt)
     {
+        // Before the target checks - the shake runs out also without a target.
+        UpdateShake(dt);
+
         if (PositionObject is null)
             return;
 

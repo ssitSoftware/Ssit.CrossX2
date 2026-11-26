@@ -23,4 +23,11 @@ public interface ICamera
     void RemoveTemporaryTarget();
     void SetCameraWindow(int? width, int? height);
     void Update(float dt);
+
+    /// <summary>
+    /// Shakes the camera for <paramref name="duration"/> seconds: <see cref="LookAt"/> jumps to a new random offset of at
+    /// most <paramref name="amplitude"/> map units on each axis, 30 times a second. A shake during another one keeps the
+    /// stronger amplitude and the longer remaining time.
+    /// </summary>
+    void Shake(float amplitude, float duration);
 }
