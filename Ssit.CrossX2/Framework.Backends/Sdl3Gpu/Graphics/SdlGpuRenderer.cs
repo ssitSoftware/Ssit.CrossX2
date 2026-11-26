@@ -10,7 +10,7 @@ using static SDL.SDL3;
 
 namespace Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Graphics;
 
-internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHandler, LightingManager.IUpdateLightsHandler, IIoCPostRegisterHandler
+internal unsafe partial class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHandler, LightingManager.IUpdateLightsHandler, IIoCPostRegisterHandler
 {
     private readonly IIoCContainer _container;
     private readonly IActionScheduler _actionScheduler;
@@ -190,6 +190,8 @@ internal unsafe class SdlGpuRenderer : IRenderer, StateManager.IUpdateHwModeHand
 
     public void ReleaseBackBuffer()
     {
+        ReleaseOcclusionMask();
+
         if (_backBuffer is null)
             return;
 

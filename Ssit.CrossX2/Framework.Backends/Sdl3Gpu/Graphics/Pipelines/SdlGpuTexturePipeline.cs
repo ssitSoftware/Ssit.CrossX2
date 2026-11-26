@@ -23,7 +23,8 @@ internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
     {
     }
 
-    protected SdlGpuTexturePipeline(SdlGpuRenderer gpuRenderer, string vertexShaderResource, string fragmentShaderResource, int fragmentUniformBuffers, int fragmentSamplers = 1)
+    /// <param name="fragmentDefine">Fragment shader variant (preprocessor symbol, see <see cref="GpuShader.CreateFromEmbeddedResource"/>).</param>
+    protected SdlGpuTexturePipeline(SdlGpuRenderer gpuRenderer, string vertexShaderResource, string fragmentShaderResource, int fragmentUniformBuffers, int fragmentSamplers = 1, string fragmentDefine = null)
     {
         GpuRenderer = gpuRenderer;
 
@@ -31,7 +32,7 @@ internal unsafe class SdlGpuTexturePipeline : ISdlGpuPipeline
         var window = gpuRenderer.Window;
 
         SDL_GPUShader* vertexShader = GpuShader.CreateFromEmbeddedResource(gpuRenderer, vertexShaderResource, "vertexMain", SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX, numUniformBuffers: 1);
-        SDL_GPUShader* fragmentShader = GpuShader.CreateFromEmbeddedResource(gpuRenderer, fragmentShaderResource, "fragmentMain", SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT, numSamplers: fragmentSamplers, numUniformBuffers: fragmentUniformBuffers);
+        SDL_GPUShader* fragmentShader = GpuShader.CreateFromEmbeddedResource(gpuRenderer, fragmentShaderResource, "fragmentMain", SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT, numSamplers: fragmentSamplers, numUniformBuffers: fragmentUniformBuffers, define: fragmentDefine);
 
         if (vertexShader == null || fragmentShader == null)
         {

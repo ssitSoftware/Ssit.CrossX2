@@ -7,9 +7,14 @@ namespace Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Graphics;
 
 internal static unsafe class GpuShader
 {
-    public static SDL_GPUShader* CreateFromEmbeddedResource(SdlGpuRenderer renderer, string resourceName, string entrypoint, SDL_GPUShaderStage stage, int numSamplers = 0, int numUniformBuffers = 0)
+    /// <param name="define">
+    /// Optional preprocessor symbol selecting a shader variant (e.g. "OCCLUSION_CONTOUR"). It is defined at the top of
+    /// the Metal / HLSL source; precompiled SPIR-V variants are looked up as "&lt;resource&gt;.&lt;define&gt;.spv".
+    /// </param>
+    public static SDL_GPUShader* CreateFromEmbeddedResource(SdlGpuRenderer renderer, string resourceName, string entrypoint, SDL_GPUShaderStage stage, int numSamplers = 0, int numUniformBuffers = 0, string define = null)
     {
         const string resourcePrefix = "Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Assets.Shaders.";
+        var definePrefix = string.IsNullOrEmpty(define) ? string.Empty : $"#define {define} 1\n";
 
         SDL_GPUShaderFormat format;
         byte[] code;
@@ -18,7 +23,7 @@ internal static unsafe class GpuShader
         {
             case SdlGpuBackendType.Metal:
                 format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_MSL;
-                code = Encoding.UTF8.GetBytes(LoadEmbeddedSource(resourcePrefix + "Metal." + resourceName + ".metal"));
+                code = Encoding.UTF8.GetBytes(definePrefix + LoadEmbeddedSource(resourcePrefix + "Metal." + resourceName + ".metal"));
                 break;
 
             case SdlGpuBackendType.DirectX:
@@ -27,13 +32,13 @@ internal static unsafe class GpuShader
                 format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXBC;
                 var hlslResource = resourcePrefix + "HLSL." + resourceName + ".hlsl";
                 var target = stage == SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX ? "vs_5_1" : "ps_5_1";
-                code = D3DShaderCompiler.Compile(LoadEmbeddedSource(hlslResource), hlslResource, entrypoint, target);
+                code = D3DShaderCompiler.Compile(definePrefix + LoadEmbeddedSource(hlslResource), hlslResource, entrypoint, target);
                 break;
             }
 
             case SdlGpuBackendType.Vulkan:
                 format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV;
-                code = LoadEmbeddedBytes(resourcePrefix + "SPIRV." + resourceName + ".spv");
+                code = LoadEmbeddedBytes(resourcePrefix + "SPIRV." + resourceName + (string.IsNullOrEmpty(define) ? "" : "." + define) + ".spv");
                 break;
 
             default:

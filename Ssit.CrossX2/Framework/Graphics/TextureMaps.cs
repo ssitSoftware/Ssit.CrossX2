@@ -17,5 +17,10 @@ public enum TextureMaps
     /// <summary>
     /// Lighting map (how the surface reacts to dynamic lights).
     /// </summary>
-    Light = 8
+    Light = 8,
+    /// <summary>
+    /// Collision mask ("&lt;name&gt;.mask.png", e.g. of a tileset). Used instead of the diffuse map when the shape of the
+    /// colliding parts is drawn (occlusion mask, see <see cref="IOcclusionContours.SetSilhouetteMap"/>).
+    /// </summary>
+    CollisionMask = 16
 }

@@ -5,14 +5,23 @@ using static SDL.SDL3;
 
 namespace Ssit.CrossX2.Framework.Backends.Sdl3Gpu.Graphics.Pipelines;
 
-internal sealed unsafe class SdlGpuTextureLightingPipeline : SdlGpuTexturePipeline
+internal unsafe class SdlGpuTextureLightingPipeline : SdlGpuTexturePipeline
 {
     private readonly SDL_GPUTexture* _fallbackLight;
 
     public SdlGpuTextureLightingPipeline(SdlGpuRenderer renderer)
+        : this(renderer, fragmentUniformBuffers: 1, fragmentSamplers: 2, fragmentDefine: null)
+    {
+    }
+
+    /// <summary>
+    /// Variant of the lighting fragment shader with extra resources bound after the lighting ones
+    /// (uniform buffers after slot 0, samplers after slot 1).
+    /// </summary>
+    protected SdlGpuTextureLightingPipeline(SdlGpuRenderer renderer, int fragmentUniformBuffers, int fragmentSamplers, string fragmentDefine)
         : base(renderer,
             "Pipelines.TextureLight.vert",
-            "Pipelines.TextureLight.frag", fragmentUniformBuffers: 1, fragmentSamplers: 2)
+            "Pipelines.TextureLight.frag", fragmentUniformBuffers, fragmentSamplers, fragmentDefine)
     {
         _fallbackLight = GpuTextureHelper.CreateSolidColorTexture(_device, 0, 0, 0, 0);
     }

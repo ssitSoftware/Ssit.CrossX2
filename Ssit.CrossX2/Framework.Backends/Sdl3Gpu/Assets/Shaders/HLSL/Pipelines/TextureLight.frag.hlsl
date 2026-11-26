@@ -1,5 +1,8 @@
 // Direct3D 12 port of Metal/Pipelines/TextureLight.frag.metal (ps_5_1).
 // Keep the lighting math in sync with ColorLight.frag.hlsl and the Metal shaders.
+//
+// Variant (compiled with a #define prepended to the source, see GpuShader):
+//   OCCLUSION_CONTOUR - draws the contour of the occlusion mask edges over the covering pixels.
 
 struct VertexOut
 {
@@ -34,6 +37,63 @@ cbuffer LightingBuffer : register(b0, space3)
 {
     LightingUniforms lights;
 };
+
+#ifdef OCCLUSION_CONTOUR
+Texture2D<float4> mask : register(t2, space2);
+SamplerState maskSamp  : register(s2, space2);
+
+cbuffer OcclusionBuffer : register(b1, space3)
+{
+    float4 occlusionParameters; // xy = 1 / mask size in pixels, z = contour width in pixels, w = contour opacity
+};
+
+// Coverage of a neighbouring mask pixel when it belongs to the same silhouette as the center (same premultiplied color),
+// 0 when it's empty or another silhouette - so a contour is drawn also where two silhouettes touch (e.g. feet on the ground).
+// The mask is 8-bit: pixels of one silhouette have exactly the same value (the tolerance is for rounding only).
+float SameSilhouette(float4 neighbour, float4 center)
+{
+    float4 difference = abs(neighbour - center);
+    return max(max(difference.r, difference.g), max(difference.b, difference.a)) < 1.5 / 255.0 ? neighbour.a : 0.0;
+}
+
+// Keep in sync with Texture.frag.hlsl and the Metal shaders.
+// The mask holds the premultiplied silhouettes of the objects drawn before the covering layer.
+// Only pixels inside a silhouette, closer than the contour width to its edge (or to another silhouette), are replaced
+// (blended) with its color.
+float4 ApplyOcclusionContour(float4 color, float2 position, float4 parameters)
+{
+    if (color.a <= 0.0)
+    {
+        return color;
+    }
+
+    float2 texel = parameters.xy;
+    float2 uv = position * texel;
+
+    float4 center = mask.SampleLevel(maskSamp, uv, 0);
+
+    if (center.a <= 0.0)
+    {
+        return color;
+    }
+
+    float2 offset = parameters.z * texel;
+
+    float neighbours = min(
+        min(SameSilhouette(mask.SampleLevel(maskSamp, uv + float2(offset.x, 0.0), 0), center),
+            SameSilhouette(mask.SampleLevel(maskSamp, uv - float2(offset.x, 0.0), 0), center)),
+        min(SameSilhouette(mask.SampleLevel(maskSamp, uv + float2(0.0, offset.y), 0), center),
+            SameSilhouette(mask.SampleLevel(maskSamp, uv - float2(0.0, offset.y), 0), center)));
+
+    // 1 on the silhouette edge (or where it touches another silhouette), 0 inside (scaled by the silhouette opacity).
+    float edge = saturate(center.a - neighbours);
+    float amount = edge * parameters.w;
+
+    // Premultiplied mask -> straight contour color, premultiplied again with the covering pixel alpha.
+    float3 contour = center.rgb / center.a;
+    return float4(lerp(color.rgb, contour * color.a, amount), color.a);
+}
+#endif
 
 float3 ComputeLighting(float3 originalPosition)
 {
@@ -159,5 +219,9 @@ float4 fragmentMain(VertexOut input) : SV_Target0
     float3 lighting = ComputeLighting(input.originalPosition);
     float3 finalColor = max(texColor.rgb * lighting, lightMapColor);
 
+#ifdef OCCLUSION_CONTOUR
+    return ApplyOcclusionContour(float4(finalColor, texColor.a), input.position.xy, occlusionParameters);
+#else
     return float4(finalColor, texColor.a);
+#endif
 }

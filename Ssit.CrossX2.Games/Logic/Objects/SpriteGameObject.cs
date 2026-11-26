@@ -10,7 +10,7 @@ using Ssit.CrossX2.Framework.Graphics.Sprites;
 
 namespace Ssit.CrossX2.Framework.Games.Logic.Objects;
 
-public abstract class SpriteGameObject : IGameObjectRenderer, IBodyOwner, ISoundEmitter
+public abstract class SpriteGameObject : IGameObjectRenderer, IOcclusionContourObject, IBodyOwner, ISoundEmitter
 {
     public GameObjectsServices Services { get; }
     public IBody Body { get; }
@@ -56,6 +56,13 @@ public abstract class SpriteGameObject : IGameObjectRenderer, IBodyOwner, ISound
     }
     
     void IGameObjectRenderer.Render(IRenderer renderer, RgbaColor color, float depth) => OnRender(renderer, color, depth);
+
+    /// <summary>
+    /// Color of the contour shown where the object is hidden behind the foreground layers. Transparent (default) - no contour.
+    /// </summary>
+    public virtual RgbaColor OcclusionContourColor => RgbaColor.Transparent;
+
+    void IOcclusionContourObject.RenderSilhouette(IRenderer renderer, float depth) => OnRenderSilhouette(renderer, depth);
 
     void IBodyOwner.OnFixedUpdate(out bool cancelUpdate)
     {
@@ -173,7 +180,18 @@ public abstract class SpriteGameObject : IGameObjectRenderer, IBodyOwner, ISound
     {
     }
 
-    protected virtual void OnRender(IRenderer renderer, RgbaColor color, float depth)
+    protected virtual void OnRender(IRenderer renderer, RgbaColor color, float depth) => DrawSprite(renderer, color, depth);
+
+    /// <summary>
+    /// Draws the silhouette for the occluded contour (see <see cref="IOcclusionContourObject.RenderSilhouette"/>) -
+    /// by default the object's sprite. Override when the object is drawn with more (or other) textures.
+    /// </summary>
+    protected virtual void OnRenderSilhouette(IRenderer renderer, float depth) => DrawSprite(renderer, RgbaColor.White, depth);
+
+    /// <summary>
+    /// Draws the current sprite frame at the object's position.
+    /// </summary>
+    protected void DrawSprite(IRenderer renderer, RgbaColor color, float depth)
     {
         if (Sprite is null)
             return;

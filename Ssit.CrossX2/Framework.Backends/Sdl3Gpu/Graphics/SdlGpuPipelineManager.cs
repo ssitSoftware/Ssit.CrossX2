@@ -10,6 +10,8 @@ internal class SdlGpuPipelineManager(IIoCContainer ioCContainer, IRenderer rende
     private const byte Lighting = 1;
     private const byte Texture = 2;
     private const byte Lines = 4;
+    private const byte Silhouette = 8;
+    private const byte Contour = 16;
 
     private readonly Dictionary<byte, ISdlGpuPipeline> _pipelines = new();
 
@@ -22,6 +24,22 @@ internal class SdlGpuPipelineManager(IIoCContainer ioCContainer, IRenderer rende
         if (texturedRendering) type |= Texture;
         if (manager.LightingEnabled) type |= Lighting;
         if (primitiveType == PrimitiveType.Lines) type |= Lines;
+
+        // Occlusion mask / contours only change the textured triangles (see IOcclusionContours).
+        if (type is Texture or (Texture | Lighting))
+        {
+            switch (((SdlGpuRenderer)renderer).OcclusionMode)
+            {
+                case SdlGpuOcclusionMode.Silhouette:
+                    // Silhouettes are flat - lighting doesn't matter.
+                    type = Texture | Silhouette;
+                    break;
+
+                case SdlGpuOcclusionMode.Contour:
+                    type |= Contour;
+                    break;
+            }
+        }
 
         if (_pipelines.TryGetValue(type, out var pipeline)) return pipeline;
 
@@ -52,6 +70,15 @@ internal class SdlGpuPipelineManager(IIoCContainer ioCContainer, IRenderer rende
 
             case Texture | Lighting:
                 return ioCContainer.IoCConstruct<SdlGpuTextureLightingPipeline>();
+
+            case Texture | Silhouette:
+                return ioCContainer.IoCConstruct<SdlGpuSilhouettePipeline>();
+
+            case Texture | Contour:
+                return ioCContainer.IoCConstruct<SdlGpuTextureContourPipeline>();
+
+            case Texture | Lighting | Contour:
+                return ioCContainer.IoCConstruct<SdlGpuTextureLightingContourPipeline>();
         }
 
         return null;

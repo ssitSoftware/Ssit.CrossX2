@@ -64,6 +64,28 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
         /// How many times the checkpoint preview is smaller than the rendered frame.
         /// </summary>
         public float CheckpointPreviewDownSize { get; set; } = 4;
+
+        /// <summary>
+        /// Show the contours of the objects (<see cref="IOcclusionContourObject"/>) hidden behind the foreground layers -
+        /// the layers above the main layer scrolled with a speed other than 1. Only the hidden part gets the contour.
+        /// </summary>
+        public bool ShowOccludedContours { get; set; }
+
+        /// <summary>
+        /// Opacity of the occluded contours over the foreground (0 - 1).
+        /// </summary>
+        public float OccludedContourOpacity { get; set; } = 0.5f;
+
+        /// <summary>
+        /// Width of the occluded contours in map (texture) pixels.
+        /// </summary>
+        public float OccludedContourWidth { get; set; } = 1;
+
+        /// <summary>
+        /// Contour color of the main layer's colliding parts hidden behind the foreground layers - the tiles drawn from
+        /// their tileset's collision mask ("&lt;tileset&gt;.mask.png") instead of the diffuse map. Transparent (default) - none.
+        /// </summary>
+        public RgbaColor OccludedMainLayerContourColor { get; set; } = RgbaColor.Transparent;
     }
     
     /// <summary>
@@ -117,6 +139,26 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
     private readonly MapLightsContainer _lightsContainer;
     private bool _isActive;
 
+    /// <summary>
+    /// See <see cref="Parameters.ShowOccludedContours"/>. Can be changed while playing.
+    /// </summary>
+    public bool ShowOccludedContours { get; set; }
+
+    /// <summary>
+    /// See <see cref="Parameters.OccludedContourOpacity"/>. Can be changed while playing.
+    /// </summary>
+    public float OccludedContourOpacity { get; set; }
+
+    /// <summary>
+    /// See <see cref="Parameters.OccludedContourWidth"/>. Can be changed while playing.
+    /// </summary>
+    public float OccludedContourWidth { get; set; }
+
+    /// <summary>
+    /// See <see cref="Parameters.OccludedMainLayerContourColor"/>. Can be changed while playing.
+    /// </summary>
+    public RgbaColor OccludedMainLayerContourColor { get; set; }
+
     void IGameInstance.Render(IRenderer renderer, RectangleF target, int renderPass, float scale)
     {
         if (renderPass != 0)
@@ -141,6 +183,11 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
         _internalStopwatch.Start();
         
         Slot = parameters.Slot;
+
+        ShowOccludedContours = parameters.ShowOccludedContours;
+        OccludedContourOpacity = parameters.OccludedContourOpacity;
+        OccludedContourWidth = parameters.OccludedContourWidth;
+        OccludedMainLayerContourColor = parameters.OccludedMainLayerContourColor;
         
         // The total game time of the slot is shared by its game instances (registered in the application services).
         container.TryGet<GameInfoService>(out var gameInfo);
@@ -328,9 +375,14 @@ public class AabbGameInstance : IGameInstance, IMessenger, IGameRendererFilter
                 renderSize.ToVector() / _gameTemplate.TileSize);
         }
         
+        // The contour width is in map pixels - the render target has scale pixels per map pixel.
+        var occlusionContours = ShowOccludedContours
+            ? new OcclusionContoursSettings(OccludedContourWidth * scale, OccludedContourOpacity, OccludedMainLayerContourColor)
+            : (OcclusionContoursSettings?)null;
+        
         MapRenderer.Render(renderer, _mapDisplayElement, Simulation, _camera.LookAt, 
             renderSize, 
-            _gameTemplate, FilterMode);
+            _gameTemplate, FilterMode, occlusionContours);
 
         renderer.StateManager.RestoreState();
     }

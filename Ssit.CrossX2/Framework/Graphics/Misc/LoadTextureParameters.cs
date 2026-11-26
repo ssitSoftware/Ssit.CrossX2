@@ -5,6 +5,7 @@ public class LoadTextureParameters
     public Stream DiffuseMapStream { get; init; }
     public Stream GlowMapStream { get; init; }
     public Stream LightMapStream { get; init; }
+    public Stream CollisionMaskStream { get; init; }
     public bool GlowFromDiffuse { get; init; }
     public bool GlowFromLightMap { get; init; }
 }

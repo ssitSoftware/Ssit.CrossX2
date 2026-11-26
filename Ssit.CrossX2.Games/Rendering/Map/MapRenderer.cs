@@ -75,10 +75,14 @@ public static class MapRenderer
 
     private delegate void RenderObjects(IRenderer renderer, LayerDisplayElement layer, object world, RectangleF bounds, RgbaColor color, bool front, int renderFilter);
     
+    /// <param name="occlusionContours">
+    /// Contours of the <see cref="IOcclusionContourObject"/> objects hidden behind the layers drawn after the main layer
+    /// with a speed other than 1 (the layers scrolled with the main layer may cover objects on purpose). Null - no contours.
+    /// </param>
     public static void Render(IRenderer renderer, MapDisplayElement map, ISimulation world, Vector2 cameraLookAt,
-        Size targetSize, IGameTemplate template, int filterMode)
+        Size targetSize, IGameTemplate template, int filterMode, OcclusionContoursSettings? occlusionContours = null)
     {
-        Render(renderer, map, RenderGameObjectsSim, world, cameraLookAt, targetSize, template, filterMode);
+        Render(renderer, map, RenderGameObjectsSim, world, cameraLookAt, targetSize, template, filterMode, occlusionContours);
         RenderPostRenderers(renderer, map, world, cameraLookAt, targetSize, template, filterMode);
     }
 
@@ -106,10 +110,19 @@ public static class MapRenderer
         renderer.StateManager.RestoreState();
     }
 
-    private static void Render(IRenderer renderer, MapDisplayElement map, RenderObjects renderObjects, object world, Vector2 cameraLookAt, Size targetSize, IGameTemplate template, int filterMode)
+    private static void Render(IRenderer renderer, MapDisplayElement map, RenderObjects renderObjects, object world, Vector2 cameraLookAt, Size targetSize, IGameTemplate template, int filterMode,
+        OcclusionContoursSettings? occlusionContours = null)
     {
         int tileSize = template.TileSize;
         var mainLayer = map.Layers.First(o => o.IsMain);
+
+        // Contours only in the regular color pass of the full scene.
+        var contours = occlusionContours is { Opacity: > 0 } && filterMode == 0 && renderer.CurrentPass == RenderPass.Normal
+            ? occlusionContours.Value
+            : (OcclusionContoursSettings?)null;
+
+        var afterMainLayer = false;
+        var occlusionMaskReady = false;
         
         foreach (var layer in map.Layers)
         {
@@ -122,6 +135,10 @@ public static class MapRenderer
             {
                 map.LightsProvider.ApplyLights(renderer, layer.UseAmbientLight, layer.UseGlobalLights);
             }
+
+            // Layers scrolled with the main layer cover the objects on purpose - only the other foreground layers show the contours.
+            var contoured = contours.HasValue && occlusionMaskReady && afterMainLayer && !IsScrolledWithMainLayer(layer)
+                            && renderer.OcclusionContours.BeginContours(contours.Value.Width, contours.Value.Opacity);
 
             if (layer.IsMain)
             {
@@ -148,6 +165,11 @@ public static class MapRenderer
             if (layer.IsMain)
             {
                 renderObjects(renderer, layer, world, visibleBounds, layer.TintColor, true, filterMode);
+
+                if (contours.HasValue && world is ISimulation simulation)
+                {
+                    occlusionMaskReady = RenderOcclusionMask(renderer, layer, simulation, visibleBounds, contours.Value.MainLayerColor);
+                }
             }
             else if (filterMode == 0)
             {
@@ -160,6 +182,11 @@ public static class MapRenderer
                     DrawObject(renderer, visibleBounds, obj, layer.TintColor);
                 }
             }
+
+            if (contoured)
+            {
+                renderer.OcclusionContours.EndContours();
+            }
             
             renderer.StateManager.RestoreState();
 
@@ -170,10 +197,70 @@ public static class MapRenderer
             
             renderer.LightingManager.EnableLighting(false);
 
+            afterMainLayer |= layer.IsMain;
         }
     }
 
-    private static void RenderLayer(IRenderer renderer, LayerDisplayElement layer, RectangleF bounds)
+    private static bool IsScrolledWithMainLayer(LayerDisplayElement layer) =>
+        Math.Abs(layer.Speed.X - 1) < float.Epsilon && Math.Abs(layer.Speed.Y - 1) < float.Epsilon;
+
+    private static readonly List<(float zOrder, IOcclusionContourObject obj)> OcclusionObjects = new();
+
+    /// <summary>
+    /// Draws the occlusion mask with the main layer transform (the same place as the layer was just drawn):
+    /// the colliding parts of the main layer tiles (tileset collision masks) in <paramref name="mainLayerColor"/>,
+    /// then the silhouettes of the visible <see cref="IOcclusionContourObject"/> objects over them.
+    /// </summary>
+    /// <returns>True when the mask was drawn (there is something with a contour).</returns>
+    private static bool RenderOcclusionMask(IRenderer renderer, LayerDisplayElement mainLayer, ISimulation simulation, RectangleF bounds, RgbaColor mainLayerColor)
+    {
+        var depth = mainLayer.Depth;
+        var drawTiles = mainLayerColor.A > 0 && HasCollisionMaskTiles(mainLayer, bounds);
+
+        OcclusionObjects.Clear();
+
+        foreach (var body in simulation.Bodies)
+        {
+            if (body.Owner is IOcclusionContourObject obj and IGameObjectRenderer gor
+                && obj.OcclusionContourColor.A > 0
+                && gor.Bounds.IsIntersecting(bounds))
+            {
+                OcclusionObjects.Add((gor.ZOrder, obj));
+            }
+        }
+
+        if (OcclusionObjects.Count == 0 && !drawTiles)
+            return false;
+
+        // Same order as drawn: the silhouette on top gives the contour color where objects overlap.
+        OcclusionObjects.Sort((o1, o2) => o1.zOrder.CompareTo(o2.zOrder));
+
+        var occlusion = renderer.OcclusionContours;
+        occlusion.BeginMask();
+
+        if (drawTiles)
+        {
+            // Only the colliding parts: the tileset's collision mask is used instead of its diffuse map.
+            occlusion.SetSilhouetteColor(mainLayerColor);
+            occlusion.SetSilhouetteMap(TextureMaps.CollisionMask);
+            RenderLayer(renderer, mainLayer, bounds, TextureMaps.CollisionMask);
+            occlusion.SetSilhouetteMap(TextureMaps.Diffuse);
+        }
+
+        foreach (var (_, obj) in OcclusionObjects)
+        {
+            occlusion.SetSilhouetteColor(obj.OcclusionContourColor);
+            obj.RenderSilhouette(renderer, depth);
+        }
+
+        occlusion.EndMask();
+        OcclusionObjects.Clear();
+
+        return true;
+    }
+
+    /// <param name="requiredMap">When set, only the segments whose texture has this map are drawn.</param>
+    private static void RenderLayer(IRenderer renderer, LayerDisplayElement layer, RectangleF bounds, TextureMaps? requiredMap = null)
     {
         foreach (var tiles in layer.Tiles)
         {
@@ -181,10 +268,30 @@ public static class MapRenderer
             {
                 foreach (var segment in tiles.segments)
                 {
+                    if (requiredMap.HasValue && !segment.Texture.Resource.Maps.HasFlag(requiredMap.Value))
+                        continue;
+                    
                     renderer.RenderQueue.PushVertices(PrimitiveType.Triangles, segment.VertexBuffer, segment.Start, segment.Count, segment.Texture.Resource);
                 }
             }
         }
+    }
+
+    private static bool HasCollisionMaskTiles(LayerDisplayElement layer, RectangleF bounds)
+    {
+        foreach (var tiles in layer.Tiles)
+        {
+            if (!tiles.bounds.IsIntersecting(bounds))
+                continue;
+
+            foreach (var segment in tiles.segments)
+            {
+                if (segment.Texture.Resource.Maps.HasFlag(TextureMaps.CollisionMask))
+                    return true;
+            }
+        }
+
+        return false;
     }
 
     // ReSharper disable once UnusedParameter.Local

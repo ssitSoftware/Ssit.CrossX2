@@ -59,4 +59,8 @@ public interface IRenderer
     /// Render target set by the last <see cref="SetRenderTarget"/> call; null when drawing to the window.
     /// </summary>
     IRenderTarget CurrentRenderTarget { get; }
+    /// <summary>
+    /// Contours of objects hidden behind the layers drawn over them.
+    /// </summary>
+    IOcclusionContours OcclusionContours { get; }
 }

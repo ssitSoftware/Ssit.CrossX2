@@ -18,6 +18,7 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
     private SDL_GPUTexture* _diffuse = null;
     private SDL_GPUTexture* _glow = null;
     private SDL_GPUTexture* _light = null;
+    private SDL_GPUTexture* _collisionMask = null;
 
     private readonly bool _glowFromDiffuse;
     private readonly bool _glowFromLight;
@@ -60,6 +61,15 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
 
             _light = tex.Pointer;
             maps |= TextureMaps.Light;
+        }
+
+        if (parameters.CollisionMaskStream is not null)
+        {
+            var (tex, ts) = LoadTextureFromStream(parameters.CollisionMaskStream, true);
+            size ??= ts;
+
+            _collisionMask = tex.Pointer;
+            maps |= TextureMaps.CollisionMask;
         }
 
         if (_glowFromDiffuse && _diffuse != null)
@@ -231,9 +241,11 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
         var diffuse = _diffuse;
         var glow = _glow;
         var light = _light;
+        var collisionMask = _collisionMask;
         _diffuse = null;
         _glow = null;
         _light = null;
+        _collisionMask = null;
 
         // Release on the main thread, after any pending Upload queued by the constructor.
         _actionScheduler.Schedule(() =>
@@ -241,6 +253,7 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
             if (diffuse != null) SDL_ReleaseGPUTexture(device, diffuse);
             if (glow != null) SDL_ReleaseGPUTexture(device, glow);
             if (light != null) SDL_ReleaseGPUTexture(device, light);
+            if (collisionMask != null) SDL_ReleaseGPUTexture(device, collisionMask);
         });
 
         _disposed = true;
@@ -263,6 +276,8 @@ internal unsafe class SdlGpuTexture: ISdlGpuTexture
                 return _glow != null ? _glow : _glowFromDiffuse ? _diffuse : _glowFromLight ? _light : null;
             case TextureMaps.Light:
                 return _light;
+            case TextureMaps.CollisionMask:
+                return _collisionMask;
             default:
                 return null;
         }

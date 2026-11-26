@@ -171,12 +171,14 @@ internal class ContentManager: IContentManager, IDisposable
         var lightPath = name + ".light" + ext;
         
         var lightAndGlowPath = name + ".glow" + ext;
+        var collisionMaskPath = name + ".mask" + ext;
 
         var hasDiffuseImplicit = _filesProvider.FileExists(name + ext);
         var hasDiffuseExplicit = _filesProvider.FileExists(name + ".diffuse" + ext);
         var hasGlow = _filesProvider.FileExists(glowPath);
         var hasLight = _filesProvider.FileExists(lightPath);
         var hasGlowAndLight = _filesProvider.FileExists(lightAndGlowPath);
+        var hasCollisionMask = _filesProvider.FileExists(collisionMaskPath);
 
         return _iocContainer.IoCConstruct<ITexture>(new LoadTextureParameters
         {
@@ -184,6 +186,7 @@ internal class ContentManager: IContentManager, IDisposable
                 _filesProvider.Open(name + ".diffuse" + ext) : null,
             GlowMapStream = hasGlow ? _filesProvider.Open(glowPath) : null,
             LightMapStream = hasLight ? _filesProvider.Open(lightPath) : hasGlowAndLight ? _filesProvider.Open(lightAndGlowPath) : null,
+            CollisionMaskStream = hasCollisionMask ? _filesProvider.Open(collisionMaskPath) : null,
             GlowFromLightMap = hasGlowAndLight
         });
     }
